@@ -1,0 +1,49 @@
+ PROPOSED USER STORIES.
+
+STUDENT.
+
+•Student should login readily and securely to access dashboard features and functionalities.
+
+•Student should submit internship data details so that they can be verified and approved by the supervisors.
+
+•Student should upload weekly reports about the internship progress.
+
+•Student should view evaluation feedback and evaluation scores from the supervisors in order to adjust accordingly.
+
+•Student needs to track their internship progress in order to ensure that all internship requirements are met.
+
+WORKPLACE SUPERVISOR.
+
+•Workplace supervisor should log in and access assigned students in order to evaluate them.
+
+•Workplace supervisor should fill review student progress reports in order to provide feedback and evaluation scores.
+
+•Workplace supervisor should submit and upload evaluation forms in order for students’ performance to be recorded and kept officially.
+
+•Workplace supervisor should communicate with the academic supervisor in order to stay updated about the student’s progress.
+
+•Workplace supervisor should approve or reject student submitted documents so that the students scores and expectations are clearly evaluated.
+
+ACADEMIC SUPERVISOR.
+
+•Academic supervisor should log in securely in order to monitor student’s internships.
+
+•Academic supervisor should provide academic feedback in order that the student can apply the theory knowledge in practice.
+
+•Academic supervisor should review workplace supervisors’ evaluations in order to asses student’s performance accordingly.
+
+•Academic supervisor should generate evaluation reports so that the final grades can be assigned to the student.
+
+•Academic supervisor should track student progress across multiple workplaces so that consistency of student performance is ensured.
+
+INTERNSHIP ADMINISTRATOR.
+
+•Internship administrator should manage user accounts in order to control access as needed by respective users.
+•Internship administrator should assign students to workplace supervisors so that responsibilities are distributed clearly.
+
+•Internship administrator should monitor system activity to ensure smooth operations to every user.
+
+•Internship administrator should configure evaluation criteria so that assessment is standardized.
+
+•Internship administrator should generate overall internship report so that program success is evaluated by the institution.
+
