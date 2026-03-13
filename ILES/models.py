@@ -3,8 +3,32 @@ from django.db import models
 from .models import InternshipPlacement
 
 # Create your models here.
+#CUSTOM USER MODEL
 class CustomUser(AbstractUser):
-    pass
+    ROLES =[
+        
+        ('intern_admin', 'Internship Administrator'),
+        ('academic_supervisor', 'Acadmemic Supervisor'),
+        ('workplace_supervisor', 'Workplace Supervisor'),        
+        ('student', 'Student Intern'),
+        
+    ]
+    role = models.CharField(
+        max_length = 40,
+        choices = ROLES,
+        default = 'student'
+    )
+    phone = models.CharField(max_length=13, blank = True)
+    id_no = models.CharField(max_length = 20)
+    def __str__ (self):
+        return f"{self.username} ({self.role})" 
+
+#INTERNSHIP PLACEMENT MODEL
+class InternshipPlacements(models.Model):
+    STATUS =[
+        ()
+    ]
+#WEEKLY LOGIN MODEL
 class WeeklyLog(models.Model):
     STATUS_CHOICE =[
         ('draft', 'Draft'),
