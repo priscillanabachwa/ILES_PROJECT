@@ -28,7 +28,7 @@ class WeeklyLog(models.Model):
         default = 'draft'
         )
     supervisor_comment = models.TextField(blank=True)
-    deadline = models.DateField()
+    deadline = models.DateTimeField()
     submitted_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now =True)
