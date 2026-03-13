@@ -3,6 +3,8 @@
 from django.conf import settings
 from django.db import migrations, models
 import django.db.models.deletion
+from .models import UserProfile
+from .Evaluation import AcademicEvaluation
 
 
 class Migration(migrations.Migration):
