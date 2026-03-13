@@ -1,6 +1,22 @@
-venv/
-node_modules/
-db.sqlite3
+# Python cache
 __pycache__/
+*.pyc
+
+# Virtual enviroment
+venv/
+env/
+
+# Database
+db.sqlite3
+
+# Enviroment variables
 .env
-.DS_Store
+
+# VS Code
+.vscode/
+
+#Logs
+*.log
+
+# Migrations
+*/migrations/*.pyc
