@@ -1,77 +1,47 @@
 from django.db import models
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 
 class AcademicEvaluation(models.Model):
 
-    placement = models.OneToOneField(
-        'ILES.InternshipPlacement',  # updated app name
-        on_delete=models.CASCADE,
-        related_name='academic_evaluation'
+    technical_score = models.PositiveIntegerField(
+        validators=[MinValueValidator(0), MaxValueValidator(100)]
     )
 
-    academic_supervisor = models.ForeignKey(
-        'auth.User',
-        on_delete=models.PROTECT,
-        related_name='academic_evaluations_given'
+    communication_score = models.PositiveIntegerField(
+        validators=[MinValueValidator(0), MaxValueValidator(100)]
     )
 
-    technical_score = models.PositiveIntegerField()
-    communication_score = models.PositiveIntegerField()
-    professionalism_score = models.PositiveIntegerField()
+    professionalism_score = models.PositiveIntegerField(
+        validators=[MinValueValidator(0), MaxValueValidator(100)]
+    )
 
-    final_score = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    final_score = models.FloatField(null=True, blank=True)
 
-    overall_comments = models.TextField(blank=True)
-
-    recommended_grade = models.CharField(
+    grade = models.CharField(
         max_length=2,
         choices=[
-            ('A', 'A - Excellent'),
-            ('B+', 'B+ - Very Good'),
-            ('B', 'B - Good'),
-            ('C+', 'C+ - Fair'),
-            ('C', 'C - Satisfactory'),
-            ('D+', 'D+ - Weak Pass'),
-            ('D', 'D - Pass'),
-            ('F', 'F - Fail'),
+            ('A','A'),
+            ('B+','B+'),
+            ('B','B'),
+            ('C+','C+'),
+            ('C','C'),
+            ('D+','D+'),
+            ('D','D'),
+            ('F','F')
         ],
         blank=True
     )
 
-    evaluated_at = models.DateTimeField(auto_now_add=True)
-    last_updated = models.DateTimeField(auto_now=True)
-
-    is_finalized = models.BooleanField(default=False)
-
-    def __str__(self):
-        return f"Academic Evaluation – {self.placement}"
-
-    def save(self, *args, **kwargs):
-
-        # Prevent editing after finalization
-        if self.is_finalized and self.pk:
-            return
-
-        # Ensure scores are between 0 and 100
-        for score in [self.technical_score, self.communication_score, self.professionalism_score]:
-            if score < 0 or score > 100:
-                raise ValueError("Scores must be between 0 and 100.")
-
-        # Calculate final score
-        self.final_score = (
-            self.technical_score * 0.4 +
-            self.communication_score * 0.3 +
-            self.professionalism_score * 0.3
+    def compute_weighted_score(self):
+        return (
+            (self.technical_score * 0.4) +
+            (self.communication_score * 0.3) +
+            (self.professionalism_score * 0.3)
         )
 
-        # Automatically assign grade
-        self.recommended_grade = self.get_grade_letter()
+    def assign_grade(self):
 
-        super().save(*args, **kwargs)
-
-    def get_grade_letter(self):
-        if self.final_score is None:
-            return "N/A"
         if self.final_score >= 80:
             return "A"
         elif self.final_score >= 75:
@@ -88,3 +58,13 @@ class AcademicEvaluation(models.Model):
             return "D"
         else:
             return "F"
+
+    def save(self, *args, **kwargs):
+
+        # compute weighted score
+        self.final_score = self.compute_weighted_score()
+
+        # assign grade automatically
+        self.grade = self.assign_grade()
+
+        super().save(*args, **kwargs)
