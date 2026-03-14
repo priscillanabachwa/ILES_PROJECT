@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from .models import InternshipPlacement
+from .models import CustomUser
 
 # Create your models here.
 class CustomUser(AbstractUser):
@@ -83,4 +84,22 @@ class WeeklyLog(models.Model):
     def __str__(self):
         return f'week{self.week_number} log for {self.internship}'
 
-     
+class AcademicEvaluation(models.Model):
+    placement=models.ForeignKey(InternshipPlacement, on_delete=models.CASCADE)
+    evaluator=models.ForeignKey(CustomUser,on_delete=models.CASCADE,related_name='evaluations')
+    Supervisor_score=models.DecimalField(max_digit=5,decimal_places=2,default=0)
+    academic_score=models.DecimalField(max_digits=5,decimal_places=2,default=0)
+    logbook_score=models.DecimalField(max_digits=5,decimal_places=2,default=0)
+    total_score=models.DecimalField(max_digits=5, decimal_places=2,blank=True,null=True)
+    overall_comment=models.TextField()
+    evaluated_at=models.DateTimeField(auto_now_add=True)
+    class Meta:
+        unique_together=[['placement','evaluator']] 
+        ordering =['-evaluated_at']
+    
+    def save(self,*args,**kwargs):
+        self.total_score=(self.supervisor_score*60/100+self.academic_score*20/100+self.logbook_score*20/100)
+        super().save(*args,**kwargs)
+        
+    def __str__(self):
+        return f"Evaluation for{self.Placement}-Total:{self.total_score}"
