@@ -1,6 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from .models import InternshipPlacement
+
 
 # Create your models here.
 #CUSTOM USER MODEL
@@ -26,8 +26,43 @@ class CustomUser(AbstractUser):
 #INTERNSHIP PLACEMENT MODEL
 class InternshipPlacements(models.Model):
     STATUS =[
-        ()
+        ('pending', 'Pending'),
+        ('active',  'Active'),
+        ('done', 'Done')
     ]
+    student = models.ForeignKey(
+        CustomUser,
+        on_delete = models.CASCADE,
+        related_name ='intern_placement',
+        limit_choices_to={'role':'student'}
+    )
+    workplace_supervisor = models.ForeignKey(
+        CustomUser,
+        on_delete = models.SET_NULL,
+        null = True,
+        blank = True,
+        related_name= 'placement_supervisor',
+        limit_choices_to ={'role':'workplace_supervisor'}
+    )
+    academic_supervisor = models.ForeignKey(
+        CustomUser,
+        on_delete = models.SET_NULL,
+        null = True,
+        releated_name = "academic_placement",
+        limit_choices_to= {"role":"academic_supervisor"}
+    )
+    company_name = models.TextField(),
+    company_email= models.TextField(),
+    start_date= models.DateField(),
+    stop_date = models.DateField()
+    status = models.CharField(
+        max_length = 10,
+        choices = STATUS,
+        default = 'pending'
+    )
+    def __str__(self):
+        return f'{self.student.username} is at {self.company_name}'
+
 #WEEKLY LOGIN MODEL
 class WeeklyLog(models.Model):
     STATUS_CHOICE =[
@@ -38,7 +73,7 @@ class WeeklyLog(models.Model):
     ]
 
     internship = models.ForeignKey(
-        InternshipPlacement,
+        InternshipPlacements,
         on_delete = models.CASCADE,
         related_name = 'logs'
     )
@@ -61,5 +96,62 @@ class WeeklyLog(models.Model):
         
     def __str__(self):
         return f'week{self.week_number} log for {self.internship}'
-
-     
+#MODEL FOR EVALUATIONS CRITEREA.
+class Evaluation(models.Model):
+   name = models.CharField(max_length= 60),
+description = models.TextField(blank=True),
+max_score = models.DecimalField( 
+    default = 0,
+    max_length = 5,
+    decimal_places = 2)
+weight_percentage = models.DecimalField(
+     default = 0,
+     max_length = 5,
+     decimal_places = 2)
+def __str__(self):
+    return f"{self.name }  weight:{self.weight_percentage}%"
+#MODEL FOR EVALUATION.
+class Evaluation(models.Model):
+    placement = models.ForeignKey (
+        InternshipPlacements,
+        on_delete = models.CASCADE,
+        related_name = 'evaluations'
+    )
+    Evaluating = models.ForeignKey(
+        CustomUser,
+        on_delete= models.CASCADE,
+        related_name = "available_evaluations"
+    )
+    supervisor_score = models.DecimalField(
+        default = 0,
+        max_length = 5,
+        decimal_places = 2
+    )
+    academic_score =  models.DecimalField(
+        default = 0,
+        max_length = 5,
+        decimal_places = 2
+    )
+    log_score =  models.DecimalField(
+        default = 0,
+        max_length = 5,
+        decimal_places = 2
+    )
+    total_score = models.DecimalField(
+        default = 0,
+        max_length = 5,
+        decimal_places = 2
+    )
+    evaluated_at = models.DateTimeField(auto_now_add= True)
+    class Meta:
+        unique_together = ['placement','Evaluating']
+    def save(self,*args,**kwargs):
+        self.total_score= (
+             self.supervisor_score * 40/100 +
+             self.academic_score * 30/100 +
+             self.log_score * 30/100
+          
+        )
+        super().save(*args,**kwargs)
+    def __str__(self):
+        return f"EValuation for {self.placement} - Total:{self.total_score}"
