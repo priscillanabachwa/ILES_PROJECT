@@ -1,7 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from .models import InternshipPlacement
 from .models import CustomUser
+
 
 # Create your models here.
 class CustomUser(AbstractUser):
@@ -84,6 +84,7 @@ class WeeklyLog(models.Model):
     def __str__(self):
         return f'week{self.week_number} log for {self.internship}'
 
+     
 class AcademicEvaluation(models.Model):
     placement=models.ForeignKey(InternshipPlacement, on_delete=models.CASCADE)
     evaluator=models.ForeignKey(CustomUser,on_delete=models.CASCADE,related_name='evaluations')
@@ -103,3 +104,4 @@ class AcademicEvaluation(models.Model):
         
     def __str__(self):
         return f"Evaluation for{self.Placement}-Total:{self.total_score}"
+
