@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from .models import CustomUser
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 
 # Create your models here.
