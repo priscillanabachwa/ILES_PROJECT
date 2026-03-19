@@ -1,7 +1,13 @@
 from django.contrib import admin
 
 # Register your models here.
-from .models import CustomUser, InternshipPlacement, WeeklyLogbook, AcademicEvaluation, WeightedScoreComputation
+from .models import (
+    CustomUser,
+    InternshipPlacement,
+    WeeklyLogbook,
+    AcademicEvaluation,
+    WeightedScoreComputation
+)
 
 admin.site.register(CustomUser)
 admin.site.register(InternshipPlacement)
