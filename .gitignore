@@ -3,7 +3,6 @@
 
 
 # Python/Django
-backend/venv/
 backend/db.sqlite3
 backend/__pycache__/
 
@@ -18,4 +17,4 @@ frontend/.env
 # Migrations
 */migrations/*.pyc
 
-
+venv/
