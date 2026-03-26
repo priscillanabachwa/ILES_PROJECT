@@ -5,14 +5,12 @@ User = settings.AUTH_USER_MODEL
 
 
 class Company(models.Model):
-    name = models.CharField(max_length=200)
-    address = models.TextField(blank=True, null=True)
-    industry = models.CharField(max_length=100, blank=True, null=True)
-    website = models.URLField(blank=True, null=True)
+    company_name = models.CharField(max_length=200)
+    company_address = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.name
+        return self.company_name
 
 
 class InternshipPlacement(models.Model):
@@ -26,11 +24,12 @@ class InternshipPlacement(models.Model):
     student = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='student_placements'
+        related_name='student_placements',
+        limit_choices_to ={'role': 'student'}
     )
 
     company = models.ForeignKey(
-        Company,
+        'Company',
         on_delete=models.PROTECT,
         related_name='placements'
     )
@@ -40,7 +39,8 @@ class InternshipPlacement(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='workplace_supervisions'
+        related_name='workplace_supervisions',
+        limit_choices_to ={'role': 'workplace_supervisor'}
     )
 
     academic_supervisor = models.ForeignKey(
@@ -48,7 +48,8 @@ class InternshipPlacement(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='academic_supervisions'
+        related_name='academic_supervisions',
+        limit_choices_to={'role': 'academic_supervisor'}
     )
 
     start_date = models.DateField()
@@ -66,9 +67,9 @@ class InternshipPlacement(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.student} - {self.company}"
+        return f"{self.student} - {self.company_name}"
 
-    # 🔥 VALIDATION (IMPORTANT)
+    #  VALIDATION (IMPORTANT)
     def clean(self):
         from django.core.exceptions import ValidationError
 
