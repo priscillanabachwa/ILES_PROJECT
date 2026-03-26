@@ -61,13 +61,12 @@ class InternshipPlacement(models.Model):
         default='PENDING'
     )
 
-    description = models.TextField(blank=True, null=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.student} - {self.company_name}"
+        return f"{self.student} - {self.company.company_name}"
 
     #  VALIDATION (IMPORTANT)
     def clean(self):
