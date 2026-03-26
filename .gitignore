@@ -3,7 +3,7 @@
 
 
 # Python/Django
-backend/venv/
+backend/my_space/
 backend/db.sqlite3
 backend/__pycache__/
 
@@ -17,5 +17,5 @@ frontend/.env
 
 # Migrations
 */migrations/*.pyc
-
+my_space/
 
