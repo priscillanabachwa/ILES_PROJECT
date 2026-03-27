@@ -40,8 +40,10 @@ INSTALLED_APPS = [
     'rest_framework',
     'placements',
     'scores',
+    'user_accounts',
 ]
 
+AUTH_USER_MODEL = 'user_accounts.CustomUser'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
