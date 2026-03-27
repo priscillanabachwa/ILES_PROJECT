@@ -1,21 +1,10 @@
-# Root-level ignore
+
 .vscode/
-
-
-# Python/Django
-backend/venv/
-backend/db.sqlite3
-backend/__pycache__/
-
-#React(Vite)
-frontend/node_modules/
-frontend/dist/
-frontend/.env
-
-#Logs
+db.sqlite3
+node_modules/
+dist/
+.env
 *.log
-
-# Migrations
-*/migrations/*.pyc
-
-
+venv/
+__pycache__/
+*.pyc
