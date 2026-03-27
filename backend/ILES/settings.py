@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'placements',
     'scores',
+    'academic_evaluations'
     'user_accounts',
 ]
 
