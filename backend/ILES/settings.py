@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'accounts',
     'placements',
     'scores',
+    'academic_evaluations'
 ]
 
 MIDDLEWARE = [
