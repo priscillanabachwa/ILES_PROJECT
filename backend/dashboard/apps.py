@@ -1,5 +1,6 @@
 from django.apps import AppConfig
 
 
-class ScoresConfig(AppConfig):
-    name = 'scores'
+class DashboardConfig(AppConfig):
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'dashboard'
