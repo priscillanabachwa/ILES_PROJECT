@@ -554,7 +554,6 @@ class StudentFeedback(models.Model):
         ordering = ['-submitted_at']
 
     def clean(self):
-        # Feedback can only be submitted after the internship is completed
         if self.placement.status != InternshipPlacement.Status.COMPLETED:
             raise ValidationError(
                 "Feedback can only be submitted after the internship is marked as completed."
@@ -602,7 +601,6 @@ class LogAttachment(models.Model):
         ordering = ['-uploaded_at']
 
     def clean(self):
-        # Block uploads on approved logs
         if self.weekly_log.status == WeeklyLog.Status.APPROVED:
             raise ValidationError("Cannot add attachments to an approved log.")
 
