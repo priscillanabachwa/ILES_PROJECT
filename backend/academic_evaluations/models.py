@@ -19,12 +19,23 @@ class EvaluationCriteria(models.Model):
 
 class AcademicEvaluation(models.Model):
     STATUS_CHOICES=[('DRAFT','Draft'),('SUBMITTED','Submitted')]
-    placement=models.ForeignKey('InternshipPlacement', on_delete=models.CASCADE,related_name='evaluations')
-    evaluator=models.ForeignKey('CustomUser',on_delete=models.CASCADE,related_name='evaluations')
+
+    placement=models.ForeignKey(
+        'placements.InternshipPlacement', 
+         on_delete=models.CASCADE,
+         related_name='evaluations'
+    )
+
+    evaluator=models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='evaluations'
+    )
+
     total_score=models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
     status=models.CharField(max_length=20,choices=STATUS_CHOICES,default='DRAFT')
     overall_comment=models.TextField(blank=True,null=True)
-    submitted_at=models.DateTimeField(auto_now_add=True)
+    submitted_at=models.DateTimeField(blank=True,null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -34,10 +45,11 @@ class AcademicEvaluation(models.Model):
         
     def calculate_total_score(self):
         total = Decimal('0')
-        items = self.items.select_related('criteria')
+        items = self.items.select_related('criteria').all()
 
         for item in items:
-         total += (item.score * item.criteria.weight) / Decimal('100')
+            if item.score and item.criteria.weight:
+                total += (item.score * item.criteria.weight) / Decimal('100')
 
         return total
     
