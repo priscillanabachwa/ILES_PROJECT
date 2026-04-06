@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'placements',
     'dashboard',
     'academic_evaluations'
+    'academic_evaluations',
     'user_accounts',
 ]
 
