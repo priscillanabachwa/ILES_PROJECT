@@ -11,7 +11,7 @@ class CustomUserManager(BaseUserManager):
         email = self.normalize_email(email)
         extra_fields.setdefault('role', 'student')
 
-        user = self.model( email=email, **extra_fields)
+        user = self.model(email=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
         return user
@@ -21,7 +21,7 @@ class CustomUserManager(BaseUserManager):
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('role', 'admin')
 
-        if extra_fields.get('is staff') is not True:
+        if extra_fields.get('is_staff') is not True:
             raise ValueError('Superuser must have is_staff=True.')
         if extra_fields.get('is_superuser') is not True:
             raise ValueError('Superuser must have is_superuser=True.')
@@ -40,15 +40,15 @@ class CustomUser(AbstractUser):
     email = models.EmailField(unique=True)
 
     role = models.CharField(
-        max_length=30, 
-        choices=ROLE_CHOICES, 
+        max_length=30,
+        choices=ROLE_CHOICES,
         default='student'
     )
     phone_number = models.CharField(max_length=20, blank=True, null=True)
     profile_picture = models.ImageField(
-        upload_to = 'profile_pictures/',
-        blank = True,
-        null = True
+        upload_to='profile_pictures/',
+        blank=True,
+        null=True
     )
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['first_name', 'last_name']
@@ -56,4 +56,4 @@ class CustomUser(AbstractUser):
     objects = CustomUserManager()
 
     def __str__(self):
-        return f'{self.email} ({self.get_role_display()})'   
+        return f'{self.email} ({self.get_role_display()})'
