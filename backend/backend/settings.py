@@ -37,12 +37,16 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'abstract_user',
     'weeklylogs',
-    'internship_placement',
     'weighted_score_computation',
     'evaluation',
+    'rest_framework',
+    'placements',    
+    'user_accounts',
+    
+
 ]
+AUTH_USER_MODEL = 'user_accounts.CustomUser'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -103,7 +107,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-AUTH_USER_MODEL = 'abstract_user.CustomUser'
+AUTH_USER_MODEL = 'user_accounts.CustomUser'
 
 
 

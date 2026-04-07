@@ -1,5 +1,5 @@
-from internship_placement.models import InternshipPlacement
-from abstract_user.models import  CustomUser
+from placements.models import InternshipPlacement
+from user_accounts.models import  CustomUser
 from django.db import models
 from django.conf import settings
 from decimal import Decimal

@@ -1,4 +1,4 @@
-from internship_placement.models import InternshipPlacement
+from placements.models import InternshipPlacement
 from django.db import models
 
 class WeeklyLogbook(models.Model):
