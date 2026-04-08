@@ -1,9 +1,11 @@
 from rest_framework import viewsets
-from .models import Placement
+from .models import InternshipPlacement
 from .serializers import PlacementSerializer
+from rest_framework.permissions import IsAuthenticated
+from rest_framework import filters
 
 class PlacementViewSet(viewsets.ModelViewSet):
-    queryset = Placement.objects.all()
+    queryset = InternshipPlacement.objects.all()
     serializer_class = PlacementSerializer
 
     permission_classes = [IsAuthenticated]
