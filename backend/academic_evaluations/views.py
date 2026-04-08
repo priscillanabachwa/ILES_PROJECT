@@ -1,3 +1,7 @@
-from django.shortcuts import render
+from rest_framework import viewsets
+from .models import AcademicEvaluation
+from .serializers import AcademicEvaluationSerializer
 
-# Create your views here.
+class AcademicEvaluationViewSet(viewsets.ModelViewSet):
+    queryset = AcademicEvaluation.objects.all()
+    serializer_class = AcademicEvaluationSerializer
