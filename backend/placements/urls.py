@@ -1,5 +1,10 @@
 from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import PlacementViewSet # Import your specific view
+
+router = DefaultRouter()
+router.register(r'list', PlacementViewSet, basename='placement')
 
 urlpatterns = [
-    # Leave this empty for now or add your placement routes later
+    path('', include(router.urls)),
 ]
