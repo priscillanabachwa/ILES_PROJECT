@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'placements',
     'academic_evaluations',
     'user_accounts',
+    'weekly_logs',
 ]
 
 AUTH_USER_MODEL = 'user_accounts.CustomUser'
