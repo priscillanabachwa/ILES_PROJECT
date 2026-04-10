@@ -22,7 +22,7 @@ class InternshipPlacement(models.Model):
     )
 
     student = models.ForeignKey(
-        User,
+        'user_accounts.CustomUser',
         on_delete=models.CASCADE,
         related_name='student_placements',
         limit_choices_to ={'role': 'student'}
@@ -35,7 +35,7 @@ class InternshipPlacement(models.Model):
     )
 
     workplace_supervisor = models.ForeignKey(
-        User,
+        'user_accounts.CustomUser',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -44,7 +44,7 @@ class InternshipPlacement(models.Model):
     )
 
     academic_supervisor = models.ForeignKey(
-        User,
+        'user_accounts.CustomUser',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
