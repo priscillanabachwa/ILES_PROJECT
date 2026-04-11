@@ -297,7 +297,7 @@ export default function AcademicSupervisorDashboard() {
           {/* Left col — 3/5 width */}
           <div className="lg:col-span-3 space-y-5">
 
-          
+            {/* Assigned Students with search */}
             <Card
               title="Assigned Students"
               actionLabel="View All"
