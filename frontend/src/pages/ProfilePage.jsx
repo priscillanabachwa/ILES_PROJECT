@@ -1,0 +1,448 @@
+import { useState, useRef, useEffect } from 'react'
+import { useAuth } from '../context/AuthContext'
+import { authService } from '../services'
+import { AppLayout } from '../components/layout/AppLayout'
+
+const ROLE_CONFIG = {
+  student: {
+    label: 'Student Intern',
+    badge: 'bg-indigo-50 text-indigo-700',
+    subtitle: 'Your details are visible to your assigned supervisors',
+    fields: [
+      { key: 'first_name',   label: 'First Name',  type: 'text', maxLength: 150 },
+      { key: 'last_name',    label: 'Last Name',   type: 'text', maxLength: 150 },
+      { key: 'phone_number', label: 'Phone',        type: 'tel',  hint: 'e.g. +256 700 000 000' },
+      { key: 'institution',  label: 'Institution',  type: 'text' },
+      { key: 'department',   label: 'Department',   type: 'text' },
+      { key: 'student_id',   label: 'Student ID',   type: 'text' },
+    ],
+  },
+  workplace_supervisor: {
+    label: 'Workplace Supervisor',
+    badge: 'bg-emerald-50 text-emerald-700',
+    subtitle: 'Your details are visible to the interns you supervise and academic supervisors',
+    fields: [
+      { key: 'first_name',   label: 'First Name',   type: 'text', maxLength: 150 },
+      { key: 'last_name',    label: 'Last Name',    type: 'text', maxLength: 150 },
+      { key: 'phone_number', label: 'Phone',         type: 'tel',  hint: 'e.g. +256 700 000 000' },
+      { key: 'organisation', label: 'Organisation',  type: 'text' },
+      { key: 'department',   label: 'Department',    type: 'text' },
+      { key: 'job_title',    label: 'Job Title',     type: 'text' },
+    ],
+  },
+  academic_supervisor: {
+    label: 'Academic Supervisor',
+    badge: 'bg-amber-50 text-amber-700',
+    subtitle: 'Your details are visible to interns and workplace supervisors in your institution',
+    fields: [
+      { key: 'first_name',   label: 'First Name',  type: 'text', maxLength: 150 },
+      { key: 'last_name',    label: 'Last Name',   type: 'text', maxLength: 150 },
+      { key: 'phone_number', label: 'Phone',        type: 'tel',  hint: 'e.g. +256 700 000 000' },
+      { key: 'institution',  label: 'Institution',  type: 'text' },
+      { key: 'faculty',      label: 'Faculty',      type: 'text' },
+      { key: 'staff_id',     label: 'Staff ID',     type: 'text' },
+    ],
+  },
+  admin: {
+    label: 'Internship Administrator',
+    badge: 'bg-rose-50 text-rose-700',
+    subtitle: 'You have full administrative access to the internship system',
+    fields: [
+      { key: 'first_name',   label: 'First Name',  type: 'text', maxLength: 150 },
+      { key: 'last_name',    label: 'Last Name',   type: 'text', maxLength: 150 },
+      { key: 'phone_number', label: 'Phone',        type: 'tel',  hint: 'e.g. +256 700 000 000' },
+    ],
+  },
+}
+
+const validators = {
+  phone_number: (v) => v && !/^\+?[0-9\s]{7,15}$/.test(v) ? 'Enter a valid phone number' : '',
+}
+
+const validateField  = (key, value) => validators[key]?.(value) || ''
+
+const validatePassword = ({ current, next, confirm }) => {
+  const errs = {}
+  if (!current) errs.current = 'Current password is required'
+  if (next && next.length < 8) errs.next = 'Must be at least 8 characters'
+  if (confirm && next !== confirm) errs.confirm = 'Passwords do not match'
+  return errs
+}
+
+const formatDate = (iso) =>
+  iso ? new Date(iso).toLocaleDateString('en-UG', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
+
+const fullName = (user) =>
+  [user?.first_name, user?.last_name].filter(Boolean).join(' ') || '—'
+
+function useToast() {
+  const [toasts, setToasts] = useState([])
+  const add = (message, type = 'success') => {
+    const id = Date.now()
+    setToasts((prev) => [...prev, { id, message, type }])
+    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 4000)
+  }
+  const dismiss = (id) => setToasts((prev) => prev.filter((t) => t.id !== id))
+  return { toasts, add, dismiss }
+}
+
+function Toast({ toasts, onDismiss }) {
+  return (
+    <div className="fixed top-5 right-5 z-50 flex flex-col gap-2 min-w-[260px]">
+      {toasts.map((t) => (
+        <div
+          key={t.id}
+          onClick={() => onDismiss(t.id)}
+          className={`flex items-start gap-3 px-4 py-3 rounded-xl shadow-lg cursor-pointer text-sm font-medium
+            ${t.type === 'success'
+              ? 'bg-green-50 text-green-800 border border-green-200'
+              : 'bg-red-50 text-red-800 border border-red-200'}`}
+        >
+          <span className="mt-0.5">{t.type === 'success' ? '✓' : '✕'}</span>
+          <span>{t.message}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+const PencilIcon = ({ className = 'w-3.5 h-3.5' }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24"
+    fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+  </svg>
+)
+
+const AVATAR_BG = {
+  student:              'bg-indigo-600',
+  workplace_supervisor: 'bg-emerald-600',
+  academic_supervisor:  'bg-amber-500',
+  admin:                'bg-rose-600',
+}
+
+function Avatar({ user, preview, onSelect, editMode }) {
+  const inputRef = useRef()
+  const bg  = AVATAR_BG[user?.role] || 'bg-gray-500'
+  const src = preview || user?.profile_picture || null
+  return (
+    <div className="relative w-20 h-20 flex-shrink-0">
+      {src
+        ? <img src={src} alt="avatar" className="w-20 h-20 rounded-full object-cover ring-4 ring-white shadow-md" />
+        : <div className={`w-20 h-20 rounded-full ${bg} text-white flex items-center justify-center text-3xl font-bold select-none ring-4 ring-white shadow-md`}>
+            {user?.first_name?.[0] || '?'}
+          </div>
+      }
+      {editMode && (
+        <button
+          onClick={() => inputRef.current.click()}
+          className="absolute bottom-0 right-0 w-7 h-7 bg-white border-2 border-gray-200 rounded-full flex items-center justify-center shadow hover:bg-gray-50 hover:border-indigo-300 transition"
+          title="Change photo"
+        >
+          <PencilIcon className="w-3 h-3 text-indigo-500" />
+        </button>
+      )}
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0]
+          if (file) onSelect(URL.createObjectURL(file))
+        }}
+      />
+    </div>
+  )
+}
+
+function Field({ label, error, hint, children }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{label}</label>
+      {children}
+      {error && <p className="text-xs text-red-500">{error}</p>}
+      {!error && hint && <p className="text-xs text-gray-400">{hint}</p>}
+    </div>
+  )
+}
+
+function InfoRow({ label, value }) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{label}</p>
+      <p className="text-sm text-gray-800 font-medium">
+        {value || <span className="text-gray-300 italic font-normal">Not set</span>}
+      </p>
+    </div>
+  )
+}
+
+function SectionDivider({ title, subtitle }) {
+  return (
+    <div className="pt-1 pb-1 border-b border-gray-100">
+      <p className="text-sm font-semibold text-gray-800">{title}</p>
+      {subtitle && <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>}
+    </div>
+  )
+}
+
+export default function ProfilePage() {
+  const { user } = useAuth()
+  const config = ROLE_CONFIG[user?.role] || ROLE_CONFIG.student
+
+  const buildInitial = () =>
+    Object.fromEntries(config.fields.map(({ key }) => [key, user?.[key] || '']))
+
+  const [form, setForm]               = useState(buildInitial)
+  const [avatarPreview, setAvatar]    = useState(null)
+  const [fieldErrors, setFieldErrors] = useState({})
+  const [saving, setSaving]           = useState(false)
+  const [editMode, setEditMode]       = useState(false)
+
+  const [pwForm, setPwForm]     = useState({ current: '', next: '', confirm: '' })
+  const [pwErrors, setPwErrors] = useState({})
+  const [pwSaving, setPwSaving] = useState(false)
+  const [showPw, setShowPw]     = useState({ current: false, next: false, confirm: false })
+
+  const { toasts, add: addToast, dismiss } = useToast()
+
+  useEffect(() => {
+    setForm(buildInitial())
+  }, [user])
+
+  useEffect(() => {
+    if (!editMode) return
+    const errs = {}
+    config.fields.forEach(({ key }) => {
+      const err = validateField(key, form[key])
+      if (err) errs[key] = err
+    })
+    setFieldErrors(errs)
+  }, [form, editMode])
+
+  const handleCancelEdit = () => {
+    setForm(buildInitial())
+    setAvatar(null)
+    setFieldErrors({})
+    setEditMode(false)
+  }
+
+  const handleSave = async () => {
+    const errs = {}
+    config.fields.forEach(({ key }) => {
+      const err = validateField(key, form[key])
+      if (err) errs[key] = err
+    })
+    if (Object.keys(errs).length) { setFieldErrors(errs); return }
+
+    setSaving(true)
+    try {
+  
+      const payload = new FormData()
+      config.fields.forEach(({ key }) => payload.append(key, form[key] || ''))
+      if (avatarPreview) {
+        const res  = await fetch(avatarPreview)
+        const blob = await res.blob()
+        payload.append('profile_picture', blob, 'profile_picture.jpg')
+      }
+      await authService.updateMe(payload)
+      addToast('Profile updated successfully.')
+      setAvatar(null)
+      setEditMode(false)
+    } catch {
+      addToast('Failed to update profile. Please try again.', 'error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handlePasswordChange = async () => {
+    const errs = validatePassword(pwForm)
+    if (Object.keys(errs).length) { setPwErrors(errs); return }
+    setPwSaving(true)
+    try {
+      await authService.changePassword({
+        current_password: pwForm.current,
+        new_password:     pwForm.next,
+      })
+      addToast('Password changed successfully.')
+      setPwForm({ current: '', next: '', confirm: '' })
+      setPwErrors({})
+    } catch {
+      addToast('Incorrect current password.', 'error')
+    } finally {
+      setPwSaving(false)
+    }
+  }
+
+  const set      = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }))
+  const setPw    = (key) => (e) => { setPwForm((f) => ({ ...f, [key]: e.target.value })); setPwErrors((f) => ({ ...f, [key]: '' })) }
+  const togglePw = (key) => setShowPw((f) => ({ ...f, [key]: !f[key] }))
+
+  const hasErrors = Object.values(fieldErrors).some(Boolean)
+
+  const inputCls = (err) =>
+    `w-full border rounded-lg px-3 py-2 text-sm outline-none transition
+     ${err
+       ? 'border-red-400 focus:ring-2 focus:ring-red-100'
+       : 'border-gray-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100'}`
+
+  const displayName = editMode
+    ? [form.first_name, form.last_name].filter(Boolean).join(' ') || fullName(user)
+    : fullName(user)
+
+  return (
+    <AppLayout title="My Profile">
+      <Toast toasts={toasts} onDismiss={dismiss} />
+
+      <div className="max-w-lg mx-auto space-y-5">
+
+        {/* Page header */}
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">My Profile</h1>
+          <p className="text-sm text-gray-400 mt-1">{config.subtitle}</p>
+        </div>
+
+        {/* ── Profile card ── */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
+
+          {/* Identity strip */}
+          <div className="flex items-center gap-4 pb-5 border-b border-gray-100">
+            <Avatar user={user} preview={avatarPreview} onSelect={setAvatar} editMode={editMode} />
+            <div className="flex-1 min-w-0">
+              <p className="text-lg font-bold text-gray-900 truncate">{displayName}</p>
+              <p className="text-gray-400 text-sm truncate">{user?.email}</p>
+              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold ${config.badge}`}>
+                  {config.label}
+                </span>
+                <span className="text-gray-300 text-xs">·</span>
+                <span className="text-gray-400 text-xs">Joined {formatDate(user?.date_joined)}</span>
+              </div>
+            </div>
+            {!editMode && (
+              <button
+                onClick={() => setEditMode(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50 transition text-xs font-semibold flex-shrink-0"
+              >
+                <PencilIcon /> Edit
+              </button>
+            )}
+          </div>
+
+          {/* Meta strip */}
+          <div className="grid grid-cols-2 gap-3 bg-gray-50 rounded-xl px-4 py-3 text-xs">
+            <div>
+              <p className="text-gray-400">Last login</p>
+              <p className="font-semibold text-gray-700 mt-0.5">{formatDate(user?.last_login)}</p>
+            </div>
+            <div>
+              <p className="text-gray-400">Member since</p>
+              <p className="font-semibold text-gray-700 mt-0.5">{formatDate(user?.date_joined)}</p>
+            </div>
+          </div>
+
+          <SectionDivider
+            title="Profile Details"
+            subtitle={editMode ? 'Make your changes below then save' : undefined}
+          />
+
+          {/* ── VIEW MODE ── */}
+          {!editMode && (
+            <div className="grid grid-cols-2 gap-x-8 gap-y-5">
+              {config.fields.map(({ key, label }) => (
+                <InfoRow key={key} label={label} value={user?.[key]} />
+              ))}
+            </div>
+          )}
+
+          {/* ── EDIT MODE ── */}
+          {editMode && (
+            <div className="space-y-4">
+              {config.fields.map(({ key, label, type, hint, maxLength }) => (
+                <Field key={key} label={label} error={fieldErrors[key]} hint={hint}>
+                  <input
+                    type={type || 'text'}
+                    className={inputCls(fieldErrors[key])}
+                    value={form[key]}
+                    onChange={set(key)}
+                    maxLength={maxLength}
+                  />
+                  {maxLength && (
+                    <p className="text-right text-xs text-gray-300 mt-0.5">
+                      {(form[key] || '').length}/{maxLength}
+                    </p>
+                  )}
+                </Field>
+              ))}
+
+              <div className="flex gap-3 pt-1">
+                <button
+                  onClick={handleCancelEdit}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSave}
+                  disabled={saving || hasErrors}
+                  className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition shadow-sm
+                    ${!hasErrors
+                      ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                      : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
+                >
+                  {saving ? 'Saving…' : 'Save Changes'}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ── Change Password card ── */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
+          <SectionDivider title="Change Password" subtitle="Use a strong password you don't use elsewhere" />
+
+          {['current', 'next', 'confirm'].map((key) => (
+            <Field
+              key={key}
+              label={key === 'current' ? 'Current Password' : key === 'next' ? 'New Password' : 'Confirm New Password'}
+              error={pwErrors[key]}
+              hint={key === 'next' ? 'Minimum 8 characters' : undefined}
+            >
+              <div className="relative">
+                <input
+                  type={showPw[key] ? 'text' : 'password'}
+                  className={inputCls(pwErrors[key]) + ' pr-14'}
+                  value={pwForm[key]}
+                  onChange={setPw(key)}
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => togglePw(key)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 hover:text-gray-600 font-medium"
+                >
+                  {showPw[key] ? 'Hide' : 'Show'}
+                </button>
+              </div>
+            </Field>
+          ))}
+
+          <button
+            onClick={handlePasswordChange}
+            disabled={!(pwForm.current || pwForm.next || pwForm.confirm) || pwSaving}
+            className={`w-full py-2.5 rounded-xl text-sm font-semibold transition
+              ${(pwForm.current || pwForm.next || pwForm.confirm)
+                ? 'bg-gray-900 hover:bg-gray-800 text-white shadow-sm'
+                : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
+          >
+            {pwSaving ? 'Updating…' : 'Update Password'}
+          </button>
+        </div>
+
+      </div>
+    </AppLayout>
+  )
+}
+

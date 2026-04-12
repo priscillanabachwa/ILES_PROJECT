@@ -1,6 +1,5 @@
-# Root-level ignore
-.vscode/
 
+.vscode/
 
 # Python/Django
 
@@ -18,4 +17,13 @@ frontend/.env
 # Migrations
 */migrations/*.pyc
 my_space/
+
+db.sqlite3
+node_modules/
+dist/
+.env
+*.log
+venv/
+__pycache__/
+*.pyc
 
