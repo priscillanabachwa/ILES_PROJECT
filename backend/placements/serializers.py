@@ -1,6 +1,14 @@
 from rest_framework import serializers
-from .models import CustomUser, InternshipPlacement, WeeklyLog, Evaluation
+from .models import  InternshipPlacement 
 from datetime import date
+from user_accounts.models import CustomUser
+from weekly_logs.models import WeeklyLogbook
+from academic_evaluations.models import (
+    EvaluationCriteria,
+    AcademicEvaluation,
+    EvaluationScore
+) 
+
 
 class PlacementSerializer(serializers.ModelSerializer):
     student_username = serializers.ReadOnlyField(source='student.username')
