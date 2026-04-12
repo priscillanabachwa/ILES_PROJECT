@@ -22,7 +22,7 @@ class InternshipPlacement(models.Model):
     )
 
     student = models.ForeignKey(
-        'user_accounts.CustomUser',
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='student_placements',
         limit_choices_to ={'role': 'student'}

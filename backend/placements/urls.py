@@ -1,10 +1,10 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import PlacementViewSet # Import your specific view
+from .views import PlacementViewSet 
 
 router = DefaultRouter()
 router.register(r'list', PlacementViewSet, basename='placement')
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path('api/', include(router.urls)),
 ]

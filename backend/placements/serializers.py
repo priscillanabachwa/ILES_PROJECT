@@ -1,12 +1,21 @@
 from rest_framework import serializers
-from .models import InternshipPlacement
+from .models import  InternshipPlacement 
+from datetime import date
+from user_accounts.models import CustomUser
+from weekly_logs.models import WeeklyLogbook
+from academic_evaluations.models import (
+    EvaluationCriteria,
+    AcademicEvaluation,
+    EvaluationScore
+) 
+
 
 class PlacementSerializer(serializers.ModelSerializer):
     student_username = serializers.ReadOnlyField(source='student.username')
 
     class Meta:
         model = InternshipPlacement
-        fields = ['id', 'student', 'student_username', 'company_name', 'start_date', 'end_date', 'status']
+        fields = '__all__'
         
     def validate(self,data):
         if data ['end_date']<=data['start_date']:
@@ -15,7 +24,7 @@ class PlacementSerializer(serializers.ModelSerializer):
             )
         student =data['student']
         overlapping = InternshipPlacement.objects.filter(
-            student=student
+            student=student,
             status='active'
         )
         if overlapping.exists():
