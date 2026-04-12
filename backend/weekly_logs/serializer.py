@@ -6,14 +6,14 @@ from .models import WeeklyLogbook
 class WeeklyLogbookSerializer(serializers.ModelSerializer):
     
     class Meta:
-        model = WeeklyLog
+        model = WeeklyLogbook
         fields = '__all__'
 
         read_only_fields = ['created_at','submitted_at','updated_at']
 
     def validate(self, date):
-        if 'status' in data and data ['status'] == 'submitted':
-            if data.get('deadline') and date.today() > data['deadline']:
+        if 'status' in date and date ['status'] == 'submitted':
+            if date.get('deadline') and date.today() > date['deadline']:
                 raise serializers.ValidationError(
                     'Cannot submit a log after the deadline'
                 )
@@ -23,4 +23,4 @@ class WeeklyLogbookSerializer(serializers.ModelSerializer):
                 'Cannot edit an approved log'
             )
     
-        return data
+        return date 

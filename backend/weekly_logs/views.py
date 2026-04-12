@@ -102,8 +102,7 @@ class WeeklyLogbookViewSet(viewsets.ModelViewSet):
         if log.status != 'reviewed':
             return Response(
                 {'detail': 'Only reviewed logs can be approved.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+                status=status.HTTP_400_BAD_REQUEST        ),
 
         log.status = 'approved'
         log.save()
