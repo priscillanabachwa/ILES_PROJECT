@@ -217,16 +217,16 @@ export default function AcademicSupervisorDashboard() {
       setError('')
       try {
         const [statsRes, placementsRes, logbooksRes, activityRes, scoresRes] = await Promise.all([
-          dashboardService.getSupervisorStats(semester),
-          dashboardService.getSupervisorPlacements(semester),
-          dashboardService.getPendingReviews(semester),
-          dashboardService.getRecentActivity(),
-          dashboardService.getEvaluationScores(),
+          AcademicSupervisorDashboardservice.getSupervisorStats(semester),
+          AcademicSupervisorDashboardservice.getSupervisorPlacements(semester),
+          AcademicSupervisorDashboardservice.getPendingReviews(semester),
+          AcademicSupervisorDashboardservice.getRecentActivity(),
+          AcademicSupervisorDashboardservice.getEvaluationScores(),
         ])
         setStats(statsRes.data)
         setPlacements(placementsRes.data)
         setLogbooks(logbooksRes.data)
-        setActivity(activityRes.data)
+        setRecentActivity(activityRes.data)
         setScores(scoresRes.data)
       } catch {
         setError('Failed to load dashboard data. Please refresh the page.')
