@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { Link, useNavigate } from 'react-router-dom'
-import { AcademicSupervisorDashboardservice } from '../services'
+import { dashboardService } from '../services'
 
 
 const formatDate = (iso) =>
@@ -197,14 +197,14 @@ function Card({ title, actionLabel, actionLink, children, headerRight }) {
 }
 
 
-export default function AcademicSupervisorDashboard() {
+export default function AcademicDashboard() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
 
   const [stats,      setStats]      = useState(null)
   const [placements, setPlacements] = useState([])
   const [logbooks,   setLogbooks]   = useState([])
-  const [activity,   setActivity]   = useState([])
+  const [activity,   setRecentActivity]   = useState([])
   const [scores,     setScores]     = useState([])
   const [loading,    setLoading]    = useState(true)
   const [error,      setError]      = useState('')
@@ -217,11 +217,11 @@ export default function AcademicSupervisorDashboard() {
       setError('')
       try {
         const [statsRes, placementsRes, logbooksRes, activityRes, scoresRes] = await Promise.all([
-          AcademicSupervisorDashboardservice.getSupervisorStats(semester),
-          AcademicSupervisorDashboardservice.getSupervisorPlacements(semester),
-          AcademicSupervisorDashboardservice.getPendingReviews(semester),
-          AcademicSupervisorDashboardservice.getRecentActivity(),
-          AcademicSupervisorDashboardservice.getEvaluationScores(),
+          dashboardService.getAcademicStats(semester),
+          dashboardService.getAcademicPlacements(semester),
+          dashboardService.getPendingReviews(semester),
+          dashboardService.getRecentActivity(),
+          dashboardService.getEvaluationScores(),
         ])
         setStats(statsRes.data)
         setPlacements(placementsRes.data)
