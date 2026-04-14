@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { Link, useNavigate } from 'react-router-dom'
-import { AcademicSupervisorDashboardservice } from '../services'
+import { dashboardService } from '../services'
 
 
 const formatDate = (iso) =>
@@ -197,14 +197,14 @@ function Card({ title, actionLabel, actionLink, children, headerRight }) {
 }
 
 
-export default function AcademicSupervisorDashboard() {
+export default function AcademicDashboard() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
 
   const [stats,      setStats]      = useState(null)
   const [placements, setPlacements] = useState([])
   const [logbooks,   setLogbooks]   = useState([])
-  const [activity,   setActivity]   = useState([])
+  const [activity,   setRecentActivity]   = useState([])
   const [scores,     setScores]     = useState([])
   const [loading,    setLoading]    = useState(true)
   const [error,      setError]      = useState('')
@@ -217,8 +217,8 @@ export default function AcademicSupervisorDashboard() {
       setError('')
       try {
         const [statsRes, placementsRes, logbooksRes, activityRes, scoresRes] = await Promise.all([
-          dashboardService.getSupervisorStats(semester),
-          dashboardService.getSupervisorPlacements(semester),
+          dashboardService.getAcademicStats(semester),
+          dashboardService.getAcademicPlacements(semester),
           dashboardService.getPendingReviews(semester),
           dashboardService.getRecentActivity(),
           dashboardService.getEvaluationScores(),
@@ -226,7 +226,7 @@ export default function AcademicSupervisorDashboard() {
         setStats(statsRes.data)
         setPlacements(placementsRes.data)
         setLogbooks(logbooksRes.data)
-        setActivity(activityRes.data)
+        setRecentActivity(activityRes.data)
         setScores(scoresRes.data)
       } catch {
         setError('Failed to load dashboard data. Please refresh the page.')
