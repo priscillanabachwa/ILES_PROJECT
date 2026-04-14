@@ -1,14 +1,36 @@
 
 from rest_framework import serializers
-from .models import Company
-from .models import InternshipPlacement
-class CompanySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Company
-        fields = '__all__'
-        read_only_fields = ['created_at']
-class InternshipPlacementSerializer(serializers.ModelSerializer):
+from .models import  InternshipPlacement 
+from datetime import date
+from user_accounts.models import CustomUser
+from weekly_logs.models import WeeklyLogbook
+from academic_evaluations.models import (
+    EvaluationCriteria,
+    AcademicEvaluation,
+    EvaluationScore
+) 
+
+
+class PlacementSerializer(serializers.ModelSerializer):
+    student_username = serializers.ReadOnlyField(source='student.username')
+
     class Meta:
         model = InternshipPlacement
         fields = '__all__'
-        read_only_fields = ['start_date','end date','status','created_at','modified_at']
+        
+    def validate(self,data):
+        if data ['end_date']<=data['start_date']:
+            raise serializers.ValidationError(
+                'End date must be after Start date'
+            )
+        student =data['student']
+        overlapping = InternshipPlacement.objects.filter(
+            student=student,
+            status='active'
+        )
+        if overlapping.exists():
+            raise serializers.ValidationError(
+                'This student already has an active placement'
+            )
+        return data
+

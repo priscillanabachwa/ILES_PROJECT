@@ -1,3 +1,4 @@
+
 from placements.models import InternshipPlacement
 from django.db import models
 
@@ -9,10 +10,10 @@ class WeeklyLogbook(models.Model):
         ('approved', 'Approved'),
     ]
 
-    internship = models.ForeignKey(
+    placement = models.ForeignKey(
         InternshipPlacement,
         on_delete = models.CASCADE,
-        related_name = 'logs'
+        related_name = 'weekly_logs'
     )
     week_number = models.PositiveIntegerField()
     activities = models.TextField()
@@ -29,13 +30,7 @@ class WeeklyLogbook(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now =True)
     class Meta:
-        unique_together=[['internship', 'week_number']]
+        unique_together=[['placement', 'week_number']]
         
     def __str__(self):
         return f'week{self.week_number} log for {self.internship}'
-
-     
-
-
-
-
