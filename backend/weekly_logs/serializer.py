@@ -17,24 +17,18 @@ class WeeklyLogbookSerializer(serializers.ModelSerializer):
         ]
 
     def validate_week_number(self, value):
-        """
-        Ensures the week number is a positive integer.
-        """
+       
+        
         if value <= 0:
             raise serializers.ValidationError("Week number must be greater than zero.")
         return value
 
     def validate(self, data):
-        """
-        Object-level validation for status-based restrictions and deadlines.
-        """
-        # 1. Prevent editing if the log is already approved
-        # self.instance refers to the record currently in the database
+        
         if self.instance and self.instance.status == 'approved':
             raise serializers.ValidationError("Approved logs cannot be modified.")
 
-        # 2. Check deadline if the status is being set to 'submitted'
-        # We check 'data' for the new status and 'self.instance' for the existing deadline
+       
         new_status = data.get('status')
         
         if new_status == 'submitted':
