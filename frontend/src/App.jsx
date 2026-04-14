@@ -1,5 +1,4 @@
 import AppLayout from './components/layout/AppLayout'
-import './App.css'
 
 function App() {
   const user = {
