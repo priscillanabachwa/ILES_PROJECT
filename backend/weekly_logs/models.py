@@ -1,3 +1,4 @@
+
 from placements.models import InternshipPlacement
 from django.db import models
 
@@ -33,6 +34,3 @@ class WeeklyLogbook(models.Model):
         
     def __str__(self):
         return f'week{self.week_number} log for {self.internship}'
-
-     
-

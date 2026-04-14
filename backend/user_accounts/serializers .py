@@ -1,39 +1,61 @@
 
 from rest_framework import serializers
 
+from .models import CustomUserManager
+
 from .models import CustomUser
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, required=True, min_length=8)
+    email = serializers.EmailField()
 
+    password = serializers.CharField(write_only=True, required=True, min_length=8)
     class Meta:
         model = CustomUser
-        fields = [
-            "id",
-            "email",
-            "first_name",
-            "last_name",
-            "username",
-            "role",
-            "phone_number",
-            "profile_picture",
-            "password",
-        ]
-        read_only_fields = ["id"]
+        fields = '__all__'
+        read_only_fields = ["id", "is_staff", "is_superuser"]
+
+    def validate_email(self, value):
+    
+        return value.lower()
+
+    def validate_role(self, value):
+        roles = [choice[0] for choice in self.Meta.model.ROLE_CHOICES]
+        if value not in roles:
+            raise serializers.ValidationError("Invalid role.")
+        return value
 
     def create(self, validated_data):
         password = validated_data.pop("password")
-        user = CustomUser(**validated_data)
-        user.set_password(password)
-        user.save()
+        email = validated_data.pop("email")
+        # Use manager to ensure default fields and proper creation
+        user = CustomUser.objects.create_user(email=email, password=password, **validated_data)
         return user
 
     def update(self, instance, validated_data):
         password = validated_data.pop("password", None)
+        # Avoid changing sensitive flags via this serializer
+        validated_data.pop("is_staff", None)
+        validated_data.pop("is_superuser", None)
+
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         if password:
             instance.set_password(password)
         instance.save()
         return instance
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        request = self.context.get("request")
+        pic = None
+        if instance.profile_picture and hasattr(instance.profile_picture, "url"):
+            pic_url = instance.profile_picture.url
+            if request is not None:
+                pic_url = request.build_absolute_uri(pic_url)
+            pic = pic_url
+        rep["profile_picture"] = pic
+        # Do not include password in representations
+        rep.pop("password", None)
+        return rep
+

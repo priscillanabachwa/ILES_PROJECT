@@ -12,25 +12,41 @@ class EvaluationCriteriaSerializer(serializers.ModelSerializer):
        
        model = EvaluationCriteria
        fields = '__all__'
-       read_only_fields = ['weight']
+       read_only_fields = ['fields']
        
 class EvaluationScoreSerializer(serializers.ModelSerializer):
     class Meta:
         model = EvaluationScore
         fields ='__all__'
         read_only_fields = ['total_score','evaluated_at']
-from .models import AcademicEvaluation, EvaluationScore
+    def validate_data(self,data):
+        criteria = data.get('criteria')
+        score = data.get('score')
+        if score >criteria.max_score:
+            raise serializers.ValidationError(
+                f"Score{score} exceeds maximum allowed "
+            )
+        return data
 
-class EvaluationScoreSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = EvaluationScore
-        fields = '__all__' 
+
+
 
 class AcademicEvaluationSerializer(serializers.ModelSerializer):
     items = EvaluationScoreSerializer(many=True, read_only=True)
 
     class Meta:
         model = AcademicEvaluation
-        fields = ['id', 'placement', 'status', 'total_score', 'submitted_at', 'items']
+        fields =[
+            'id', 'placement',  'items', 
+            'total_score', 'grade', 'status', 'overall_comment', 
+            'submitted_at', 'created_at'
+        ]
+        read_only_fields = [
+            'submitted_at', 'total_score','grade', 'created_at','submitted_at'
+        ]
+    def update(self,instance, data):
+        item_data = data.pop('items', None)
+        if instance.status == 'submitted':
+            raise serializers.ValidationError ("cannot edit a submitted evaluation")
 
 
