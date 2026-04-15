@@ -1,22 +1,35 @@
 
+
 from rest_framework import serializers
 
 from .models import CustomUserManager
-
 from .models import CustomUser
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField()
 
+    email = serializers.EmailField()
+    profile_picture = serializers.ImageField(required=False, allow_null=True)
     password = serializers.CharField(write_only=True, required=True, min_length=8)
     class Meta:
         model = CustomUser
-        fields = '__all__'
+        fields = [
+            "id",
+            "email",
+            "first_name",
+            "last_name",
+            "username",
+            "role",
+            "phone_number",
+            "profile_picture",
+            "password",
+            "is_staff",
+            "is_superuser",
+        ]
         read_only_fields = ["id", "is_staff", "is_superuser"]
 
     def validate_email(self, value):
-    
+
         return value.lower()
 
     def validate_role(self, value):
