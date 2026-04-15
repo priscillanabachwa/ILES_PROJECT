@@ -239,7 +239,7 @@ export default function AcademicDashboard() {
 
   const handleLogout = () => { logout(); navigate('/login') }
 
-  const fullName   = [user?.first_name, user?.last_name].filter(Boolean).join(' ') || 'Supervisor'
+  const fullName   = [user?.first_name, user?.last_name].filter(Boolean).join(' ') || 'Academic Supervisor'
   const filtered   = placements.filter((p) =>
     p.student_name?.toLowerCase().includes(search.toLowerCase()) ||
     p.student_id?.toLowerCase().includes(search.toLowerCase())
