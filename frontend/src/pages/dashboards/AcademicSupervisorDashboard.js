@@ -109,10 +109,10 @@ function Navbar({ user, notifications = 0, onLogout }) {
   return (
     <nav className="bg-white border-b border-gray-100 shadow-sm px-6 py-3 flex items-center justify-between">
       <div className="flex items-center gap-3">
-        <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-xs font-bold text-white">IL</div>
+        <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-xs font-bold text-white">ILES</div>
         <div>
           <p className="text-sm font-bold text-gray-900 leading-tight">ILES</p>
-          <p className="text-gray-400 leading-tight" style={{ fontSize: '9px' }}>Internship Logging & Evaluation</p>
+          <p className="text-gray-400 leading-tight" style={{ fontSize: '9px' }}>Internship Logging & Evaluation System</p>
         </div>
       </div>
       <div className="flex items-center gap-6">
@@ -239,7 +239,7 @@ export default function AcademicDashboard() {
 
   const handleLogout = () => { logout(); navigate('/login') }
 
-  const fullName   = [user?.first_name, user?.last_name].filter(Boolean).join(' ') || 'Supervisor'
+  const fullName   = [user?.first_name, user?.last_name].filter(Boolean).join(' ') || 'Academic Supervisor'
   const filtered   = placements.filter((p) =>
     p.student_name?.toLowerCase().includes(search.toLowerCase()) ||
     p.student_id?.toLowerCase().includes(search.toLowerCase())
