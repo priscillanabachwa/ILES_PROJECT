@@ -1,3 +1,6 @@
+
+from django.shortcuts import render
+
 from rest_framework import viewsets
 from .models import InternshipPlacement
 from .serializers import PlacementSerializer
@@ -12,4 +15,6 @@ class PlacementViewSet(viewsets.ModelViewSet):
 
     filter_backends = [filters.SearchFilter]
     search_fields = ['student__username', 'company_name']
+
+
 

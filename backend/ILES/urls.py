@@ -1,5 +1,5 @@
 """
-URL configuration for iles project.
+URL configuration for backend project.
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/6.0/topics/http/urls/
@@ -26,5 +26,6 @@ urlpatterns = [
     path('api/placements/<int:pk>/', PlacementViewSet.as_view({'get': 'retrieve', 'put': 'update', 'delete': 'destroy'})),
 
     path('api/evaluations/', include('academic_evaluations.urls')),
+    path('api/weeklylogs/', include('weekly_logs.urls'))
 
 ]

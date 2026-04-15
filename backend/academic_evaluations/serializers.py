@@ -39,12 +39,15 @@ class AcademicEvaluationSerializer(serializers.ModelSerializer):
         fields =[
             'id', 'placement',  'items', 
             'total_score', 'grade', 'status', 'overall_comment', 
-            'submitted_at', 'created_at'
+            'submitted_at', 'created_at','activity_choices'
         ]
         read_only_fields = [
-            'submitted_at', 'total_score','grade', 'created_at','submitted_at'
+            'submitted_at','activity_choices', 'total_score','grade', 'created_at','submitted_at'
         ]
     def update(self,instance, data):
         item_data = data.pop('items', None)
         if instance.status == 'submitted':
-            raise serializers.ValidationError ("cannot edit a submitted evaluation")
+             raise serializers.ValidationError ("cannot edit a submitted evaluation")
+
+
+
