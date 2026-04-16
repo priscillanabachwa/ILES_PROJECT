@@ -34,7 +34,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         password = validated_data.pop("password", None)
-        # Avoid changing sensitive flags via this serializer
+    
         validated_data.pop("is_staff", None)
         validated_data.pop("is_superuser", None)
 

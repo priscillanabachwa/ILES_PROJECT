@@ -20,7 +20,7 @@ class EvaluationCriteria(models.Model):
 
 class AcademicEvaluation(models.Model):
     STATUS_CHOICES=[('DRAFT','Draft'),('SUBMITTED','Submitted')]
-
+    activity_choices = [('true','True'),('false','False')]
     placement=models.ForeignKey(
         'placements.InternshipPlacement', 
          on_delete=models.CASCADE,
@@ -33,16 +33,34 @@ class AcademicEvaluation(models.Model):
         related_name='evaluations'
     )
 
-    placement=models.ForeignKey('placements.InternshipPlacement', on_delete=models.CASCADE,related_name='evaluations')
-    evaluator=models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.CASCADE,related_name='evaluations')
-    total_score=models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
-    grade=models.CharField(max_length=2,blank=True,null=True)
-    status=models.CharField(max_length=20,choices=STATUS_CHOICES,default='DRAFT')
-    overall_comment=models.TextField(blank=True,null=True)
-    submitted_at=models.DateTimeField(blank=True,null=True)
-    submitted_at=models.DateTimeField(auto_now_add=True,null=True)
+    total_score=models.DecimalField(
+        max_digits=5, decimal_places=2,
+        blank=True, null=True
+    )
+    grade=models.CharField(
+        max_length=2,
+        blank=True,null=True
+    )
+    status=models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='DRAFT'
+    )
+    overall_comment=models.TextField(
+        blank=True,
+        null=True
+    )
+    submitted_at=models.DateTimeField(
+        blank=True,
+        null=True
+    )
+    submitted_at=models.DateTimeField(
+        auto_now_add=True,
+        null=True
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default =True, choices = activity_choices)
 
     class Meta:
         unique_together=[['placement','evaluator']] 
@@ -82,6 +100,7 @@ class AcademicEvaluation(models.Model):
             return 'D'
         else:
             return 'F'
+        
 #ensuring all criteria are filled before submission
     def is_complete(self):
         total_criteria=EvaluationCriteria.objects.filter(is_active=True).count

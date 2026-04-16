@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
 from .models import WeeklyLogbook
-from .serializers import WeeklyLogbookSerializer
+from .serializer import WeeklyLogbookSerializer
 
 
 class WeeklyLogbookViewSet(viewsets.ModelViewSet):
@@ -102,7 +102,7 @@ class WeeklyLogbookViewSet(viewsets.ModelViewSet):
         if log.status != 'reviewed':
             return Response(
                 {'detail': 'Only reviewed logs can be approved.'},
-                status=status.HTTP_400_BAD_REQUEST        ),
+                status=status.HTTP_400_BAD_REQUEST        )
 
         log.status = 'approved'
         log.save()

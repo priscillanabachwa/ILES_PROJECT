@@ -1,120 +1,63 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import AppLayout from './components/layout/AppLayout'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const user = {
+    first_name: 'ILES',
+    last_name: 'Admin',
+    role: 'admin',
+  }
+
+  const cards = [
+    {
+      title: 'Single shared shell',
+      body: 'Every page can sit inside the same header and sidebar so the project keeps one consistent navigation structure.',
+    },
+    {
+      title: 'Reusable component set',
+      body: 'The layout accepts custom menu items and user data, so dashboards and forms can reuse it without duplication.',
+    },
+    {
+      title: 'Responsive by default',
+      body: 'The sidebar collapses into a mobile drawer while the desktop experience keeps a clean, persistent navigation rail.',
+    },
+  ]
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <AppLayout
+      title="ILES"
+      subtitle="Internship Logging and Evaluation System"
+      user={user}
+      activePath="/"
+      sidebarItems={[
+        { label: 'Dashboard', href: '/' },
+        { label: 'Profile', href: '/profile' },
+        { label: 'Weekly Logs', href: '/weekly-logs' },
+        { label: 'Submit Log', href: '/submit-log' },
+        { label: 'Logout', href: '/login' },
+      ]}
+    >
+      <div className="iles-page">
+        <section className="iles-panel">
+          <div className="iles-panel__hero">
+            <p className="iles-panel__eyebrow">Project Layout</p>
+            <h2 className="iles-panel__title">A consistent header, sidebar, and content shell for the whole app.</h2>
+            <p className="iles-panel__text">
+              This shell is intended to wrap dashboards, profile screens, and forms so the user always lands in the same
+              navigation system.
+            </p>
+          </div>
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+          <div className="iles-card-grid">
+            {cards.map((card) => (
+              <article key={card.title} className="iles-card">
+                <h3>{card.title}</h3>
+                <p>{card.body}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+      </div>
+    </AppLayout>
   )
 }
 
