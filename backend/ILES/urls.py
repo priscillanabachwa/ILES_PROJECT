@@ -26,5 +26,6 @@ urlpatterns = [
     path('api/placements/<int:pk>/', PlacementViewSet.as_view({'get': 'retrieve', 'put': 'update', 'delete': 'destroy'})),
 
     path('api/evaluations/', include('academic_evaluations.urls')),
+    path('api/weeklylogs/', include('weekly_logs.urls'))
 
 ]

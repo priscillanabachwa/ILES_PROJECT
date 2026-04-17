@@ -1,5 +1,6 @@
+
 from rest_framework import serializers
-from .models import  InternshipPlacement 
+from .models import  InternshipPlacement ,Company
 from datetime import date
 from user_accounts.models import CustomUser
 from weekly_logs.models import WeeklyLogbook

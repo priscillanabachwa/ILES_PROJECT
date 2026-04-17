@@ -20,7 +20,7 @@ class EvaluationCriteria(models.Model):
 
 class AcademicEvaluation(models.Model):
     STATUS_CHOICES=[('DRAFT','Draft'),('SUBMITTED','Submitted')]
-
+    activity_choices = [('true','True'),('false','False')]
     placement=models.ForeignKey(
         'placements.InternshipPlacement', 
          on_delete=models.CASCADE,
@@ -60,6 +60,7 @@ class AcademicEvaluation(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default =True, choices = activity_choices)
 
     class Meta:
         unique_together=[['placement','evaluator']] 
