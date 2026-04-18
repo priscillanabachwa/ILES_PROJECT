@@ -410,7 +410,7 @@ export default function AcademicDashboard() {
             </Card>
 
             {/* Evaluation Scores */}
-            <Card title="Evaluation Scores" actionLabel="Full Report" actionLink="/reports">
+            <Card title="Evaluation Summary Scores" actionLabel="Full Report" actionLink="/reports">
               {loading ? <ListSkeleton /> : (
                 <>
                   {scores.length === 0
