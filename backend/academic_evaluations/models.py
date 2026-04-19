@@ -54,10 +54,6 @@ class AcademicEvaluation(models.Model):
         blank=True,
         null=True
     )
-    submitted_at=models.DateTimeField(
-        auto_now_add=True,
-        null=True
-    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default =True, choices = activity_choices)
@@ -75,16 +71,7 @@ class AcademicEvaluation(models.Model):
                 total += (item.score * item.criteria.weight) / Decimal('100')
 
         return total
-        total_score = Decimal('0')
-        total_weight =Decimal('0')
-        items = self.items.select_related('criteria').all()
-
-        for item in items:
-            total_score += item.score *item.criteria.weight
-            total_weight +=item.criteria.weight
-        if total_weight >0:
-            return total_score / total_weight
-        return Decimal('0')
+        
     
     def get_grade(self):
         if self.total_score is None:
@@ -134,4 +121,4 @@ class EvaluationScore(models.Model):
      
     def __str__(self):
         return f"{self.criteria.name}:{self.score}"
-        return f"{self.criteria.name}:{self.score}"
+        

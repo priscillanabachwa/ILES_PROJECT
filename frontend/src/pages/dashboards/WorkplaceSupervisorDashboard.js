@@ -3,7 +3,6 @@ import { useAuth } from '../context/AuthContext'
 import { Link, useNavigate } from 'react-router-dom'
 import { dashboardService } from '../services'
 
-
 const formatDate = (iso) =>
   iso ? new Date(iso).toLocaleDateString('en-UG', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
 
@@ -13,28 +12,27 @@ const getInitials = (name) =>
 const isOverdue = (deadline) =>
   deadline ? new Date(deadline) < new Date() : false
 
-
 const STATUS_STYLES = {
-  'In Progress': 'bg-indigo-50 text-indigo-700',
-  ACTIVE:        'bg-indigo-50 text-indigo-700',
-  COMPLETED:     'bg-emerald-50 text-emerald-700',
-  PENDING:       'bg-amber-50 text-amber-700',
-  submitted:     'bg-amber-50 text-amber-700',
-  reviewed:      'bg-blue-50 text-blue-700',
-  approved:      'bg-emerald-50 text-emerald-700',
-  overdue:       'bg-red-50 text-red-600',
-  draft:         'bg-gray-100 text-gray-500',
+  ACTIVE:    'bg-indigo-50 text-indigo-700',
+  COMPLETED: 'bg-emerald-50 text-emerald-700',
+  PENDING:   'bg-amber-50 text-amber-700',
+  CANCELLED: 'bg-red-50 text-red-600',
+  submitted: 'bg-amber-50 text-amber-700',
+  reviewed:  'bg-blue-50 text-blue-700',
+  approved:  'bg-emerald-50 text-emerald-700',
+  rejected:  'bg-red-50 text-red-600',
+  draft:     'bg-gray-100 text-gray-500',
+  overdue:   'bg-red-50 text-red-600',
 }
 
 function Badge({ status, overdue = false }) {
   const s = overdue ? 'overdue' : status
   return (
-    <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold whitespace-nowrap ${STATUS_STYLES[s] || 'bg-gray-100 text-gray-500'}`}>
-      {overdue ? 'Overdue' : status}
+    <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold capitalize whitespace-nowrap ${STATUS_STYLES[s] || 'bg-gray-100 text-gray-500'}`}>
+      {overdue ? 'Overdue' : status?.toLowerCase()}
     </span>
   )
 }
-
 
 const AVATAR_COLORS = [
   'bg-indigo-500', 'bg-emerald-500', 'bg-amber-500',
@@ -50,7 +48,6 @@ function AvatarCircle({ name, index = 0, size = 'md' }) {
     </div>
   )
 }
-
 
 function Skeleton({ className = '' }) {
   return <div className={`bg-gray-100 animate-pulse rounded-lg ${className}`} />
@@ -73,62 +70,79 @@ function ListSkeleton() {
   )
 }
 
-
 function MiniBarChart({ scores }) {
   const COLORS = ['#4f46e5', '#0d9488', '#f59e0b', '#f43f5e']
+  const xTicks = [0, 25, 50, 75, 100]
   return (
-    <div className="space-y-3">
-      {scores.map(({ criteria, score }, i) => (
-        <div key={criteria}>
-          <div className="flex justify-between text-xs text-gray-500 mb-1">
-            <span>{criteria}</span>
-            <span className="font-semibold text-gray-700">{Number(score).toFixed(0)}</span>
+    <div>
+      <div className="space-y-3 mb-2">
+        {scores.map(({ criteria, score }, i) => (
+          <div key={criteria}>
+            <div className="flex justify-between text-xs text-gray-500 mb-1">
+              <span>{criteria}</span>
+              <span className="font-semibold text-gray-700">{Number(score).toFixed(0)}</span>
+            </div>
+            <div className="w-full bg-gray-100 rounded-full h-2">
+              <div
+                className="h-2 rounded-full transition-all"
+                style={{ width: `${Math.min(score, 100)}%`, backgroundColor: COLORS[i % COLORS.length] }}
+              />
+            </div>
           </div>
-          <div className="w-full bg-gray-100 rounded-full h-1.5">
-            <div className="h-1.5 rounded-full transition-all" style={{ width: `${Math.min(score, 100)}%`, backgroundColor: COLORS[i % COLORS.length] }} />
-          </div>
+        ))}
+      </div>
+      <div className="relative mt-3 border-t border-gray-200">
+        <div className="flex justify-between mt-1">
+          {xTicks.map((tick) => (
+            <div key={tick} className="flex flex-col items-center">
+              <div className="w-px h-1.5 bg-gray-300" />
+              <span className="text-xs text-gray-400 mt-0.5">{tick}</span>
+            </div>
+          ))}
         </div>
-      ))}
+        <p className="text-center text-xs text-gray-400 mt-1">Score (out of 100)</p>
+      </div>
     </div>
   )
 }
 
-
 const Icon = {
   students: <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-5-3.87M9 20H4v-2a4 4 0 015-3.87m6-4a4 4 0 11-8 0 4 4 0 018 0zm6 0a3 3 0 11-6 0 3 3 0 016 0z"/></svg>,
   logbook:  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>,
-  eval:     <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>,
+  score:    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>,
+  approved: <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>,
+  comment:  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>,
   report:   <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>,
   bell:     <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>,
-  search:   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>,
   chevron:  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>,
+  check:    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>,
+  reject:   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>,
 }
-
 
 function Navbar({ user, notifications = 0, onLogout }) {
   return (
     <nav className="bg-white border-b border-gray-100 shadow-sm px-6 py-3 flex items-center justify-between">
       <div className="flex items-center gap-3">
-        <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-xs font-bold text-white">ILES</div>
+        <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-xs font-bold text-white">IL</div>
         <div>
           <p className="text-sm font-bold text-gray-900 leading-tight">ILES</p>
-          <p className="text-gray-400 leading-tight" style={{ fontSize: '9px' }}>Internship Login & Evaluation System</p>
+          <p className="text-gray-400 leading-tight" style={{ fontSize: '9px' }}>Internship Logging & Evaluation</p>
         </div>
       </div>
       <div className="flex items-center gap-6">
-        <Link to="/dashboard" className="text-indigo-600 text-xs font-semibold border-b-2 border-indigo-600 pb-0.5">Dashboard</Link>
-        <Link to="/students"  className="text-gray-400 text-xs hover:text-gray-700 transition font-medium">My Students</Link>
-        <Link to="/reviews"   className="text-gray-400 text-xs hover:text-gray-700 transition font-medium">Reviews</Link>
-        <Link to="/reports"   className="text-gray-400 text-xs hover:text-gray-700 transition font-medium">Reports</Link>
+        <Link to="/dashboard"  className="text-indigo-600 text-xs font-semibold border-b-2 border-indigo-600 pb-0.5">Dashboard</Link>
+        <Link to="/students"   className="text-gray-400 text-xs hover:text-gray-700 transition font-medium">My Students</Link>
+        <Link to="/reviews"    className="text-gray-400 text-xs hover:text-gray-700 transition font-medium">Reviews</Link>
+        <Link to="/scores"     className="text-gray-400 text-xs hover:text-gray-700 transition font-medium">Scores</Link>
+        <Link to="/reports"    className="text-gray-400 text-xs hover:text-gray-700 transition font-medium">Reports</Link>
       </div>
       <div className="flex items-center gap-3">
-        {/* Notification Bell */}
         <div className="relative">
           <button className="text-gray-400 hover:text-indigo-600 transition p-1.5 rounded-lg hover:bg-indigo-50">
             {Icon.bell}
           </button>
           {notifications > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold" style={{ fontSize: '9px' }}>
+            <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center font-bold" style={{ fontSize: '9px' }}>
               {notifications > 9 ? '9+' : notifications}
             </span>
           )}
@@ -152,7 +166,6 @@ function Navbar({ user, notifications = 0, onLogout }) {
     </nav>
   )
 }
-
 
 function StatCard({ label, value, sub, subLink, icon, accent }) {
   const A = {
@@ -178,56 +191,49 @@ function StatCard({ label, value, sub, subLink, icon, accent }) {
   )
 }
 
-
-function Card({ title, actionLabel, actionLink, children, headerRight }) {
+function Card({ title, actionLabel, actionLink, children }) {
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
       <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
         <p className="text-sm font-bold text-gray-800">{title}</p>
-        <div className="flex items-center gap-3">
-          {headerRight}
-          {actionLabel && actionLink && (
-            <Link to={actionLink} className="text-xs font-semibold text-indigo-600 hover:underline">{actionLabel} →</Link>
-          )}
-        </div>
+        {actionLabel && actionLink && (
+          <Link to={actionLink} className="text-xs font-semibold text-indigo-600 hover:underline">{actionLabel} →</Link>
+        )}
       </div>
       <div className="p-5">{children}</div>
     </div>
   )
 }
 
-
-export default function AcademicDashboard() {
+export default function WorkplaceSupervisorDashboard() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
 
   const [stats,      setStats]      = useState(null)
   const [placements, setPlacements] = useState([])
-  const [logbooks,   setLogbooks]   = useState([])
-  const [activity,   setRecentActivity]   = useState([])
+  const [reviews,    setReviews]    = useState([])
   const [scores,     setScores]     = useState([])
+  const [activity,   setActivity]   = useState([])
   const [loading,    setLoading]    = useState(true)
   const [error,      setError]      = useState('')
-  const [search,     setSearch]     = useState('')
-  const [semester,   setSemester]   = useState('2024-II')
 
   useEffect(() => {
     const fetchAll = async () => {
       setLoading(true)
       setError('')
       try {
-        const [statsRes, placementsRes, logbooksRes, activityRes, scoresRes] = await Promise.all([
-          dashboardService.getAcademicStats(semester),
-          dashboardService.getAcademicPlacements(semester),
-          dashboardService.getPendingReviews(semester),
-          dashboardService.getRecentActivity(),
-          dashboardService.getEvaluationScores(),
+        const [statsRes, placementsRes, reviewsRes, scoresRes, activityRes] = await Promise.all([
+          dashboardService.getWorkplaceStats(),
+          dashboardService.getWorkplacePlacements(),
+          dashboardService.getWorkplacePendingReviews(),
+          dashboardService.getWorkplaceScores(),
+          dashboardService.getWorkplaceActivity(),
         ])
         setStats(statsRes.data)
         setPlacements(placementsRes.data)
-        setLogbooks(logbooksRes.data)
-        setRecentActivity(activityRes.data)
+        setReviews(reviewsRes.data)
         setScores(scoresRes.data)
+        setActivity(activityRes.data)
       } catch {
         setError('Failed to load dashboard data. Please refresh the page.')
       } finally {
@@ -235,17 +241,11 @@ export default function AcademicDashboard() {
       }
     }
     fetchAll()
-  }, [semester])
+  }, [])
 
   const handleLogout = () => { logout(); navigate('/login') }
 
-  const fullName   = [user?.first_name, user?.last_name].filter(Boolean).join(' ') || 'Academic Supervisor'
-  const filtered   = placements.filter((p) =>
-    p.student_name?.toLowerCase().includes(search.toLowerCase()) ||
-    p.student_id?.toLowerCase().includes(search.toLowerCase())
-  )
-
-  const SEMESTERS = ['2023-I', '2023-II', '2024-I', '2024-II', '2025-I']
+  const fullName = [user?.first_name, user?.last_name].filter(Boolean).join(' ') || 'Supervisor'
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -258,23 +258,14 @@ export default function AcademicDashboard() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Welcome, {fullName} 👋</h1>
             <p className="text-sm text-gray-400 mt-1">
-              Manage your assigned students, review internship logs, and track evaluations.
+              Review student logs, approve submissions, and score intern performance.
             </p>
           </div>
-          {/* Semester Selector */}
-          <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 py-2 shadow-sm">
+          <div className="bg-white border border-gray-200 rounded-xl px-4 py-2 text-xs text-gray-500 font-medium shadow-sm flex items-center gap-2">
             <svg className="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
             </svg>
-            <select
-              value={semester}
-              onChange={(e) => setSemester(e.target.value)}
-              className="text-xs font-medium text-gray-600 bg-transparent outline-none cursor-pointer pr-1"
-            >
-              {SEMESTERS.map((s) => (
-                <option key={s} value={s}>Semester {s}</option>
-              ))}
-            </select>
+            Semester 2024 — Semester II
           </div>
         </div>
 
@@ -285,55 +276,76 @@ export default function AcademicDashboard() {
 
         {/* ── Stat cards ── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard label="Assigned Students"    value={stats?.assigned_students}     sub="View all students"  subLink="/students"    accent="indigo"  icon={Icon.students} />
-          <StatCard label="Pending Reviews"       value={stats?.pending_reviews}       sub="Review now"         subLink="/reviews"     accent="amber"   icon={Icon.logbook}  />
-          <StatCard label="Completed Evaluations" value={stats?.completed_evaluations} sub="View summaries"     subLink="/reports"     accent="emerald" icon={Icon.eval}     />
-          <StatCard label="Average Score"         value={stats ? `${Number(stats.average_score).toFixed(0)}%` : null} sub="Across all students" accent="rose" icon={Icon.report} />
+          <StatCard label="Assigned Students"  value={stats?.assigned_students}  sub="View all students" subLink="/students" accent="indigo"  icon={Icon.students} />
+          <StatCard label="Pending Reviews"     value={stats?.pending_reviews}    sub="Review now"        subLink="/reviews"  accent="amber"   icon={Icon.logbook}  />
+          <StatCard label="Approved Logs"       value={stats?.approved_logs}      sub="View approved"     subLink="/reviews"  accent="emerald" icon={Icon.approved} />
+          <StatCard label="Avg. Workplace Score"value={stats ? `${Number(stats.average_score).toFixed(0)}%` : null} sub="Contributes 40% to final" accent="rose" icon={Icon.score} />
         </div>
 
-        {/* ── Main content — asymmetric 2-col ── */}
+        {/* ── Main content — asymmetric layout ── */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
 
-          {/* Left col — 3/5 width */}
+          {/* Left col — 3/5 */}
           <div className="lg:col-span-3 space-y-5">
 
-            {/* Assigned Students with search */}
-            <Card
-              title="Assigned Students"
-              actionLabel="View All"
-              actionLink="/students"
-              headerRight={
-                <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5">
-                  <span className="text-gray-400">{Icon.search}</span>
-                  <input
-                    type="text"
-                    placeholder="Search name or ID..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="text-xs bg-transparent outline-none text-gray-600 placeholder-gray-300 w-32"
-                  />
-                </div>
-              }
-            >
+            {/* Pending Reviews — most prominent section */}
+            <Card title="Pending Reviews" actionLabel="View All" actionLink="/reviews">
               {loading ? <ListSkeleton /> : (
                 <div className="space-y-3">
-                  {filtered.length === 0 && (
-                    <p className="text-xs text-gray-400">{search ? 'No students match your search.' : 'No students assigned yet.'}</p>
+                  {reviews.length === 0 && (
+                    <p className="text-xs text-gray-400">No pending reviews. You are all caught up!</p>
                   )}
-                  {filtered.slice(0, 5).map((p, i) => (
-                    <div key={p.id} className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 transition">
-                      <AvatarCircle name={p.student_name} index={i} />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-gray-800 truncate">{p.student_name}</p>
-                        <p className="text-xs text-gray-400">{p.student_id} · {p.company}</p>
+                  {reviews.slice(0, 4).map((r, i) => (
+                    <div
+                      key={r.id}
+                      className={`p-3 rounded-xl border transition ${
+                        isOverdue(r.deadline)
+                          ? 'border-red-100 bg-red-50'
+                          : 'border-gray-100 hover:border-indigo-100 hover:bg-indigo-50'
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <AvatarCircle name={r.student_name} index={i} />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between flex-wrap gap-2">
+                            <p className="text-sm font-semibold text-gray-800">
+                              Week {r.week_number} — {r.student_name}
+                            </p>
+                            {isOverdue(r.deadline)
+                              ? <Badge status="overdue" />
+                              : <Badge status={r.status} />
+                            }
+                          </div>
+                          <p className="text-xs text-gray-400 mt-0.5 truncate">{r.activities_preview}</p>
+                          <p className="text-xs text-gray-300 mt-0.5">
+                            Submitted {formatDate(r.submitted_at)}
+                            {isOverdue(r.deadline) && (
+                              <span className="text-red-500 font-medium ml-2">· Past deadline</span>
+                            )}
+                          </p>
+                        </div>
                       </div>
-                      <Badge status="In Progress" />
+                      {/* Approve / Reject actions */}
+                      <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
+                        <Link
+                          to={`/reviews/${r.id}`}
+                          className="flex-1 text-center text-xs font-semibold text-indigo-600 border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 py-1.5 rounded-lg transition"
+                        >
+                          Review & Comment
+                        </Link>
+                        <button className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition">
+                          {Icon.check} Approve
+                        </button>
+                        <button className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition">
+                          {Icon.reject} Reject
+                        </button>
+                      </div>
                     </div>
                   ))}
-                  {stats?.assigned_students > 0 && (
-                    <p className="text-xs text-gray-400 pt-2 border-t border-gray-50">
-                      Showing {Math.min(filtered.length, 5)} of {stats.assigned_students} students
-                    </p>
+                  {stats?.pending_reviews > 4 && (
+                    <Link to="/reviews" className="text-xs text-amber-600 font-semibold hover:underline block pt-1">
+                      View all pending ({stats.pending_reviews}) →
+                    </Link>
                   )}
                 </div>
               )}
@@ -351,7 +363,7 @@ export default function AcademicDashboard() {
                           <tr className="text-gray-400 border-b border-gray-100">
                             <th className="text-left pb-3 font-semibold w-1/4">Student</th>
                             <th className="text-left pb-3 font-semibold w-1/3">Activity</th>
-                            <th className="text-left pb-3 font-semibold w-1/5">Submitted</th>
+                            <th className="text-left pb-3 font-semibold w-1/5">Date</th>
                             <th className="text-left pb-3 font-semibold w-1/6">Status</th>
                           </tr>
                         </thead>
@@ -366,9 +378,7 @@ export default function AcademicDashboard() {
                               </td>
                               <td className="py-3 pr-3 text-gray-600 truncate">{a.activity}</td>
                               <td className="py-3 pr-3 text-gray-400">{formatDate(a.date)}</td>
-                              <td className="py-3">
-                                <Badge status={a.status} overdue={isOverdue(a.deadline)} />
-                              </td>
+                              <td className="py-3"><Badge status={a.status} overdue={isOverdue(a.deadline)} /></td>
                             </tr>
                           ))}
                         </tbody>
@@ -377,44 +387,44 @@ export default function AcademicDashboard() {
                   )
               )}
             </Card>
+
           </div>
 
-          {/* Right col — 2/5 width */}
+          {/* Right col — 2/5 */}
           <div className="lg:col-span-2 space-y-5">
 
-            {/* Pending Reviews */}
-            <Card title="Pending Reviews" actionLabel="Review All" actionLink="/reviews">
+            {/* Assigned Students (US10) */}
+            <Card title="Assigned Students" actionLabel="View All" actionLink="/students">
               {loading ? <ListSkeleton /> : (
                 <div className="space-y-3">
-                  {logbooks.length === 0 && <p className="text-xs text-gray-400">No pending reviews.</p>}
-                  {logbooks.slice(0, 4).map((l, i) => (
-                    <div key={l.id} className={`flex items-start gap-3 p-2.5 rounded-xl border transition ${isOverdue(l.deadline) ? 'border-red-100 bg-red-50' : 'border-gray-100 hover:bg-gray-50'}`}>
-                      <AvatarCircle name={l.student_name} index={i} size="sm" />
+                  {placements.length === 0 && (
+                    <p className="text-xs text-gray-400">No students assigned yet.</p>
+                  )}
+                  {placements.slice(0, 4).map((p, i) => (
+                    <div key={p.id} className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 transition">
+                      <AvatarCircle name={p.student_name} index={i} />
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-gray-800">Week {l.week_number} — {l.student_name}</p>
-                        <p className="text-xs text-gray-400 mt-0.5">Submitted {formatDate(l.submitted_at)}</p>
-                        {isOverdue(l.deadline) && (
-                          <p className="text-xs text-red-500 font-medium mt-0.5">Past deadline</p>
-                        )}
+                        <p className="text-sm font-semibold text-gray-800 truncate">{p.student_name}</p>
+                        <p className="text-xs text-gray-400 truncate">{p.student_id} · {p.department}</p>
                       </div>
-                      <Badge status={l.status} overdue={isOverdue(l.deadline)} />
+                      <Badge status={p.status} />
                     </div>
                   ))}
-                  {stats?.pending_reviews > 4 && (
-                    <Link to="/reviews" className="text-xs text-amber-600 font-semibold hover:underline block pt-1">
-                      View all pending ({stats.pending_reviews}) →
-                    </Link>
+                  {stats?.assigned_students > 0 && (
+                    <p className="text-xs text-gray-400 pt-2 border-t border-gray-50">
+                      Total: {stats.assigned_students} students
+                    </p>
                   )}
                 </div>
               )}
             </Card>
 
-            {/* Evaluation Scores */}
-            <Card title="Evaluation Summary Scores" actionLabel="Full Report" actionLink="/reports">
+            {/* Workplace Score Summary */}
+            <Card title="Workplace Scores" actionLabel="View All" actionLink="/scores">
               {loading ? <ListSkeleton /> : (
                 <>
                   {scores.length === 0
-                    ? <p className="text-xs text-gray-400">No scores yet.</p>
+                    ? <p className="text-xs text-gray-400">No scores submitted yet.</p>
                     : <MiniBarChart scores={scores} />
                   }
                   <div className="grid grid-cols-2 gap-3 mt-4">
@@ -424,12 +434,14 @@ export default function AcademicDashboard() {
                         {stats ? `${Number(stats.average_score).toFixed(0)}%` : '—'}
                       </p>
                     </div>
-                    <div className="bg-emerald-50 rounded-xl p-3 text-center">
-                      <p className="text-xs text-emerald-400">Evaluated</p>
-                      <p className="text-xl font-bold text-emerald-700 mt-0.5">
-                        {stats?.completed_evaluations ?? '—'}
-                      </p>
+                    <div className="bg-amber-50 rounded-xl p-3 text-center">
+                      <p className="text-xs text-amber-500">Weight</p>
+                      <p className="text-xl font-bold text-amber-700 mt-0.5">40%</p>
                     </div>
+                  </div>
+                  <div className="mt-3 bg-gray-50 rounded-xl p-3">
+                    <p className="text-xs text-gray-400 font-medium mb-1">Your contribution</p>
+                    <p className="text-xs text-gray-500">Your scores contribute 40% to each student's final grade</p>
                   </div>
                 </>
               )}
@@ -439,10 +451,10 @@ export default function AcademicDashboard() {
             <Card title="Quick Actions">
               <div className="space-y-2">
                 {[
-                  { label: 'View My Students',  sub: 'All assigned students',        icon: Icon.students, to: '/students',    color: 'text-indigo-500 bg-indigo-50'  },
-                  { label: 'Review Submissions', sub: 'Pending internship logs',      icon: Icon.logbook,  to: '/reviews',     color: 'text-amber-500 bg-amber-50'    },
-                  { label: 'Submit Evaluation',  sub: 'Complete a student evaluation',icon: Icon.eval,     to: '/evaluations', color: 'text-teal-500 bg-teal-50'      },
-                  { label: 'Generate Report',    sub: 'Download evaluation reports',  icon: Icon.report,   to: '/reports',     color: 'text-rose-500 bg-rose-50'      },
+                  { label: 'View My Students',    sub: 'All assigned interns',          icon: Icon.students, to: '/students', color: 'text-indigo-500 bg-indigo-50'  },
+                  { label: 'Review Submissions',   sub: 'Approve or reject log entries', icon: Icon.logbook,  to: '/reviews',  color: 'text-amber-500 bg-amber-50'    },
+                  { label: 'Score Performance',    sub: 'Submit workplace scores',       icon: Icon.score,    to: '/scores',   color: 'text-emerald-500 bg-emerald-50' },
+                  { label: 'Generate Report',      sub: 'Download student reports',      icon: Icon.report,   to: '/reports',  color: 'text-rose-500 bg-rose-50'      },
                 ].map(({ label, sub, icon, to, color }) => (
                   <Link
                     key={label}
@@ -468,4 +480,3 @@ export default function AcademicDashboard() {
     </div>
   )
 }
-
