@@ -1,8 +1,4 @@
-
-
 from rest_framework import serializers
-
-from .models import CustomUserManager
 from .models import CustomUser
 
 
