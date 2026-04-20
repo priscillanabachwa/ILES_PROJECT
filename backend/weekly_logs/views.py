@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
 from .models import WeeklyLogbook
-from .serializer import WeeklyLogbookSerializer
+from .serializers import WeeklyLogbookSerializer
 
 
 class WeeklyLogbookViewSet(viewsets.ModelViewSet):

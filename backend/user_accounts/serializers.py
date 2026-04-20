@@ -1,12 +1,12 @@
 from rest_framework import serializers
-
 from .models import CustomUser
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, required=True, min_length=8)
-    profile_picture = serializers.ImageField(required=False, allow_null=True)
 
+    email = serializers.EmailField()
+    profile_picture = serializers.ImageField(required=False, allow_null=True)
+    password = serializers.CharField(write_only=True, required=True, min_length=8)
     class Meta:
         model = CustomUser
         fields = [
@@ -25,6 +25,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "is_staff", "is_superuser"]
 
     def validate_email(self, value):
+
         return value.lower()
 
     def validate_role(self, value):
@@ -66,3 +67,4 @@ class CustomUserSerializer(serializers.ModelSerializer):
         # Do not include password in representations
         rep.pop("password", None)
         return rep
+
