@@ -126,7 +126,7 @@ function Navbar({ user, notifications = 0, onLogout }) {
         <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-xs font-bold text-white">IL</div>
         <div>
           <p className="text-sm font-bold text-gray-900 leading-tight">ILES</p>
-          <p className="text-gray-400 leading-tight" style={{ fontSize: '9px' }}>Internship Login & Evaluation</p>
+          <p className="text-gray-400 leading-tight" style={{ fontSize: '9px' }}>Internship Logging & Evaluation</p>
         </div>
       </div>
       <div className="flex items-center gap-6">
