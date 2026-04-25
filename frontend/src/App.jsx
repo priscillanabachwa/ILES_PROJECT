@@ -12,7 +12,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* The Layout wraps all internal pages */}
+       
         <Route element={<AppLayout role={user.role} />}>
           <Route path="/" element={<div>Dashboard Content Here</div>} />
           <Route path="/admin/dashboard" element={<div>Admin Dashboard</div>} />
@@ -21,7 +21,7 @@ function App() {
           <Route path="/admin/profile" element={<div>User Profile</div>} />
         </Route>
 
-        {/* Auth routes don't use the sidebar layout */}
+        
         <Route path="/login" element={<div>Login Page</div>} />
       </Routes>
     </BrowserRouter>
