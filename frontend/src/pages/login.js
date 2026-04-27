@@ -173,6 +173,8 @@ function Login() {
     }
 
     setSuccess(true);
+    localStorage.setItem('acess_token',data.access)
+    localStorage.setItem('user',JSON.stringify(data.user))
 
 
     setTimeout(() => {
