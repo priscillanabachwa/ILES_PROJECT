@@ -122,3 +122,4 @@ class EvaluationScore(models.Model):
     def __str__(self):
         return f"{self.criteria.name}:{self.score}"
         
+
