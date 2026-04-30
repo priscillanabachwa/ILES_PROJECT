@@ -4,17 +4,29 @@ import { NavLink, useNavigate, Outlet } from 'react-router-dom';
 
 const NAV = {
   ADMIN: [
-    { to: '/admin/dashboard', label: 'Dashboard', icon: 'dashboard' },
-    { to: '/admin/logs', label: 'Internship Logs', icon: 'assignment' },
-    { to: '/admin/evaluations', label: 'Evaluations', icon: 'rate_review' },
-    { to: '/admin/profile', label: 'Profile', icon: 'person' },
+    { to: '/admin/dashboard',       label: 'Dashboard',       icon: 'dashboard'   },
+    { to: '/admin/logs',            label: 'Internship Logs', icon: 'assignment'  },
+    { to: '/admin/evaluations',     label: 'Evaluations',     icon: 'rate_review' },
+    { to: '/admin/profile',         label: 'Profile',         icon: 'person'      },
   ],
   STUDENT: [
-    { to: '/student/dashboard', label: 'Dashboard', icon: 'dashboard' },
-    { to: '/student/logs', label: 'My Logs', icon: 'assignment' },
-    { to: '/student/profile', label: 'Profile', icon: 'person' },
-  ]
-};
+    { to: '/student/dashboard',     label: 'Dashboard',       icon: 'dashboard'   },
+    { to: '/student/logs',          label: 'My Logs',         icon: 'assignment'  },
+    { to: '/student/profile',       label: 'Profile',         icon: 'person'      },
+  ],
+  ACADEMIC_SUPERVISOR: [
+    { to: '/academic/dashboard',    label: 'Dashboard',       icon: 'dashboard'   },
+    { to: '/academic/logs',         label: 'Internship Logs', icon: 'assignment'  },
+    { to: '/academic/evaluations',  label: 'Evaluations',     icon: 'rate_review' },
+    { to: '/academic/profile',      label: 'Profile',         icon: 'person'      },
+  ],
+  WORKPLACE_SUPERVISOR: [
+    { to: '/supervisor/dashboard',  label: 'Dashboard',       icon: 'dashboard'   },
+    { to: '/supervisor/reviews',    label: 'Reviews',         icon: 'rate_review' },
+    { to: '/supervisor/scores',     label: 'Scores',          icon: 'score'       },
+    { to: '/supervisor/profile',    label: 'Profile',         icon: 'person'      },
+  ],
+}
 
 export default function AppLayout({ role = 'ADMIN' }) {
   const navigate = useNavigate();

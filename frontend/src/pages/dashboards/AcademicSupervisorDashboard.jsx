@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from "../../context/AuthContext";
 import { Link, useNavigate } from 'react-router-dom'
-import { dashboardService } from "../../services/dashboardService";
+import  dashboardService  from "../../services/dashboardService";
 
 
 

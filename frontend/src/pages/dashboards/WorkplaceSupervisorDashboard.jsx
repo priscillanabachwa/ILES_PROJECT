@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../../context/AuthContext'
 import { Link, useNavigate } from 'react-router-dom'
-import { dashboardService } from '../services'
+import  dashboardService  from '../../services'
 
 const formatDate = (iso) =>
   iso ? new Date(iso).toLocaleDateString('en-UG', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
