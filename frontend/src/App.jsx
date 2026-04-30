@@ -1,7 +1,8 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import AppLayout from './components/layout/AppLayout'
-import AcademicDashboard from './pages/AcademicDashboard'
+import AcademicSupervisorDashboard from "./pages/dashboards/AcademicSupervisorDashboard.jsx";
+
 
 function App() {
   const user = {
@@ -22,7 +23,7 @@ function App() {
             <Route path="/admin/profile" element={<div>User Profile</div>} />
 
             {/* Added academic dashboard here */}
-            <Route path="/dashboard" element={<AcademicDashboard />} />
+            <Route path="/dashboard" element={<AcademicSupervisorDashboard />} />
             <Route path="/students" element={<div>Students Page</div>} />
             <Route path="/reviews" element={<div>Reviews Page</div>} />
             <Route path="/reports" element={<div>Reports Page</div>} />

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { Link, useNavigate } from 'react-router-dom'
-import { dashboardService } from '../services'
+import { dashboardService } from "../../services/dashboardService";
+
 
 
 const formatDate = (iso) =>
@@ -27,13 +28,16 @@ const STATUS_STYLES = {
 }
 
 function Badge({ status, overdue = false }) {
-  const s = overdue ? 'overdue' : status
+  const s = overdue ? 'Overdue' : status;
   return (
-    <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold whitespace-nowrap ${STATUS_STYLES[s] || 'bg-gray-100 text-gray-500'}`}>
+    <span
+      className={`text-xs px-2.5 py-0.5 rounded-full font-semibold whitespace-nowrap ${STATUS_STYLES[s] || 'bg-gray-100 text-gray-500'}`}
+    >
       {overdue ? 'Overdue' : status}
     </span>
-  )
+  );
 }
+
 
 
 const AVATAR_COLORS = [
