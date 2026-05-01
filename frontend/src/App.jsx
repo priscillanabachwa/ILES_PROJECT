@@ -2,9 +2,9 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext.jsx'
 import AppLayout from './components/layout/AppLayout'
 import AcademicSupervisorDashboard from './pages/dashboards/AcademicSupervisorDashboard.jsx'
-import StudentDashboard from './pages/dashboards/StudentDashboard.js'
-import WorkplaceSupervisorDashboard from './pages/dashboards/WorkplaceSupervisorDashboard.js'
-import InternshipAdministratorDashboard from './pages/dashboards/InternshipAdministratorDashboard.js'
+import StudentDashboard from './pages/dashboards/StudentDashboard.jsx'
+import WorkplaceSupervisorDashboard from './pages/dashboards/WorkplaceSupervisorDashboard.jsx'
+import InternshipAdministratorDashboard from './pages/dashboards/InternshipAdministratorDashboard.jsx'
 
 function App() {
   return (
