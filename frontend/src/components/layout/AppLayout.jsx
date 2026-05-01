@@ -1,5 +1,6 @@
 import React from 'react';
 import { NavLink, useNavigate, Outlet } from 'react-router-dom';
+import ILESLogo from '../../assets/ILES_LOGO.png'
 
 const NAV = {
   ADMIN: [
@@ -45,14 +46,14 @@ export default function AppLayout({ role = 'ADMIN' }) {
     <div className="flex min-h-screen bg-[#0f172a] text-[#e4e1ed]">
 
       {/* ── Sidebar ── */}
-      <aside className="w-64 h-screen sticky left-0 top-0 border-r border-white/10 bg-slate-900/50 backdrop-blur-xl flex flex-col py-6">
+      <aside className="w-64 h-screen sticky left-0 top-0 border-r border-white/10 bg-slate-900/50 backdrop-blur-xl flex flex-col py-6 overflow-hidden">
 
         {/* Logo */}
         <div className="px-6 mb-10 flex items-center justify-center">
           <img
-            src="/src/assets/ILES_LOGO.png"
+            src={ILESLogo}
             alt="ILES Logo"
-            className="w-24 h-24 object-contain"
+            className="w-0.5 h-0.5 object-contain rounded-lg flex-shrink-0 "
           />
         </div>
 
