@@ -99,7 +99,7 @@ def register_view(request):
         token, created = Token.objects.get_or_create(user=user)
         
         # Serialize user data
-        user_serializer = UserResponseSerializer(user)
+        user_serializer = CustomUserSerializer(user)
         
         return Response({
             'token': token.key,
