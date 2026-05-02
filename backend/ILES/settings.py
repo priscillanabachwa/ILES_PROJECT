@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'rest_framework',
+    'rest_framework.authtoken',
     'placements',
     'academic_evaluations',
     'user_accounts',
@@ -48,6 +49,17 @@ INSTALLED_APPS = [
 
 
 AUTH_USER_MODEL = 'user_accounts.CustomUser'
+
+# REST Framework Configuration
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
+    ],
+}
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -135,4 +147,32 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
-CORS_ALLOWED_ORIGINS = ['http://localhost:5173']
+
+# ==================== CORS Configuration ====================
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:5174',
+    'http://localhost:8000',
+    'http://127.0.0.1:5174',
+    'http://127.0.0.1:8000',
+]
+
+# ==================== CSRF Configuration ====================
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:5174',
+    'http://localhost:8000',
+    'http://127.0.0.1:5174',
+    'http://127.0.0.1:8000',
+]
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# CORS Configuration - Allow requests from React frontend
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:5174',
+    'http://localhost:8000',
+]
+
+CORS_ALLOW_CREDENTIALS = True
