@@ -49,13 +49,17 @@ export default function AppLayout({ role = 'ADMIN' }) {
       <aside className="w-64 h-screen sticky left-0 top-0 border-r border-white/10 bg-slate-900/50 backdrop-blur-xl flex flex-col py-6 overflow-hidden">
 
         {/* Logo */}
-        <div className="px-6 mb-10 flex items-center justify-center">
-          <img
-            src={ILESLogo}
-            alt="ILES Logo"
-            className="w-0.5 h-0.5 object-contain rounded-lg flex-shrink-0 "
-          />
-        </div>
+<div className="px-4 mb-8 flex items-center gap-3">
+  <img
+    src={ILESLogo}
+    alt="ILES Logo"
+    className="w-24 h-24 object-contain rounded-lg flex-shrink-0"
+  />
+  <div>
+    <p className="text-white font-bold text-base leading-tight">ILES</p>
+    <p className="text-indigo-400 text-xs">Academic Portal</p>
+  </div>
+</div>
 
         {/* Nav links */}
         <nav className="flex-1 space-y-1">
@@ -94,7 +98,7 @@ export default function AppLayout({ role = 'ADMIN' }) {
       </aside>
 
       {/* ── Main content ── */}
-      <main className="flex-1 flex flex-col min-w-0">
+      <main className="flex-1 flex flex-col min-w-0 bg-[#0f172a]">
         <header className="h-16 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md flex items-center px-8 justify-between sticky top-0 z-40">
           <span className="text-white font-bold text-lg">Internship Management System</span>
           <div className="flex items-center gap-4">
