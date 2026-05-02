@@ -42,6 +42,13 @@ export default function AppLayout({ role = 'ADMIN' }) {
 
   const items = NAV[role] || []
 
+  const PORTAL_LABELS = {
+  INTERNSHIP_ADMINISTRATOR: 'Internship Administrator Portal',
+  STUDENT:              'Student Portal',
+  ACADEMIC_SUPERVISOR:  'Academic Supervisor Portal',
+  WORKPLACE_SUPERVISOR: 'Workplace Supervisor Portal',
+}
+
   return (
     <div className="flex min-h-screen bg-[#0f172a] text-[#e4e1ed]">
 
@@ -57,7 +64,7 @@ export default function AppLayout({ role = 'ADMIN' }) {
   />
   <div>
     <p className="text-white font-bold text-base leading-tight">ILES</p>
-    <p className="text-indigo-400 text-xs">Academic Portal</p>
+    <p className="text-indigo-400 text-xs">{PORTAL_LABELS[role] || 'Portal'}</p>
   </div>
 </div>
 

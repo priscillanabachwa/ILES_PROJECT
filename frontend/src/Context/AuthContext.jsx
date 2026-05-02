@@ -6,10 +6,10 @@ export function AuthProvider({ children }) {
 const [user, setUser] = useState(() => {
   const stored = localStorage.getItem('user')
   return stored ? JSON.parse(stored) : {
-    first_name: 'Grace',
-    last_name: 'Atim',
-    role: 'academic_supervisor',
-    email: 'g.atim@mak.ac.ug',
+    first_name: 'Amara',
+    last_name: 'Nkosi',
+    role: 'student',
+    email: 'amara.nkosi@university.ac.ug',
   }
 })
 

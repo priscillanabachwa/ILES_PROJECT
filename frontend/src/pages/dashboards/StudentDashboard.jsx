@@ -3,7 +3,6 @@ import { useAuth } from '../../context/AuthContext'
 import { Link } from 'react-router-dom'
 import dashboardService from "../../services/dashboardService"
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 const formatDate = (iso) =>
   iso ? new Date(iso).toLocaleDateString('en-UG', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
 
@@ -16,7 +15,6 @@ const daysUntil = (deadline) => {
   return Math.ceil(diff / (1000 * 60 * 60 * 24))
 }
 
-// ─── Status Badge ─────────────────────────────────────────────────────────────
 const STATUS_STYLES = {
   draft:     'bg-slate-500/20 text-slate-400 border border-slate-500/30',
   submitted: 'bg-amber-500/20 text-amber-300 border border-amber-500/30',
@@ -36,7 +34,6 @@ function Badge({ status }) {
   )
 }
 
-// ─── Skeleton ─────────────────────────────────────────────────────────────────
 function Skeleton({ className = '' }) {
   return <div className={`bg-slate-700/50 animate-pulse rounded-lg ${className}`} />
 }
@@ -58,7 +55,6 @@ function ListSkeleton() {
   )
 }
 
-// ─── Icons ────────────────────────────────────────────────────────────────────
 const Icon = {
   logbook:  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>,
   pending:  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>,
@@ -72,7 +68,6 @@ const Icon = {
   chevron:  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>,
 }
 
-// ─── Stat Card ────────────────────────────────────────────────────────────────
 function StatCard({ label, value, sub, subLink, icon, accent }) {
   const A = {
     indigo:  { bg: 'bg-indigo-600/10 border border-indigo-500/20',   icon: 'bg-indigo-600/20 text-indigo-400',   val: 'text-indigo-300',  sub: 'text-indigo-400'  },
@@ -95,7 +90,6 @@ function StatCard({ label, value, sub, subLink, icon, accent }) {
   )
 }
 
-// ─── Card ─────────────────────────────────────────────────────────────────────
 function Card({ title, actionLabel, actionLink, children }) {
   return (
     <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl overflow-hidden">
@@ -112,7 +106,6 @@ function Card({ title, actionLabel, actionLink, children }) {
   )
 }
 
-// ─── Score Breakdown ──────────────────────────────────────────────────────────
 function ScoreBreakdown({ scores }) {
   const segments = [
     { label: 'Workplace Supervisor', weight: 40, score: scores?.workplace_score, color: 'bg-indigo-500' },
@@ -141,7 +134,6 @@ function ScoreBreakdown({ scores }) {
   )
 }
 
-// ─── Workflow Tracker ─────────────────────────────────────────────────────────
 function WorkflowStep({ label, active, done }) {
   return (
     <div className="flex flex-col items-center gap-1 flex-1">
@@ -173,8 +165,7 @@ function WorkflowTracker({ status }) {
   )
 }
 
-// ─── Main Dashboard ───────────────────────────────────────────────────────────
-// No Navbar, no outer wrapper — AppLayout handles sidebar, header and padding
+
 export default function StudentDashboard() {
   const { user } = useAuth()
 
