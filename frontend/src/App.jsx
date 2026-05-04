@@ -1,5 +1,5 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { AuthProvider } from './context/AuthContext.jsx'
+import React from 'react'
+import { BrowserRouter, Routes, Route, Navigate} from 'react-router-dom'
 import AppLayout from './components/layout/AppLayout'
 import AcademicSupervisorDashboard from './pages/dashboards/AcademicSupervisorDashboard.jsx'
 import StudentDashboard from './pages/dashboards/StudentDashboard.jsx'
@@ -48,56 +48,17 @@ class ErrorBoundary extends React.Component {
 // 404 Not Found Component
 function NotFound() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-
-          {/* ── Academic Supervisor ── */}
-          <Route element={<AppLayout role="ACADEMIC_SUPERVISOR" />}>
-            <Route path="/academic/dashboard"    element={<AcademicSupervisorDashboard />} />
-            <Route path="/academic/logs"         element={<div>Internship Logs</div>} />
-            <Route path="/academic/evaluations"  element={<div>Evaluations Page</div>} />
-            <Route path="/academic/profile"      element={<ProfilePage />} />
-          </Route>
-
-          {/* ── Student ── */}
-          <Route element={<AppLayout role="STUDENT" />}>
-            <Route path="/student/dashboard"     element={<StudentDashboard />} />
-            <Route path="/student/logs"          element={<div>My Logs</div>} />
-            <Route path="/student/profile"       element={<ProfilePage />} />
-            <Route path="/student/logs/new" element={<SubmitLogPage />} />
-          </Route>
-
-          {/* ── Workplace Supervisor ── */}
-          <Route element={<AppLayout role="WORKPLACE_SUPERVISOR" />}>
-            <Route path="/supervisor/dashboard"  element={<WorkplaceSupervisorDashboard />} />
-            <Route path="/supervisor/reviews"    element={<div>Reviews Page</div>} />
-            <Route path="/supervisor/scores"     element={<div>Scores Page</div>} />
-            <Route path="/supervisor/profile"    element={<ProfilePage />} />
-          </Route>
-
-          {/* ── Admin ── */}
-          <Route element={<AppLayout role="ADMIN" />}>
-            <Route path="/admin/dashboard"       element={<InternshipAdministratorDashboard />} />
-            <Route path="/admin/logs"            element={<div>All Logs Table</div>} />
-            <Route path="/admin/evaluations"     element={<div>Evaluations Page</div>} />
-            <Route path="/admin/profile"         element={<ProfilePage />} />
-          </Route>
-          
-          {/* Redirect root to login */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/" element={<Navigate to="/login" replace />} />
-
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[#0f172a] text-white p-6">
+        <h1 className="text-6xl font-bold mb-4">Page Not Found</h1>
+        <p className="text-xl text-slate-400 mb-8">The page you are looking for does not exist.</p>
+        <Navigate to="/login" replace className="text-indigo-400 underline">Return to Login</Navigate>
+    </div>
   )
 }
 
 function App() {
   return (
     <ErrorBoundary>
-      <AuthProvider>
         <BrowserRouter>
           <Routes>
             {/* Default route - redirect to login */}
@@ -142,7 +103,6 @@ function App() {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
-      </AuthProvider>
     </ErrorBoundary>
   )
 }
