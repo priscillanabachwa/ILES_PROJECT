@@ -6,6 +6,7 @@ import StudentDashboard from './pages/dashboards/StudentDashboard.jsx'
 import WorkplaceSupervisorDashboard from './pages/dashboards/WorkplaceSupervisorDashboard.jsx'
 import InternshipAdministratorDashboard from './pages/dashboards/InternshipAdministratorDashboard.jsx'
 import ProfilePage from './pages/ProfilePage.jsx'
+import SubmitLogPage from './pages/SubmitLogPage.jsx'
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
             <Route path="/student/dashboard"     element={<StudentDashboard />} />
             <Route path="/student/logs"          element={<div>My Logs</div>} />
             <Route path="/student/profile"       element={<ProfilePage />} />
+            <Route path="/student/logs/new" element={<SubmitLogPage />} />
           </Route>
 
           {/* ── Workplace Supervisor ── */}
