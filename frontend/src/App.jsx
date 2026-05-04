@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate} from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext.jsx'
 import AppLayout from './components/layout/AppLayout'
 import AcademicSupervisorDashboard from './pages/dashboards/AcademicSupervisorDashboard.jsx'
@@ -13,6 +13,7 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
+          <Route path="/" element={<Navigate to="/login" replace />} />
 
           {/* ── Academic Supervisor ── */}
           <Route element={<AppLayout role="ACADEMIC_SUPERVISOR" />}>
