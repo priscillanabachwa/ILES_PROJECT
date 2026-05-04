@@ -1,7 +1,5 @@
-
 import React from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { AuthProvider } from './Context/AuthContext.jsx'
+import { BrowserRouter, Routes, Route, Navigate} from 'react-router-dom'
 import AppLayout from './components/layout/AppLayout'
 import AcademicSupervisorDashboard from './pages/dashboards/AcademicSupervisorDashboard.jsx'
 import StudentDashboard from './pages/dashboards/StudentDashboard.jsx'
@@ -50,18 +48,10 @@ class ErrorBoundary extends React.Component {
 // 404 Not Found Component
 function NotFound() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0f172a] text-white">
-      <div className="text-center">
-        <h1 className="text-6xl font-bold mb-4 text-indigo-400">404</h1>
-        <h2 className="text-2xl font-semibold mb-4">Page Not Found</h2>
-        <p className="text-slate-400 mb-8">The page you're looking for doesn't exist.</p>
-        <a
-          href="/login"
-          className="inline-block px-6 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-medium"
-        >
-          Back to Login
-        </a>
-      </div>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[#0f172a] text-white p-6">
+        <h1 className="text-6xl font-bold mb-4">Page Not Found</h1>
+        <p className="text-xl text-slate-400 mb-8">The page you are looking for does not exist.</p>
+        <Navigate to="/login" replace className="text-indigo-400 underline">Return to Login</Navigate>
     </div>
   )
 }
@@ -69,7 +59,6 @@ function NotFound() {
 function App() {
   return (
     <ErrorBoundary>
-      <AuthProvider>
         <BrowserRouter>
           <Routes>
             {/* Default route - redirect to login */}
@@ -114,7 +103,6 @@ function App() {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
-      </AuthProvider>
     </ErrorBoundary>
   )
 }
