@@ -224,7 +224,7 @@ export default function AcademicDashboard() {
     p.student_name?.toLowerCase().includes(search.toLowerCase()) ||
     p.student_id?.toLowerCase().includes(search.toLowerCase())
   )
-  const SEMESTERS = ['2023-I', '2023-II', '2024-I', '2024-II', '2025-I']
+  const SEMESTERS = ['2023-I', '2023-II', '2024-I', '2024-II', '2025-I', '2025-II', '2026-I', '2026-II']
 
   return (
     <div className="space-y-6">

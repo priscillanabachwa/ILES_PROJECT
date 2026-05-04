@@ -7,7 +7,7 @@ import WorkplaceSupervisorDashboard from './pages/dashboards/WorkplaceSupervisor
 import InternshipAdministratorDashboard from './pages/dashboards/InternshipAdministratorDashboard.jsx'
 import ProfilePage from './pages/ProfilePage.jsx'
 import SubmitLogPage from './pages/SubmitLogPage.jsx'
-import Login from './pages/Login.jsx'
+import Login from './pages/login.jsx'
 
 // Error Boundary Component for catching React errors
 class ErrorBoundary extends React.Component {
