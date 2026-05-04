@@ -1,0 +1,123 @@
+import React from 'react';
+import { NavLink, useNavigate, Outlet } from 'react-router-dom';
+import ILESLogo from '../../assets/ILES_LOGO.png'
+
+const NAV = {
+  ADMIN: [
+    { to: '/admin/dashboard',       label: 'Dashboard',       icon: 'dashboard'   },
+    { to: '/admin/logs',            label: 'Internship Logs', icon: 'assignment'  },
+    { to: '/admin/evaluations',     label: 'Evaluations',     icon: 'rate_review' },
+    { to: '/admin/profile',         label: 'Profile',         icon: 'person'      },
+  ],
+  STUDENT: [
+    { to: '/student/dashboard',     label: 'Dashboard',       icon: 'dashboard'   },
+    { to: '/student/logs',          label: 'My Logs',         icon: 'assignment'  },
+    { to: '/student/profile',       label: 'Profile',         icon: 'person'      },
+  ],
+  ACADEMIC_SUPERVISOR: [
+    { to: '/academic/dashboard',    label: 'Dashboard',       icon: 'dashboard'   },
+    { to: '/academic/logs',         label: 'Internship Logs', icon: 'assignment'  },
+    { to: '/academic/evaluations',  label: 'Evaluations',     icon: 'rate_review' },
+    { to: '/academic/profile',      label: 'Profile',         icon: 'person'      },
+  ],
+  WORKPLACE_SUPERVISOR: [
+    { to: '/supervisor/dashboard',  label: 'Dashboard',       icon: 'dashboard'   },
+    { to: '/supervisor/reviews',    label: 'Reviews',         icon: 'rate_review' },
+    { to: '/supervisor/scores',     label: 'Scores',          icon: 'score'       },
+    { to: '/supervisor/profile',    label: 'Profile',         icon: 'person'      },
+  ],
+}
+
+export default function AppLayout({ role = 'ADMIN' }) {
+  const navigate = useNavigate()
+  // const { logout, user } = useAuth() // Uncomment when auth is ready
+
+  // Placeholder user for development
+  const user = { full_name: 'User Name' }
+
+  const handleLogout = async () => {
+    // await logout()
+    navigate('/login')
+  }
+
+  const items = NAV[role] || []
+
+  const PORTAL_LABELS = {
+  INTERNSHIP_ADMINISTRATOR: 'Internship Administrator Portal',
+  STUDENT:              'Student Portal',
+  ACADEMIC_SUPERVISOR:  'Academic Supervisor Portal',
+  WORKPLACE_SUPERVISOR: 'Workplace Supervisor Portal',
+}
+
+  return (
+    <div className="flex min-h-screen bg-[#0f172a] text-[#e4e1ed]">
+
+      {/* ── Sidebar ── */}
+      <aside className="w-64 h-screen sticky left-0 top-0 border-r border-white/10 bg-slate-900/50 backdrop-blur-xl flex flex-col py-6 overflow-hidden">
+
+        {/* Logo */}
+<div className="px-4 mb-8 flex items-center gap-3">
+  <img
+    src={ILESLogo}
+    alt="ILES Logo"
+    className="w-24 h-24 object-contain rounded-lg flex-shrink-0"
+  />
+  <div>
+    <p className="text-white font-bold text-base leading-tight">ILES</p>
+    <p className="text-indigo-400 text-xs">{PORTAL_LABELS[role] || 'Portal'}</p>
+  </div>
+</div>
+
+        {/* Nav links */}
+        <nav className="flex-1 space-y-1">
+          {items.map(({ to, label, icon }) => (
+            <NavLink
+              key={to}
+              to={to}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-4 py-3 transition-all duration-200 ${
+                  isActive
+                    ? 'text-white bg-indigo-600/10 border-r-2 border-indigo-500 shadow-md'
+                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                }`
+              }
+            >
+              <span className="material-symbols-outlined">{icon}</span>
+              {label}
+            </NavLink>
+          ))}
+        </nav>
+
+        {/* User info + logout */}
+        <div className="px-4 mt-auto border-t border-white/5 pt-4">
+          <div className="px-4 py-2 mb-2">
+            <p className="text-sm font-medium truncate text-white">{user?.full_name}</p>
+            <p className="text-xs text-indigo-400">{role.replace('_', ' ')}</p>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-red-400 transition-colors"
+          >
+            <span className="material-symbols-outlined">logout</span>
+            Logout
+          </button>
+        </div>
+      </aside>
+
+      {/* ── Main content ── */}
+      <main className="flex-1 flex flex-col min-w-0 bg-[#0f172a]">
+        <header className="h-16 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md flex items-center px-8 justify-between sticky top-0 z-40">
+          <span className="text-white font-bold text-lg">Internship Management System</span>
+          <div className="flex items-center gap-4">
+            {/* Add search or profile icons here if needed */}
+          </div>
+        </header>
+
+        {/* Dashboard or page content renders here */}
+        <div className="p-8">
+          <Outlet />
+        </div>
+      </main>
+    </div>
+  )
+}

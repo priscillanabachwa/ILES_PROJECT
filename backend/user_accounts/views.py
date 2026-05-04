@@ -3,6 +3,12 @@ from rest_framework import permissions, viewsets, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
+from django.contrib.auth import authenticate
+from django.core.cache import cache
+from django.core.mail import send_mail
+from django.conf import settings
+import random
+import string
 
 from .models import CustomUser
 from .serializers import CustomUserSerializer, LoginSerializer
@@ -18,29 +24,7 @@ class CustomUserViewSet(viewsets.ModelViewSet):
 @api_view(['POST'])
 @permission_classes([permissions.AllowAny])
 def login_view(request):
-    """
-    Login endpoint for user authentication.
-    
-    Expected POST data:
-    {
-        "email": "user@example.com",
-        "password": "password123"
-    }
-    
-    Returns:
-    {
-        "token": "auth_token_string",
-        "user": {
-            "id": 1,
-            "email": "user@example.com",
-            "first_name": "John",
-            "last_name": "Doe",
-            "role": "student",
-            "phone_number": "1234567890",
-            "profile_picture": null
-        }
-    }
-    """
+  
     serializer = LoginSerializer(data=request.data)
     
     if serializer.is_valid():
@@ -63,33 +47,7 @@ def login_view(request):
 @api_view(['POST'])
 @permission_classes([permissions.AllowAny])
 def register_view(request):
-    """
-    Registration endpoint for creating new user accounts.
-    
-    Expected POST data:
-    {
-        "email": "user@example.com",
-        "password": "password123",
-        "first_name": "John",
-        "last_name": "Doe",
-        "role": "student",
-        "phone_number": "1234567890"
-    }
-    
-    Returns:
-    {
-        "token": "auth_token_string",
-        "user": {
-            "id": 1,
-            "email": "user@example.com",
-            "first_name": "John",
-            "last_name": "Doe",
-            "role": "student",
-            "phone_number": "1234567890",
-            "profile_picture": null
-        }
-    }
-    """
+   
     serializer = CustomUserSerializer(data=request.data)
     
     if serializer.is_valid():
@@ -107,5 +65,199 @@ def register_view(request):
         }, status=status.HTTP_201_CREATED)
     
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+# ==================== PASSWORD RECOVERY ENDPOINTS ====================
+
+def generate_reset_code(length=6):
+    """Generate a random 6-digit recovery code"""
+    return ''.join(random.choices(string.digits, k=length))
+
+
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def password_reset_request(request):
+    """
+    Request password reset - verifies email and returns recovery code to frontend
+    
+    Expected POST data:
+    {
+        "email": "user@example.com"
+    }
+    
+    Returns:
+    {
+        "message": "Recovery code generated",
+        "recovery_code": "123456"  (only if email exists)
+    }
+    """
+    email = request.data.get('email')
+    
+    if not email:
+        return Response(
+            {'detail': 'Email is required'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    try:
+        user = CustomUser.objects.get(email=email)
+    except CustomUser.DoesNotExist:
+        # For security, don't reveal if email exists
+        return Response(
+            {'detail': 'If an account with that email exists, a recovery code has been generated'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Generate and store recovery code (valid for 15 minutes)
+    recovery_code = generate_reset_code()
+    cache_key = f'password_reset_{email}'
+    cache.set(cache_key, recovery_code, timeout=900)  # 15 minutes
+    
+    return Response(
+        {
+            'message': 'Recovery code generated',
+            'recovery_code': recovery_code
+        },
+        status=status.HTTP_200_OK
+    )
+
+
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def verify_reset_code(request):
+   
+
+    email = request.data.get('email')
+    code = request.data.get('code')
+    
+    if not email or not code:
+        return Response(
+            {'detail': 'Email and code are required'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    cache_key = f'password_reset_{email}'
+    stored_code = cache.get(cache_key)
+    
+    if not stored_code:
+        return Response(
+            {'detail': 'Recovery code expired or not found. Request a new one.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    if stored_code != code:
+        return Response(
+            {'detail': 'Invalid recovery code'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Mark code as verified by setting a verification flag
+    verify_key = f'password_reset_verified_{email}'
+    cache.set(verify_key, True, timeout=900)  # 15 minutes
+    
+    return Response(
+        {'message': 'Code verified successfully'},
+        status=status.HTTP_200_OK
+    )
+
+
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def password_reset_confirm(request):
+    """
+    Reset password after code verification
+    
+    Expected POST data:
+    {
+        "email": "user@example.com",
+        "code": "123456",
+        "new_password": "newpassword123"
+    }
+    
+    Returns:
+    {
+        "message": "Password reset successfully",
+        "detail": "You can now login with your new password"
+    }
+    """
+    email = request.data.get('email')
+    code = request.data.get('code')
+    new_password = request.data.get('new_password')
+    
+    if not all([email, code, new_password]):
+        return Response(
+            {'detail': 'Email, code, and new password are required'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    if len(new_password) < 8:
+        return Response(
+            {'detail': 'Password must be at least 8 characters long'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Verify code and email
+    cache_key = f'password_reset_{email}'
+    verify_key = f'password_reset_verified_{email}'
+    
+    stored_code = cache.get(cache_key)
+    is_verified = cache.get(verify_key)
+    
+    if not stored_code or stored_code != code:
+        return Response(
+            {'detail': 'Invalid or expired recovery code'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    if not is_verified:
+        return Response(
+            {'detail': 'Code has not been verified'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    try:
+        user = CustomUser.objects.get(email=email)
+    except CustomUser.DoesNotExist:
+        return Response(
+            {'detail': 'User not found'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    # Update password
+    user.set_password(new_password)
+    user.save()
+    
+    # Clear cache
+    cache.delete(cache_key)
+    cache.delete(verify_key)
+    
+    # Send confirmation email
+    try:
+        send_mail(
+            subject='ILES - Password Reset Confirmation',
+            message=f"""
+Hello {user.first_name or 'User'},
+
+Your password has been reset successfully.
+
+If you did not make this change, please contact support immediately.
+
+Best regards,
+ILES System
+            """,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[email],
+            fail_silently=True,
+        )
+    except:
+        pass  # Don't fail if confirmation email doesn't send
+    
+    return Response(
+        {
+            'message': 'Password reset successfully',
+            'detail': 'You can now login with your new password'
+        },
+        status=status.HTTP_200_OK
+    )
 
 

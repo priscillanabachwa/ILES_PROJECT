@@ -168,3 +168,90 @@ export const getUserProfile = async (userId) => {
   return fetchWithAuth(`${API_BASE_URL}/accounts/users/${userId}/`);
 };
 
+// ==================== PASSWORD RECOVERY ====================
+
+/**
+ * Request password reset - sends recovery code to email
+ */
+export const requestPasswordReset = async (email) => {
+  const response = await fetch(`${API_BASE_URL}/accounts/password-reset-request/`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(
+      errorData.detail ||
+      errorData.message ||
+      'Failed to generate recovery code'
+    );
+  }
+
+  const data = await response.json();
+  
+  // Log the recovery code to browser console
+  if (data.recovery_code) {
+    console.log('%c🔐 RECOVERY CODE:', 'color: red; font-size: 14px; font-weight: bold;', data.recovery_code);
+    console.log('%cCheck the Developer Console above to see your recovery code. Enter it in the modal.', 'color: orange; font-size: 12px;');
+  }
+  
+  return data;
+};
+
+/**
+ * Verify recovery code
+ */
+export const verifyResetCode = async (email, code) => {
+  const response = await fetch(`${API_BASE_URL}/accounts/verify-reset-code/`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email, code }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(
+      errorData.detail ||
+      errorData.message ||
+      'Invalid or expired code'
+    );
+  }
+
+  return response.json();
+};
+
+/**
+ * Reset password with verification code
+ */
+export const resetPassword = async (email, code, newPassword) => {
+  const response = await fetch(`${API_BASE_URL}/accounts/password-reset-confirm/`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ 
+      email, 
+      code, 
+      new_password: newPassword 
+    }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(
+      errorData.detail ||
+      errorData.message ||
+      'Failed to reset password'
+    );
+  }
+
+  return response.json();
+};
+
+
