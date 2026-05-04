@@ -275,118 +275,130 @@ function ForgotPasswordModal({ isOpen, onClose }) {
 
 // ==================== MAIN LOGIN COMPONENT ====================
 export default function Login() {
-  const [email,    setEmail]    = useState("")
-  const [password, setPassword] = useState("")
-  const [loading,  setLoading]  = useState(false)
-  const [success,  setSuccess]  = useState(false)
-  const [error,    setError]    = useState("")
-
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [showForgotPassword, setShowForgotPassword] = useState(false)
+  const navigate = useNavigate()
   const { login } = useAuth()
-  const navigate  = useNavigate()
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword)
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setError("")
-    setSuccess(false)
+    setError('')
     setLoading(true)
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/accounts/login/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.message || data.detail || "Invalid email or password")
+      const response = await loginUser(email, password)
+      
+      if (response.token && response.user) {
+        // Use AuthContext to store auth data
+        login(response.user, response.token)
+        
+        // Also store in localStorage for persistence
+        localStorage.setItem('authToken', response.token)
+        localStorage.setItem('user', JSON.stringify(response.user))
+        
+        // Redirect based on user role
+        const roleRoutes = {
+          student: '/student/dashboard',
+          academic_supervisor: '/academic/dashboard',
+          workplace_supervisor: '/supervisor/dashboard',
+          admin: '/admin/dashboard',
+        }
+        
+        const redirectPath = roleRoutes[response.user.role] || '/student/dashboard'
+        navigate(redirectPath)
       }
-
-      
-      login(data.user, data.access)
-      
-      
-      localStorage.setItem('access_token', data.access)
-      localStorage.setItem('user', JSON.stringify(data.user))
-
-      setSuccess(true)
-
-      // 3. Redirect based on user role
-      const route = ROLE_ROUTES[data.user?.role] || '/student/dashboard'
-      setTimeout(() => navigate(route), 1000)
-
     } catch (err) {
-      setError(err.message)
+      setError(err.message || 'Login failed. Please check your credentials.')
+      console.error('Login error:', err)
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <>
-      <style>{style}</style>
-      <div className="login-root">
-        <div className="login-card">
+    <div className="login-container">
+      <div className="login-box">
+        {/* Header with Logo and System Title - Inside Box */}
+        <div className="login-box-header">
+          <img src={ILES_LOGO} alt="ILES Logo" className="ILES_LOGO" />
+          <span className="system-title">INTERNSHIP LOGIN AND EVALUATION SYSTEM</span>
+        </div>
 
-          <div className="login-header">
-            <p className="login-eyebrow">ILES Project</p>
-            <h1 className="login-title">Welcome <em>back</em></h1>
-            <p className="login-subtitle">Sign in to your internship portal</p>
+        <h1>Welcome, Login to ILES</h1>
+        <form onSubmit={handleSubmit} className="login-form">
+          <div className="form-group">
+            <label htmlFor="email">Email</label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
+              required
+              disabled={loading}
+            />
           </div>
 
-          <div className="login-body">
-            {success && (
-              <div className="success-banner">✓ Login successful — redirecting…</div>
-            )}
-
-            <form onSubmit={handleSubmit}>
-              <div className="field-group">
-                <div>
-                  <label className="field-label" htmlFor="email">Email</label>
-                  <input
-                    id="email"
-                    className="field-input"
-                    type="email"
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    autoComplete="email"
-                  />
-                </div>
-                <div>
-                  <label className="field-label" htmlFor="password">Password</label>
-                  <input
-                    id="password"
-                    className="field-input"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    autoComplete="current-password"
-                  />
-                  {error && <p className="error-msg">{error}</p>}
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                className={`login-btn${loading ? " loading" : ""}`}
+          <div className="form-group">
+            <label htmlFor="password">Password</label>
+            <div className="password-input-wrapper">
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
+                required
                 disabled={loading}
+              />
+              <button
+                type="button"
+                className="password-toggle-btn"
+                onClick={togglePasswordVisibility}
+                disabled={loading}
+                title={showPassword ? "Hide password" : "Show password"}
               >
-                {loading ? "Signing in…" : "Sign In"}
+                {showPassword ? "👁️" : "👁️‍🗨️"}
               </button>
-            </form>
-
-            <p className="login-footer">
-              No account? <a href="/register">Register here</a>
-            </p>
+            </div>
           </div>
 
+          {error && <div className="error-message">{error}</div>}
+
+          {/* Login and Forgot Password Buttons */}
+          <div className="button-group">
+            <button type="submit" disabled={loading} className="submit-btn">
+              {loading ? 'Logging in...' : 'Login'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowForgotPassword(true)}
+              disabled={loading}
+              className="forgot-password-btn"
+            >
+              🔑 Forgot Password?
+            </button>
+          </div>
+        </form>
+
+        <div className="register-section">
+          <p>Don't have an account? <a href="/register">Register here</a></p>
         </div>
       </div>
-    </>
+
+      {/* Forgot Password Modal */}
+      <ForgotPasswordModal 
+        isOpen={showForgotPassword}
+        onClose={() => setShowForgotPassword(false)}
+      />
+    </div>
   )
 }
