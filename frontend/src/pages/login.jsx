@@ -1,4 +1,13 @@
-import { useState } from "react";
+import { useState } from "react"
+import { useNavigate } from "react-router-dom"
+import { useAuth } from "../context/AuthContext"
+
+const ROLE_ROUTES = {
+  student:              '/student/dashboard',
+  academic_supervisor:  '/academic/dashboard',
+  workplace_supervisor: '/supervisor/dashboard',
+  admin:                '/admin/dashboard',
+}
 
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap');
@@ -142,53 +151,52 @@ const styles = `
 
   .login-footer a { color: #0F6E56; text-decoration: none; }
   .login-footer a:hover { text-decoration: underline; }
-`;
+`
 
-function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState("");
+export default function Login() {
+  const [email,    setEmail]    = useState("")
+  const [password, setPassword] = useState("")
+  const [loading,  setLoading]  = useState(false)
+  const [success,  setSuccess]  = useState(false)
+  const [error,    setError]    = useState("")
+
+  const { login } = useAuth()
+  const navigate  = useNavigate()
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  setError("");
-  setSuccess(false);
-  setLoading(true);
+    e.preventDefault()
+    setError("")
+    setSuccess(false)
+    setLoading(true)
 
-  try {
-    const response = await fetch("http://127.0.0.1:8000/api/login/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email, password }),
-    });
+    try {
+      const response = await fetch("http://127.0.0.1:8000/api/accounts/login/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      })
 
-    const data = await response.json();
+      const data = await response.json()
 
-    if (!response.ok) {
-      throw new Error(data.message || "Login failed");
+      if (!response.ok) {
+        throw new Error(data.message || data.detail || "Invalid email or password")
+      }
+
+      
+      login(data.user, data.access)
+
+      setSuccess(true)
+
+      // Redirect based on user role
+      const route = ROLE_ROUTES[data.user?.role] || '/student/dashboard'
+      setTimeout(() => navigate(route), 1000)
+
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
     }
-
-    setSuccess(true);
-    localStorage.setItem('acess_token',data.access)
-    localStorage.setItem('user',JSON.stringify(data.user))
-
-
-    setTimeout(() => {
-      window.location.href = "/dashboard";
-    }, 1000);
-
-  } catch (err) {
-    setError(err.message);
-  } finally {
-    setLoading(false);
   }
-};
-    
-    
 
   return (
     <>
@@ -255,7 +263,5 @@ function Login() {
         </div>
       </div>
     </>
-  );
+  )
 }
-
-export default Login;

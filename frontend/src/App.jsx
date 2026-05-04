@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext.jsx'
 import AppLayout from './components/layout/AppLayout'
 import AcademicSupervisorDashboard from './pages/dashboards/AcademicSupervisorDashboard.jsx'
@@ -7,6 +7,7 @@ import WorkplaceSupervisorDashboard from './pages/dashboards/WorkplaceSupervisor
 import InternshipAdministratorDashboard from './pages/dashboards/InternshipAdministratorDashboard.jsx'
 import ProfilePage from './pages/ProfilePage.jsx'
 import SubmitLogPage from './pages/SubmitLogPage.jsx'
+import Login from './pages/login.jsx'
 
 function App() {
   return (
@@ -45,8 +46,10 @@ function App() {
             <Route path="/admin/evaluations"     element={<div>Evaluations Page</div>} />
             <Route path="/admin/profile"         element={<ProfilePage />} />
           </Route>
-
-          <Route path="/login" element={<div>Login Page</div>} />
+          
+          {/* Redirect root to login */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/" element={<Navigate to="/login" replace />} />
 
         </Routes>
       </BrowserRouter>
