@@ -1,12 +1,11 @@
+from decimal import Decimal, ROUND_HALF_UP
 from rest_framework import serializers
 from .models import AcademicEvaluation
 from .models import EvaluationCriteria
 from .models import EvaluationScore
-class AcademicEvaluationSerializer(serializers.ModelSerializer):
-    class Meta:
-        model =AcademicEvaluation
-        fields = '__all__'
-        read_only_fields = ['submitted_at','total_score','created_at','submitted_at']
+
+
+
 class EvaluationCriteriaSerializer(serializers.ModelSerializer):
     class Meta:
        
@@ -19,7 +18,8 @@ class EvaluationScoreSerializer(serializers.ModelSerializer):
         model = EvaluationScore
         fields ='__all__'
         read_only_fields = ['total_score','evaluated_at']
-    def validate_data(self,data):
+
+    def validate(self,data):
         criteria = data.get('criteria')
         score = data.get('score')
         if score >criteria.max_score:
@@ -30,9 +30,9 @@ class EvaluationScoreSerializer(serializers.ModelSerializer):
 
 
 
-
 class AcademicEvaluationSerializer(serializers.ModelSerializer):
     items = EvaluationScoreSerializer(many=True, read_only=True)
+    total_score = serializers.SerializerMethodField()
 
     class Meta:
         model = AcademicEvaluation
@@ -44,10 +44,20 @@ class AcademicEvaluationSerializer(serializers.ModelSerializer):
         read_only_fields = [
             'submitted_at','activity_choices', 'total_score','grade', 'created_at','submitted_at'
         ]
-    def update(self,instance, data):
-        item_data = data.pop('items', None)
+
+    def get_total_score(self, obj):
+        return obj.calculate_total_score()
+
+
+    def update(self,instance, data, validated_data):
+        
         if instance.status == 'submitted':
-             raise serializers.ValidationError ("cannot edit a submitted evaluation")
+             raise serializers.ValidationError ("Cannot edit a submitted evaluation")
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        return instance
 
 
 
