@@ -8,19 +8,19 @@ const [user, setUser] = useState(() => {
   return stored ? JSON.parse(stored) : {
     first_name: 'Amara',
     last_name: 'Nkosi',
-    role: 'student',
+    role: 'supervisor',
     email: 'amara.nkosi@university.ac.ug',
   }
 })
 
   const login = (userData, token) => {
-    localStorage.setItem('token', token)
+    localStorage.setItem('authToken', token)
     localStorage.setItem('user', JSON.stringify(userData))
     setUser(userData)
   }
 
   const logout = () => {
-    localStorage.removeItem('token')
+    localStorage.removeItem('authToken')
     localStorage.removeItem('user')
     setUser(null)
   }
@@ -32,4 +32,10 @@ const [user, setUser] = useState(() => {
   )
 }
 
-export const useAuth = () => useContext(AuthContext)
+export const useAuth = () => {
+  const context = useContext(AuthContext)
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
