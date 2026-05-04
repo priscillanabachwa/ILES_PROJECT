@@ -7,6 +7,7 @@ class WeeklyLogbookSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = WeeklyLogbook
+
         fields = [
             'id', 'internship_id', 'week_number', 'activities', 
             'challenges', 'lesson', 'status', 'supervisor_comment', 
@@ -21,10 +22,7 @@ class WeeklyLogbookSerializer(serializers.ModelSerializer):
               raise serializers.ValidationError("Approved log cannot be modified")
          
          return data  
-
-
-        
-
+      
     def validate(self, date):
         if 'status' in date and date ['status'] == 'submitted':
             if date.get('deadline') and date.today() > date['deadline']:
