@@ -1,5 +1,5 @@
 import { useState } from "react";
-import './login.css';
+import style from'./login.css';
 
 
 function Login() {
@@ -31,7 +31,7 @@ function Login() {
     }
 
     setSuccess(true);
-    localStorage.setItem('acess_token',data.access)
+    localStorage.setItem('access_token',data.access)
     localStorage.setItem('user',JSON.stringify(data.user))
 
 
@@ -50,7 +50,7 @@ function Login() {
 
   return (
     <>
-      <style>{styles}</style>
+      <style>{style}</style>
       <div className="login-root">
         <div className="login-card">
 
