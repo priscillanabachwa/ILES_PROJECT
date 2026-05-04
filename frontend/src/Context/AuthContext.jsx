@@ -8,7 +8,7 @@ const [user, setUser] = useState(() => {
   return stored ? JSON.parse(stored) : {
     first_name: 'Amara',
     last_name: 'Nkosi',
-    role: 'student',
+    role: 'academic_supervisor',
     email: 'amara.nkosi@university.ac.ug',
   }
 })
