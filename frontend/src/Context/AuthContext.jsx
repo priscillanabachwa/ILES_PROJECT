@@ -14,13 +14,13 @@ const [user, setUser] = useState(() => {
 })
 
   const login = (userData, token) => {
-    localStorage.setItem('token', token)
+    localStorage.setItem('authToken', token)
     localStorage.setItem('user', JSON.stringify(userData))
     setUser(userData)
   }
 
   const logout = () => {
-    localStorage.removeItem('token')
+    localStorage.removeItem('authToken')
     localStorage.removeItem('user')
     setUser(null)
   }

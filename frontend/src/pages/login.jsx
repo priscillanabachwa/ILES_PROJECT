@@ -1,5 +1,5 @@
 import { useState } from "react";
-import './login.css';
+import style from'./login.css';
 
 export default function Login() {
   const [email,    setEmail]    = useState("")
@@ -44,11 +44,28 @@ export default function Login() {
     } finally {
       setLoading(false)
     }
+<<<<<<< HEAD:frontend/src/pages/login.jsx
+=======
+
+    setSuccess(true);
+    localStorage.setItem('access_token',data.access)
+    localStorage.setItem('user',JSON.stringify(data.user))
+
+
+    setTimeout(() => {
+      window.location.href = "/dashboard";
+    }, 1000);
+
+  } catch (err) {
+    setError(err.message);
+  } finally {
+    setLoading(false);
+>>>>>>> 770474a25454539ae2f307ff0a29d293fe28c8ce:frontend/src/pages/login.js
   }
 
   return (
     <>
-      <style>{styles}</style>
+      <style>{style}</style>
       <div className="login-root">
         <div className="login-card">
 
