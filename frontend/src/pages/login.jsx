@@ -32,10 +32,14 @@ export default function Login() {
 
       
       login(data.user, data.access)
+      
+      
+      localStorage.setItem('access_token', data.access)
+      localStorage.setItem('user', JSON.stringify(data.user))
 
       setSuccess(true)
 
-      // Redirect based on user role
+      // 3. Redirect based on user role
       const route = ROLE_ROUTES[data.user?.role] || '/student/dashboard'
       setTimeout(() => navigate(route), 1000)
 
@@ -44,23 +48,6 @@ export default function Login() {
     } finally {
       setLoading(false)
     }
-<<<<<<< HEAD:frontend/src/pages/login.jsx
-=======
-
-    setSuccess(true);
-    localStorage.setItem('access_token',data.access)
-    localStorage.setItem('user',JSON.stringify(data.user))
-
-
-    setTimeout(() => {
-      window.location.href = "/dashboard";
-    }, 1000);
-
-  } catch (err) {
-    setError(err.message);
-  } finally {
-    setLoading(false);
->>>>>>> 770474a25454539ae2f307ff0a29d293fe28c8ce:frontend/src/pages/login.js
   }
 
   return (
