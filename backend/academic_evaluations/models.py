@@ -1,6 +1,6 @@
 from django.db import models
 from django.conf import settings
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 
@@ -70,7 +70,7 @@ class AcademicEvaluation(models.Model):
             if item.score and item.criteria.weight:
                 total += (item.score * item.criteria.weight) / Decimal('100')
 
-        return total
+        return total.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
         
     
     def get_grade(self):

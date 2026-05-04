@@ -1,3 +1,4 @@
+<<<<<<< HEAD:frontend/src/pages/login.jsx
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
@@ -152,6 +153,11 @@ const styles = `
   .login-footer a { color: #0F6E56; text-decoration: none; }
   .login-footer a:hover { text-decoration: underline; }
 `
+=======
+import { useState } from "react";
+import './login.css';
+
+>>>>>>> aa4e0d38aafec26c333f969772a6e19c8dc61039:frontend/src/pages/login.js
 
 export default function Login() {
   const [email,    setEmail]    = useState("")
