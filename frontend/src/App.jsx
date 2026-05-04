@@ -1,12 +1,5 @@
-<<<<<<< HEAD
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext.jsx'
-=======
-
-import React from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { AuthProvider } from './Context/AuthContext.jsx'
->>>>>>> 770474a25454539ae2f307ff0a29d293fe28c8ce
 import AppLayout from './components/layout/AppLayout'
 import AcademicSupervisorDashboard from './pages/dashboards/AcademicSupervisorDashboard.jsx'
 import StudentDashboard from './pages/dashboards/StudentDashboard.jsx'
@@ -14,11 +7,7 @@ import WorkplaceSupervisorDashboard from './pages/dashboards/WorkplaceSupervisor
 import InternshipAdministratorDashboard from './pages/dashboards/InternshipAdministratorDashboard.jsx'
 import ProfilePage from './pages/ProfilePage.jsx'
 import SubmitLogPage from './pages/SubmitLogPage.jsx'
-<<<<<<< HEAD
 import Login from './pages/login.jsx'
-=======
-import Login from './pages/Login.jsx'
->>>>>>> 770474a25454539ae2f307ff0a29d293fe28c8ce
 
 // Error Boundary Component for catching React errors
 class ErrorBoundary extends React.Component {
@@ -59,7 +48,6 @@ class ErrorBoundary extends React.Component {
 // 404 Not Found Component
 function NotFound() {
   return (
-<<<<<<< HEAD
     <AuthProvider>
       <BrowserRouter>
         <Routes>
@@ -103,21 +91,6 @@ function NotFound() {
         </Routes>
       </BrowserRouter>
     </AuthProvider>
-=======
-    <div className="min-h-screen flex items-center justify-center bg-[#0f172a] text-white">
-      <div className="text-center">
-        <h1 className="text-6xl font-bold mb-4 text-indigo-400">404</h1>
-        <h2 className="text-2xl font-semibold mb-4">Page Not Found</h2>
-        <p className="text-slate-400 mb-8">The page you're looking for doesn't exist.</p>
-        <a
-          href="/login"
-          className="inline-block px-6 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-medium"
-        >
-          Back to Login
-        </a>
-      </div>
-    </div>
->>>>>>> 770474a25454539ae2f307ff0a29d293fe28c8ce
   )
 }
 
