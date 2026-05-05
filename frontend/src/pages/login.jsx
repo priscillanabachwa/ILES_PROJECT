@@ -304,7 +304,6 @@ export default function Login() {
                 id="password"
                 className="field-input"
                 type={showPassword ? 'text' : 'password'}
-                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
