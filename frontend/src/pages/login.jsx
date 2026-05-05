@@ -100,178 +100,122 @@ function ForgotPasswordModal({ isOpen, onClose }) {
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-slate-900 border border-slate-700 rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-white">Recover Password</h2>
-          <button
-            onClick={handleClose}
-            className="text-slate-400 hover:text-white text-2xl leading-none"
-          >
-            ×
-          </button>
+    <div className="modal-overlay">
+      <div className="modal-card">
+        <div className="modal-header">
+          <h2 className="modal-title">
+            {step === 1 && 'Reset Password'}
+            {step === 2 && 'Enter Recovery Code'}
+            {step === 3 && 'Set New Password'}
+          </h2>
+          <button className="modal-close-btn" onClick={handleClose} type="button" aria-label="Close">✕</button>
         </div>
 
-        {/* Progress Steps */}
-        <div className="flex gap-2 mb-6">
-          <div className={`h-1 flex-1 rounded-full transition-all ${step >= 1 ? 'bg-indigo-500' : 'bg-slate-700'}`} />
-          <div className={`h-1 flex-1 rounded-full transition-all ${step >= 2 ? 'bg-indigo-500' : 'bg-slate-700'}`} />
-          <div className={`h-1 flex-1 rounded-full transition-all ${step >= 3 ? 'bg-indigo-500' : 'bg-slate-700'}`} />
-        </div>
+        {error && <div className="error-msg">{error}</div>}
+        {success && <div className="success-banner">✓ {success}</div>}
 
-        {/* Step 1: Email */}
+        {/* Step 1 — Enter Email */}
         {step === 1 && (
           <form onSubmit={handleEmailSubmit}>
-            <p className="text-slate-300 text-sm mb-4">Enter your email address to receive a recovery code</p>
-            
-            <div className="mb-4">
-              <label htmlFor="recovery-email" className="block text-sm font-medium text-slate-300 mb-2">
-                Email Address
-              </label>
+            <div className="field-group">
+              <label className="field-label" htmlFor="reset-email">Email address</label>
               <input
-                id="recovery-email"
+                id="reset-email"
+                className="field-input"
                 type="email"
+                placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="your@email.com"
-                className="w-full px-4 py-2.5 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
                 required
                 disabled={loading}
               />
             </div>
-
-            {error && <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg"><p className="text-red-400 text-sm">{error}</p></div>}
-            {success && <div className="mb-4 p-3 bg-green-500/10 border border-green-500/30 rounded-lg"><p className="text-green-400 text-sm">{success}</p></div>}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold rounded-lg transition-all"
-            >
-              {loading ? 'Sending...' : 'Send Recovery Code'}
+            <button type="submit" className="login-btn" disabled={loading}>
+              {loading ? 'Sending…' : 'Send Recovery Code'}
             </button>
           </form>
         )}
 
-        {/* Step 2: OTP Verification */}
+        {/* Step 2 — Enter OTP */}
         {step === 2 && (
           <form onSubmit={handleOtpSubmit}>
-            <p className="text-slate-300 text-sm mb-4">Enter the recovery code sent to your email</p>
-            
-            <div className="mb-4">
-              <label htmlFor="otp" className="block text-sm font-medium text-slate-300 mb-2">
-                Recovery Code
-              </label>
+            <div className="field-group">
+              <label className="field-label" htmlFor="otp">Recovery Code</label>
               <input
                 id="otp"
+                className="field-input"
                 type="text"
+                placeholder="Enter the 6-digit code sent to your email"
                 value={otp}
-                onChange={(e) => setOtp(e.target.value.toUpperCase())}
-                placeholder="Enter 6-digit code"
+                onChange={(e) => setOtp(e.target.value)}
                 maxLength="6"
-                className="w-full px-4 py-2.5 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-center tracking-widest"
                 required
                 disabled={loading}
               />
             </div>
-
-            {error && <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg"><p className="text-red-400 text-sm">{error}</p></div>}
-            {success && <div className="mb-4 p-3 bg-green-500/10 border border-green-500/30 rounded-lg"><p className="text-green-400 text-sm">{success}</p></div>}
-
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => setStep(1)}
-                disabled={loading}
-                className="flex-1 px-4 py-2.5 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-white font-semibold rounded-lg transition-all"
-              >
-                Back
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex-1 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold rounded-lg transition-all"
-              >
-                {loading ? 'Verifying...' : 'Verify Code'}
-              </button>
-            </div>
+            <button type="submit" className="login-btn" disabled={loading}>
+              {loading ? 'Verifying…' : 'Verify Code'}
+            </button>
           </form>
         )}
 
-        {/* Step 3: New Password */}
+        {/* Step 3 — Set New Password */}
         {step === 3 && (
           <form onSubmit={handlePasswordReset}>
-            <p className="text-slate-300 text-sm mb-4">Set your new password</p>
-            
-            <div className="mb-4">
-              <label htmlFor="new-password" className="block text-sm font-medium text-slate-300 mb-2">
-                New Password
-              </label>
-              <div className="relative">
-                <input
-                  id="new-password"
-                  type={showPassword ? "text" : "password"}
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Enter new password"
-                  className="w-full px-4 py-2.5 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
-                  required
-                  disabled={loading}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-2.5 text-slate-400 hover:text-white"
-                >
-                  {showPassword ? '👁️' : '👁️‍🗨️'}
-                </button>
-              </div>
-              <p className="text-xs text-slate-400 mt-1">Minimum 8 characters</p>
-            </div>
-
-            <div className="mb-4">
-              <label htmlFor="confirm-password" className="block text-sm font-medium text-slate-300 mb-2">
-                Confirm Password
-              </label>
+            <div className="field-group">
+              <label className="field-label" htmlFor="new-password">New Password</label>
               <input
-                id="confirm-password"
-                type={showPassword ? "text" : "password"}
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirm password"
-                className="w-full px-4 py-2.5 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+                id="new-password"
+                className="field-input"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="At least 8 characters"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
                 required
                 disabled={loading}
               />
             </div>
-
-            {error && <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg"><p className="text-red-400 text-sm">{error}</p></div>}
-            {success && <div className="mb-4 p-3 bg-green-500/10 border border-green-500/30 rounded-lg"><p className="text-green-400 text-sm">{success}</p></div>}
-
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => setStep(2)}
+            <div className="field-group">
+              <label className="field-label" htmlFor="confirm-password">Confirm Password</label>
+              <input
+                id="confirm-password"
+                className="field-input"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Repeat your password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
                 disabled={loading}
-                className="flex-1 px-4 py-2.5 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-white font-semibold rounded-lg transition-all"
-              >
-                Back
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex-1 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold rounded-lg transition-all"
-              >
-                {loading ? 'Resetting...' : 'Reset Password'}
-              </button>
+              />
             </div>
+            <div className="field-group checkbox-group">
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={showPassword}
+                  onChange={() => setShowPassword(!showPassword)}
+                  disabled={loading}
+                />
+                <span>Show passwords</span>
+              </label>
+            </div>
+            <button type="submit" className="login-btn" disabled={loading}>
+              {loading ? 'Resetting…' : 'Reset Password'}
+            </button>
           </form>
         )}
+
+        {/* Progress Indicator */}
+        <div className="modal-progress">
+          <div className={`progress-step ${step >= 1 ? 'active' : ''}`}>1</div>
+          <div className={`progress-step ${step >= 2 ? 'active' : ''}`}>2</div>
+          <div className={`progress-step ${step >= 3 ? 'active' : ''}`}>3</div>
+        </div>
       </div>
     </div>
   )
 }
+
 
 // ==================== MAIN LOGIN COMPONENT ====================
 export default function Login() {
@@ -324,81 +268,90 @@ export default function Login() {
   }
 
   return (
-    <div className="login-container">
-      <div className="login-box">
-        {/* Header with Logo and System Title - Inside Box */}
-        <div className="login-box-header">
-          <img src={ILES_LOGO} alt="ILES Logo" className="ILES_LOGO" />
-          <span className="system-title">INTERNSHIP LOGIN AND EVALUATION SYSTEM</span>
+    <div className="login-root">
+      <div className="login-card">
+        {/* Header — Logo + Brand */}
+        <div className="card-header">
+          <img src={ILES_LOGO} alt="ILES Logo" className="logo-img" />
+          <div className="brand-content">
+            <div className="brand-name">INTERNSHIP LOGIN AND EVALUATION SYSTEM</div>
+            
+          </div>
         </div>
 
-        <h1>Welcome, Login to ILES</h1>
-        <form onSubmit={handleSubmit} className="login-form">
-          <div className="form-group">
-            <label htmlFor="email">Email</label>
+        <h1 className="login-title">Welcome , Login to ILES</h1>
+        
+
+        <form onSubmit={handleSubmit}>
+          <div className="field-group">
+            <label className="field-label" htmlFor="email">Email address</label>
             <input
               id="email"
+              className="field-input"
               type="email"
+              placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
               required
               disabled={loading}
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
-            <div className="password-input-wrapper">
+          <div className="field-group">
+            <label className="field-label" htmlFor="password">Password</label>
+            <div className="password-wrapper">
               <input
                 id="password"
-                type={showPassword ? "text" : "password"}
+                className="field-input"
+                type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
                 required
+                autoComplete="current-password"
                 disabled={loading}
               />
               <button
                 type="button"
-                className="password-toggle-btn"
+                className="password-toggle"
                 onClick={togglePasswordVisibility}
                 disabled={loading}
-                title={showPassword ? "Hide password" : "Show password"}
+                title={showPassword ? 'Hide password' : 'Show password'}
+                
               >
                 {showPassword ? "👁️" : "👁️‍🗨️"}
               </button>
             </div>
           </div>
 
-          {error && <div className="error-message">{error}</div>}
+          {error && <p className="error-msg">{error}</p>}
 
-          {/* Login and Forgot Password Buttons */}
-          <div className="button-group">
-            <button type="submit" disabled={loading} className="submit-btn">
-              {loading ? 'Logging in...' : 'Login'}
+          <div className="button-group-login">
+            <button type="submit" className="login-btn" disabled={loading}>
+              {loading ? 'Signing in…' : 'Sign In'}
             </button>
             <button
               type="button"
+              className="forgot-pwd-btn"
               onClick={() => setShowForgotPassword(true)}
               disabled={loading}
-              className="forgot-password-btn"
             >
               🔑 Forgot Password?
             </button>
           </div>
         </form>
 
-        <div className="register-section">
-          <p>Don't have an account? <a href="/register">Register here</a></p>
-        </div>
+        <p className="login-footer">
+          No account? <a href="/register">Register here</a>
+        </p>
       </div>
 
       {/* Forgot Password Modal */}
-      <ForgotPasswordModal 
+      <ForgotPasswordModal
         isOpen={showForgotPassword}
         onClose={() => setShowForgotPassword(false)}
       />
     </div>
   )
 }
+
