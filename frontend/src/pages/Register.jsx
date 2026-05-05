@@ -4,7 +4,25 @@ import { registerUser } from '../services/authService';
 import './Register.css';
 import ILES_LOGO from '../assets/iles_logo.png';
 
+// ==================== EYE ICONS ====================
+const EyeIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+    fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+    <circle cx="12" cy="12" r="3" />
+  </svg>
+);
 
+const EyeOffIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+    fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+    <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+    <line x1="1" y1="1" x2="23" y2="23" />
+  </svg>
+);
+
+// ==================== MAIN COMPONENT ====================
 export default function Register() {
   const [formData, setFormData] = useState({
     email: '',
@@ -23,10 +41,7 @@ export default function Register() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const validateForm = () => {
@@ -34,30 +49,22 @@ export default function Register() {
       setError('Email and password fields are required.');
       return false;
     }
-
     if (formData.password !== formData.confirm_password) {
       setError('Passwords do not match.');
       return false;
     }
-
     if (formData.password.length < 8) {
       setError('Password must be at least 8 characters long.');
       return false;
     }
-
     return true;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-
-    if (!validateForm()) {
-      return;
-    }
-
+    if (!validateForm()) return;
     setLoading(true);
-
     try {
       const response = await registerUser({
         email: formData.email,
@@ -67,12 +74,8 @@ export default function Register() {
         phone_number: formData.phone_number,
         role: formData.role,
       });
-
-      // Store auth token and user data
       localStorage.setItem('authToken', response.token);
       localStorage.setItem('user', JSON.stringify(response.user));
-
-      // Redirect to dashboard
       navigate('/dashboard');
     } catch (err) {
       setError(err.message || 'Registration failed. Please try again.');
@@ -81,24 +84,23 @@ export default function Register() {
     }
   };
 
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
-
-  const toggleConfirmPasswordVisibility = () => {
-    setShowConfirmPassword(!showConfirmPassword);
-  };
-
   return (
-    <div className="register-container">
-      <div className="register-box">
-        <div className="logo-container">
-          <img src={ILES_LOGO} alt="logo" className="ILES-logo" />
+    <div className="reg-root">
+      <div className="reg-card">
+
+        {/* Logo + Title */}
+        <div className="reg-header">
+          <div className="reg-logo-wrap">
+            <img src={ILES_LOGO} alt="ILES Logo" className="reg-logo" />
+          </div>
+          <h1 className="reg-title">Create Account</h1>
         </div>
-        <h1>Create Account - ILES</h1>
-        <form onSubmit={handleSubmit} className="register-form">
+
+        <form onSubmit={handleSubmit} className="reg-form">
+
+          {/* First & Last Name */}
           <div className="form-row">
-            <div className="form-group form-half">
+            <div className="form-group">
               <label htmlFor="first_name">First Name</label>
               <input
                 id="first_name"
@@ -110,7 +112,7 @@ export default function Register() {
                 disabled={loading}
               />
             </div>
-            <div className="form-group form-half">
+            <div className="form-group">
               <label htmlFor="last_name">Last Name</label>
               <input
                 id="last_name"
@@ -124,8 +126,9 @@ export default function Register() {
             </div>
           </div>
 
+          {/* Email */}
           <div className="form-group">
-            <label htmlFor="email">Email *</label>
+            <label htmlFor="email">Email <span className="req">*</span></label>
             <input
               id="email"
               type="email"
@@ -138,6 +141,7 @@ export default function Register() {
             />
           </div>
 
+          {/* Role */}
           <div className="form-group">
             <label htmlFor="role">Role</label>
             <select
@@ -153,6 +157,7 @@ export default function Register() {
             </select>
           </div>
 
+          {/* Phone */}
           <div className="form-group">
             <label htmlFor="phone_number">Phone Number</label>
             <input
@@ -166,12 +171,13 @@ export default function Register() {
             />
           </div>
 
+          {/* Password */}
           <div className="form-group">
-            <label htmlFor="password">Password * (min. 8 characters)</label>
-            <div className="password-input-wrapper">
+            <label htmlFor="password">Password <span className="req">*</span> <span className="hint">(min. 8 characters)</span></label>
+            <div className="pw-wrap">
               <input
                 id="password"
-                type={showPassword ? "text" : "password"}
+                type={showPassword ? 'text' : 'password'}
                 name="password"
                 value={formData.password}
                 onChange={handleInputChange}
@@ -181,22 +187,23 @@ export default function Register() {
               />
               <button
                 type="button"
-                className="password-toggle-btn"
-                onClick={togglePasswordVisibility}
+                className="pw-toggle"
+                onClick={() => setShowPassword(!showPassword)}
                 disabled={loading}
-                title={showPassword ? "Hide password" : "Show password"}
+                title={showPassword ? 'Hide password' : 'Show password'}
               >
-                {showPassword ? "👁️" : "👁️‍🗨️"}
+                {showPassword ? <EyeOffIcon /> : <EyeIcon />}
               </button>
             </div>
           </div>
 
+          {/* Confirm Password */}
           <div className="form-group">
-            <label htmlFor="confirm_password">Confirm Password *</label>
-            <div className="password-input-wrapper">
+            <label htmlFor="confirm_password">Confirm Password <span className="req">*</span></label>
+            <div className="pw-wrap">
               <input
                 id="confirm_password"
-                type={showConfirmPassword ? "text" : "password"}
+                type={showConfirmPassword ? 'text' : 'password'}
                 name="confirm_password"
                 value={formData.confirm_password}
                 onChange={handleInputChange}
@@ -206,24 +213,24 @@ export default function Register() {
               />
               <button
                 type="button"
-                className="password-toggle-btn"
-                onClick={toggleConfirmPasswordVisibility}
+                className="pw-toggle"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 disabled={loading}
-                title={showConfirmPassword ? "Hide password" : "Show password"}
+                title={showConfirmPassword ? 'Hide password' : 'Show password'}
               >
-                {showConfirmPassword ? "👁️" : "👁️‍🗨️"}
+                {showConfirmPassword ? <EyeOffIcon /> : <EyeIcon />}
               </button>
             </div>
           </div>
 
-          {error && <div className="error-message">{error}</div>}
+          {error && <div className="reg-error">{error}</div>}
 
-          <button type="submit" disabled={loading} className="submit-btn">
-            {loading ? 'Creating Account...' : 'Register'}
+          <button type="submit" className="reg-btn" disabled={loading}>
+            {loading ? 'Creating Account…' : 'Register'}
           </button>
         </form>
 
-        <div className="login-section">
+        <div className="reg-footer">
           <p>Already have an account? <a href="/login">Login here</a></p>
         </div>
       </div>
