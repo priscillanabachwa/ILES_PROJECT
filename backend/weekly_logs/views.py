@@ -13,28 +13,39 @@ class WeeklyLogbookViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        queryset = WeeklyLogbook.objects.all()
 
-        if user.role == 'student':
-            return WeeklyLogbook.objects.filter(placement__student=user)
+        role_filters = {   
+            'student': {'placement__student'},
+            'workplace_supervisor': {'placement__workplace_supervisor'},  
+            'academic_supervisor': {'placement__academic_supervisor'},
+        }
+        lookup_fields = role_filters.get(user.role)
+        if lookup_fields:
+            return queryset.filter(**{lookup_fields: user})
+        return queryset
+        
 
-        elif user.role == 'workplace_supervisor':
-            return WeeklyLogbook.objects.filter(placement__workplace_supervisor=user)
-
-        elif user.role == 'academic_supervisor':
-            return WeeklyLogbook.objects.filter(placement__academic_supervisor=user)
-
-        # admin sees all
-        return WeeklyLogbook.objects.all()
 
     def perform_create(self, serializer):
-        serializer.save()
+        if self.request.user.role == 'student':
+            serializer.save()
+        else:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied('Only students can create logbooks.')
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
+        user = request.user
 
         if instance.status == 'approved':
             return Response(
                 {'detail': 'Cannot edit an approved log.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        if user.role == 'student' and instance.status != 'draft':
+            return Response(
+                {'detail': 'You can only edit logs while they are in draft status.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -107,3 +118,31 @@ class WeeklyLogbookViewSet(viewsets.ModelViewSet):
         log.status = 'approved'
         log.save()
         return Response(WeeklyLogbookSerializer(log).data)
+
+        @action(detail=True, methods=['post'], url_path='reject')
+        def reject(self, request, pk=None):
+            log = self.get_object()
+
+            if request.user.role not in ('workplace_supervisor', 'academic_supervisor', 'admin'):
+                return Response(
+                    {'detail': 'You do not have permission to reject logs.'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+
+            if log.status != 'submitted':
+                return Response(
+                    {'detail': 'Only submitted logs can be rejected.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            comment = request.data.get('supervisor_comment', '').strip()
+            if not comment:
+                return Response(
+                    {'detail': 'A supervisor comment is required to reject a log.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            log.status = 'draft'
+            log.supervisor_comment = comment
+            log.save()
+            return Response(WeeklyLogbookSerializer(log).data)  
