@@ -16,6 +16,12 @@ class PlacementViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['student__username', 'company__company_name']
 
+    def perform_create(self, serializer):
+        if self.request.user.role == 'student':
+            serializer.save(student=self.request.user)
+        else:
+            serializer.save()
+
     def get_queryset(self):
         user = self.request.user
         if user.role == 'student':
