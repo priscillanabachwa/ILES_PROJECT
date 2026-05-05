@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
-import { useAuth } from '../Context/AuthContext'
+import { useAuth } from '../context/AuthContext'
 
-// ─── Role config ──────────────────────────────────────────────────────────────
 const ROLE_CONFIG = {
   student: {
     label: 'Student Intern',
@@ -54,7 +53,6 @@ const ROLE_CONFIG = {
   },
 }
 
-// ─── Validators ───────────────────────────────────────────────────────────────
 const validators = {
   phone_number: (v) => v && !/^\+?[0-9\s]{7,15}$/.test(v) ? 'Enter a valid phone number' : '',
 }
@@ -75,7 +73,6 @@ const formatDate = (iso) =>
 const getFullName = (user) =>
   [user?.first_name, user?.last_name].filter(Boolean).join(' ') || '—'
 
-// ─── Toast ────────────────────────────────────────────────────────────────────
 function useToast() {
   const [toasts, setToasts] = useState([])
   const add = (message, type = 'success') => {
@@ -91,14 +88,11 @@ function Toast({ toasts, onDismiss }) {
   return (
     <div className="fixed top-5 right-5 z-50 flex flex-col gap-2 min-w-[260px]">
       {toasts.map((t) => (
-        <div
-          key={t.id}
-          onClick={() => onDismiss(t.id)}
+        <div key={t.id} onClick={() => onDismiss(t.id)}
           className={`flex items-start gap-3 px-4 py-3 rounded-xl shadow-lg cursor-pointer text-sm font-medium
             ${t.type === 'success'
               ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-              : 'bg-red-500/20 text-red-300 border border-red-500/30'}`}
-        >
+              : 'bg-red-500/20 text-red-300 border border-red-500/30'}`}>
           <span className="mt-0.5">{t.type === 'success' ? '✓' : '✕'}</span>
           <span>{t.message}</span>
         </div>
@@ -107,7 +101,6 @@ function Toast({ toasts, onDismiss }) {
   )
 }
 
-// ─── Icons ────────────────────────────────────────────────────────────────────
 const PencilIcon = ({ className = 'w-3.5 h-3.5' }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
@@ -115,7 +108,6 @@ const PencilIcon = ({ className = 'w-3.5 h-3.5' }) => (
   </svg>
 )
 
-// ─── Avatar ───────────────────────────────────────────────────────────────────
 const AVATAR_BG = {
   student:              'bg-indigo-600',
   workplace_supervisor: 'bg-emerald-600',
@@ -132,33 +124,22 @@ function Avatar({ user, preview, onSelect, editMode }) {
       {src
         ? <img src={src} alt="avatar" className="w-20 h-20 rounded-full object-cover ring-4 ring-slate-700 shadow-md" />
         : <div className={`w-20 h-20 rounded-full ${bg} text-white flex items-center justify-center text-3xl font-bold select-none ring-4 ring-slate-700 shadow-md`}>
-            {user?.first_name?.[0] || '?'}
+            {user?.first_name?.[0] || user?.name?.[0] || user?.full_name?.[0] || '?'}
           </div>
       }
       {editMode && (
-        <button
-          onClick={() => inputRef.current.click()}
+        <button onClick={() => inputRef.current.click()}
           className="absolute bottom-0 right-0 w-7 h-7 bg-slate-700 border-2 border-slate-600 rounded-full flex items-center justify-center shadow hover:bg-slate-600 hover:border-indigo-500 transition"
-          title="Change photo"
-        >
+          title="Change photo">
           <PencilIcon className="w-3 h-3 text-indigo-400" />
         </button>
       )}
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={(e) => {
-          const file = e.target.files?.[0]
-          if (file) onSelect(URL.createObjectURL(file))
-        }}
-      />
+      <input ref={inputRef} type="file" accept="image/*" className="hidden"
+        onChange={(e) => { const file = e.target.files?.[0]; if (file) onSelect(URL.createObjectURL(file)) }} />
     </div>
   )
 }
 
-// ─── Field Components ─────────────────────────────────────────────────────────
 function Field({ label, error, hint, children }) {
   return (
     <div className="flex flex-col gap-1">
@@ -190,8 +171,6 @@ function SectionDivider({ title, subtitle }) {
   )
 }
 
-// ─── Main Profile Page ────────────────────────────────────────────────────────
-// No AppLayout wrapper — renders inside AppLayout's <Outlet />
 export default function ProfilePage() {
   const { user } = useAuth()
   const config = ROLE_CONFIG[user?.role] || ROLE_CONFIG.student
@@ -205,10 +184,11 @@ export default function ProfilePage() {
   const [saving, setSaving]           = useState(false)
   const [editMode, setEditMode]       = useState(false)
 
-  const [pwForm, setPwForm]     = useState({ current: '', next: '', confirm: '' })
+  const [showPwSection, setShowPwSection] = useState(false)
+  const [pwForm, setPwForm]   = useState({ current: '', next: '', confirm: '' })
   const [pwErrors, setPwErrors] = useState({})
   const [pwSaving, setPwSaving] = useState(false)
-  const [showPw, setShowPw]     = useState({ current: false, next: false, confirm: false })
+  const [showPw, setShowPw]   = useState({ current: false, next: false, confirm: false })
 
   const { toasts, add: addToast, dismiss } = useToast()
 
@@ -229,6 +209,9 @@ export default function ProfilePage() {
     setAvatar(null)
     setFieldErrors({})
     setEditMode(false)
+    setShowPwSection(false)
+    setPwForm({ current: '', next: '', confirm: '' })
+    setPwErrors({})
   }
 
   const handleSave = async () => {
@@ -238,21 +221,13 @@ export default function ProfilePage() {
       if (err) errs[key] = err
     })
     if (Object.keys(errs).length) { setFieldErrors(errs); return }
-
     setSaving(true)
     try {
-      // TODO: uncomment when Django backend is connected
-      // const payload = new FormData()
-      // config.fields.forEach(({ key }) => payload.append(key, form[key] || ''))
-      // if (avatarPreview) {
-      //   const res = await fetch(avatarPreview)
-      //   const blob = await res.blob()
-      //   payload.append('profile_picture', blob, 'profile_picture.jpg')
-      // }
-      // await authService.updateMe(payload)
+      // TODO: connect to Django
       addToast('Profile updated successfully.')
       setAvatar(null)
       setEditMode(false)
+      setShowPwSection(false)
     } catch {
       addToast('Failed to update profile. Please try again.', 'error')
     } finally {
@@ -265,14 +240,11 @@ export default function ProfilePage() {
     if (Object.keys(errs).length) { setPwErrors(errs); return }
     setPwSaving(true)
     try {
-      // TODO: uncomment when Django backend is connected
-      // await authService.changePassword({
-      //   current_password: pwForm.current,
-      //   new_password: pwForm.next,
-      // })
+      // TODO: connect to Django
       addToast('Password changed successfully.')
       setPwForm({ current: '', next: '', confirm: '' })
       setPwErrors({})
+      setShowPwSection(false)
     } catch {
       addToast('Incorrect current password.', 'error')
     } finally {
@@ -283,15 +255,11 @@ export default function ProfilePage() {
   const set      = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }))
   const setPw    = (key) => (e) => { setPwForm((f) => ({ ...f, [key]: e.target.value })); setPwErrors((f) => ({ ...f, [key]: '' })) }
   const togglePw = (key) => setShowPw((f) => ({ ...f, [key]: !f[key] }))
-
   const hasErrors = Object.values(fieldErrors).some(Boolean)
 
   const inputCls = (err) =>
-    `w-full rounded-lg px-3 py-2 text-sm outline-none transition text-white placeholder-slate-500
-     bg-slate-700/50 border
-     ${err
-       ? 'border-red-500/50 focus:ring-2 focus:ring-red-500/20'
-       : 'border-slate-600 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20'}`
+    `w-full rounded-lg px-3 py-2 text-sm outline-none transition text-white placeholder-slate-500 bg-slate-700/50 border
+     ${err ? 'border-red-500/50 focus:ring-2 focus:ring-red-500/20' : 'border-slate-600 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20'}`
 
   const displayName = editMode
     ? [form.first_name, form.last_name].filter(Boolean).join(' ') || getFullName(user)
@@ -301,13 +269,11 @@ export default function ProfilePage() {
     <div className="max-w-lg mx-auto space-y-5">
       <Toast toasts={toasts} onDismiss={dismiss} />
 
-      {/* Page header */}
       <div>
         <h1 className="text-2xl font-bold text-white">My Profile</h1>
         <p className="text-sm text-slate-400 mt-1">{config.subtitle}</p>
       </div>
 
-      {/* ── Profile card ── */}
       <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 space-y-5">
 
         {/* Identity strip */}
@@ -317,18 +283,14 @@ export default function ProfilePage() {
             <p className="text-lg font-bold text-white truncate">{displayName}</p>
             <p className="text-slate-400 text-sm truncate">{user?.email}</p>
             <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-              <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold ${config.badge}`}>
-                {config.label}
-              </span>
+              <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold ${config.badge}`}>{config.label}</span>
               <span className="text-slate-600 text-xs">·</span>
               <span className="text-slate-500 text-xs">Joined {formatDate(user?.date_joined)}</span>
             </div>
           </div>
           {!editMode && (
-            <button
-              onClick={() => setEditMode(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-600 text-slate-400 hover:border-indigo-500 hover:text-indigo-400 hover:bg-indigo-600/10 transition text-xs font-semibold flex-shrink-0"
-            >
+            <button onClick={() => setEditMode(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-600 text-slate-400 hover:border-indigo-500 hover:text-indigo-400 hover:bg-indigo-600/10 transition text-xs font-semibold flex-shrink-0">
               <PencilIcon /> Edit
             </button>
           )}
@@ -346,12 +308,9 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        <SectionDivider
-          title="Profile Details"
-          subtitle={editMode ? 'Make your changes below then save' : undefined}
-        />
+        <SectionDivider title="Profile Details" subtitle={editMode ? 'Make your changes below then save' : undefined} />
 
-        {/* ── VIEW MODE ── */}
+        {/* VIEW MODE */}
         {!editMode && (
           <div className="grid grid-cols-2 gap-x-8 gap-y-5">
             {config.fields.map(({ key, label }) => (
@@ -360,90 +319,78 @@ export default function ProfilePage() {
           </div>
         )}
 
-        {/* ── EDIT MODE ── */}
+        {/* EDIT MODE */}
         {editMode && (
           <div className="space-y-4">
+
+            {/* Profile fields */}
             {config.fields.map(({ key, label, type, hint, maxLength }) => (
               <Field key={key} label={label} error={fieldErrors[key]} hint={hint}>
-                <input
-                  type={type || 'text'}
-                  className={inputCls(fieldErrors[key])}
-                  value={form[key]}
-                  onChange={set(key)}
-                  maxLength={maxLength}
-                />
+                <input type={type || 'text'} className={inputCls(fieldErrors[key])}
+                  value={form[key]} onChange={set(key)} maxLength={maxLength} />
                 {maxLength && (
-                  <p className="text-right text-xs text-slate-600 mt-0.5">
-                    {(form[key] || '').length}/{maxLength}
-                  </p>
+                  <p className="text-right text-xs text-slate-600 mt-0.5">{(form[key] || '').length}/{maxLength}</p>
                 )}
               </Field>
             ))}
 
+            {/* Change Password toggle */}
+            <div className="pt-2 border-t border-slate-700/50">
+              <button type="button" onClick={() => setShowPwSection((v) => !v)}
+                className="flex items-center gap-2 text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition">
+                <svg className={`w-3.5 h-3.5 transition-transform ${showPwSection ? 'rotate-90' : ''}`}
+                  fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/>
+                </svg>
+                {showPwSection ? 'Hide password change' : 'Change password'}
+              </button>
+            </div>
+
+            {/* Change Password fields */}
+            {showPwSection && (
+              <div className="space-y-4 bg-slate-700/20 rounded-xl p-4 border border-slate-700/50">
+                <p className="text-xs text-slate-400 font-medium">Use a strong password you don't use elsewhere</p>
+                {(['current', 'next', 'confirm']).map((key) => (
+                  <Field key={key}
+                    label={key === 'current' ? 'Current Password' : key === 'next' ? 'New Password' : 'Confirm New Password'}
+                    error={pwErrors[key]} hint={key === 'next' ? 'Minimum 8 characters' : undefined}>
+                    <div className="relative">
+                      <input type={showPw[key] ? 'text' : 'password'}
+                        className={inputCls(pwErrors[key]) + ' pr-14'}
+                        value={pwForm[key]} onChange={setPw(key)} placeholder="••••••••" />
+                      <button type="button" onClick={() => togglePw(key)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 hover:text-slate-300 font-medium">
+                        {showPw[key] ? 'Hide' : 'Show'}
+                      </button>
+                    </div>
+                  </Field>
+                ))}
+                <button onClick={handlePasswordChange}
+                  disabled={!(pwForm.current || pwForm.next || pwForm.confirm) || pwSaving}
+                  className={`w-full py-2.5 rounded-xl text-sm font-semibold transition
+                    ${(pwForm.current || pwForm.next || pwForm.confirm)
+                      ? 'bg-slate-600 hover:bg-slate-500 text-white border border-slate-500'
+                      : 'bg-slate-700/30 text-slate-600 cursor-not-allowed border border-slate-700/50'}`}>
+                  {pwSaving ? 'Updating…' : 'Update Password'}
+                </button>
+              </div>
+            )}
+
+            {/* Save / Cancel */}
             <div className="flex gap-3 pt-1">
-              <button
-                onClick={handleCancelEdit}
-                className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-slate-600 text-slate-400 hover:bg-slate-700/50 transition"
-              >
+              <button onClick={handleCancelEdit}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-slate-600 text-slate-400 hover:bg-slate-700/50 transition">
                 Cancel
               </button>
-              <button
-                onClick={handleSave}
-                disabled={saving || hasErrors}
+              <button onClick={handleSave} disabled={saving || hasErrors}
                 className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition shadow-sm
-                  ${!hasErrors
-                    ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
-                    : 'bg-slate-700 text-slate-500 cursor-not-allowed'}`}
-              >
+                  ${!hasErrors ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-slate-700 text-slate-500 cursor-not-allowed'}`}>
                 {saving ? 'Saving…' : 'Save Changes'}
               </button>
             </div>
           </div>
         )}
       </div>
-
-      {/* ── Change Password card ── */}
-      <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 space-y-5">
-        <SectionDivider title="Change Password" subtitle="Use a strong password you don't use elsewhere" />
-
-        {(['current', 'next', 'confirm']).map((key) => (
-          <Field
-            key={key}
-            label={key === 'current' ? 'Current Password' : key === 'next' ? 'New Password' : 'Confirm New Password'}
-            error={pwErrors[key]}
-            hint={key === 'next' ? 'Minimum 8 characters' : undefined}
-          >
-            <div className="relative">
-              <input
-                type={showPw[key] ? 'text' : 'password'}
-                className={inputCls(pwErrors[key]) + ' pr-14'}
-                value={pwForm[key]}
-                onChange={setPw(key)}
-                placeholder="••••••••"
-              />
-              <button
-                type="button"
-                onClick={() => togglePw(key)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 hover:text-slate-300 font-medium"
-              >
-                {showPw[key] ? 'Hide' : 'Show'}
-              </button>
-            </div>
-          </Field>
-        ))}
-
-        <button
-          onClick={handlePasswordChange}
-          disabled={!(pwForm.current || pwForm.next || pwForm.confirm) || pwSaving}
-          className={`w-full py-2.5 rounded-xl text-sm font-semibold transition
-            ${(pwForm.current || pwForm.next || pwForm.confirm)
-              ? 'bg-slate-700 hover:bg-slate-600 text-white shadow-sm border border-slate-600'
-              : 'bg-slate-700/30 text-slate-600 cursor-not-allowed border border-slate-700/50'}`}
-        >
-          {pwSaving ? 'Updating…' : 'Update Password'}
-        </button>
-      </div>
-
     </div>
   )
 }
