@@ -1,12 +1,15 @@
 from rest_framework import serializers
+from django.contrib.auth import authenticate
+from .models import CustomUserManager
 
 from .models import CustomUser
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, required=True, min_length=8)
-    profile_picture = serializers.ImageField(required=False, allow_null=True)
 
+    email = serializers.EmailField()
+    profile_picture = serializers.ImageField(required=False, allow_null=True)
+    password = serializers.CharField(write_only=True, required=True, min_length=8)
     class Meta:
         model = CustomUser
         fields = [
@@ -21,10 +24,12 @@ class CustomUserSerializer(serializers.ModelSerializer):
             "password",
             "is_staff",
             "is_superuser",
+            "is_active",
         ]
-        read_only_fields = ["id", "is_staff", "is_superuser"]
+        read_only_fields = ["id", "is_staff", "is_superuser", "is_active"]
 
     def validate_email(self, value):
+
         return value.lower()
 
     def validate_role(self, value):
@@ -46,11 +51,11 @@ class CustomUserSerializer(serializers.ModelSerializer):
         validated_data.pop("is_staff", None)
         validated_data.pop("is_superuser", None)
 
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
+        instance = super().update(instance,validated_date)
+        
         if password:
             instance.set_password(password)
-        instance.save()
+            instance.save()
         return instance
 
     def to_representation(self, instance):
@@ -66,3 +71,26 @@ class CustomUserSerializer(serializers.ModelSerializer):
         # Do not include password in representations
         rep.pop("password", None)
         return rep
+
+class LoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(style={'input_type': 'password'}, trim_whitespace=False)
+
+    def validate(self, attrs):
+        email = attrs.get('email')
+        password = attrs.get('password')
+
+        if email and password:
+            user = authenticate(request=self.context.get('request'),
+                                email=email, password=password)
+
+            if not user:
+                msg = 'Unable to log in with provided credentials.'
+                raise serializers.ValidationError(msg, code='authorization')
+
+        else:
+            msg = 'Must include "email" and "password".'
+            raise serializers.ValidationError(msg, code='authorization')
+
+        attrs['user'] = user
+        return attrs
