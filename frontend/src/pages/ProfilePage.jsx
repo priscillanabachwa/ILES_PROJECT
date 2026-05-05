@@ -184,7 +184,6 @@ export default function ProfilePage() {
   const [saving, setSaving]           = useState(false)
   const [editMode, setEditMode]       = useState(false)
 
-  // Password — only visible inside edit mode
   const [showPwSection, setShowPwSection] = useState(false)
   const [pwForm, setPwForm]   = useState({ current: '', next: '', confirm: '' })
   const [pwErrors, setPwErrors] = useState({})
