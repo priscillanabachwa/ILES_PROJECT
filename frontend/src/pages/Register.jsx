@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { registerUser } from '../services/authService';
 import './Register.css';
+import ILES_LOGO from '../assets/iles_logo.png';
+
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -91,7 +93,7 @@ export default function Register() {
     <div className="register-container">
       <div className="register-box">
         <div className="logo-container">
-          <img src={maklogo} alt="logo" className="maklogo" />
+          <img src={ILES_LOGO} alt="logo" className="ILES-logo" />
         </div>
         <h1>Create Account - ILES</h1>
         <form onSubmit={handleSubmit} className="register-form">
