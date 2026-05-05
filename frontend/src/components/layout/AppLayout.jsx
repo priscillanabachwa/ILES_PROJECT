@@ -54,7 +54,7 @@ export default function AppLayout({ role = 'ADMIN' }) {
     <div className="flex min-h-screen bg-[#0f172a] text-[#e4e1ed]">
 
       {/* ── Sidebar ── */}
-      <aside className="w-64 h-screen sticky left-0 top-0 border-r border-white/10 bg-[#c5dff0] backdrop-blur-xl flex flex-col py-6 overflow-hidden">
+      <aside className="w-64 h-screen sticky left-0 top-0 border-r border-white/10 bg-[#1e3a5f] backdrop-blur-xl flex flex-col py-6 overflow-hidden">
 
         {/* Logo */}
 <div className="px-4 mb-8 flex items-center gap-3">
@@ -78,8 +78,8 @@ export default function AppLayout({ role = 'ADMIN' }) {
               className={({ isActive }) =>
   `flex items-center gap-3 px-4 py-3 transition-all duration-200 ${
     isActive
-      ? 'text-[#0f172a] bg-white/30 border-r-2 border-[#0f172a] shadow-md'
-      : 'text-[#1a3a5c] hover:text-[#0f172a] hover:bg-white/20'
+      ? 'text-white bg-white/20 border-r-2 border-white shadow-md'
+      : 'text-[#93c5fd] hover:text-white hover:bg-white/10'
   }`
 }
             >
@@ -92,12 +92,12 @@ export default function AppLayout({ role = 'ADMIN' }) {
         {/* User info + logout */}
         <div className="px-4 mt-auto border-t border-white/5 pt-4">
           <div className="px-4 py-2 mb-2">
-            <p className="text-sm font-medium truncate text-[#0f172a]">{user?.full_name}</p>
-            <p className="text-xs text-[#1a3a5c]">{role.replace('_', ' ')}</p>
+            <p className="text-sm font-medium truncate text-white">{user?.full_name}</p>
+            <p className="text-xs text-[#93c5fd]">{role.replace('_', ' ')}</p>
           </div>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 text-[#1a3a5c] hover:text-red-700 transition-colors"
+            className="w-full flex items-center gap-3 px-4 py-3 text-[#93c5fd] hover:text-red-400 transition-colors"
           >
             <span className="material-symbols-outlined">Logout</span>
           </button>

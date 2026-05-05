@@ -59,14 +59,6 @@ const validators = {
 
 const validateField = (key, value) => validators[key]?.(value) || ''
 
-const validatePassword = ({ current, next, confirm }) => {
-  const errs = {}
-  if (!current) errs.current = 'Current password is required'
-  if (next && next.length < 8) errs.next = 'Must be at least 8 characters'
-  if (confirm && next !== confirm) errs.confirm = 'Passwords do not match'
-  return errs
-}
-
 const formatDate = (iso) =>
   iso ? new Date(iso).toLocaleDateString('en-UG', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
 
@@ -124,7 +116,9 @@ function Avatar({ user, preview, onSelect, editMode }) {
       {src
         ? <img src={src} alt="avatar" className="w-20 h-20 rounded-full object-cover ring-4 ring-slate-700 shadow-md" />
         : <div className={`w-20 h-20 rounded-full ${bg} text-white flex items-center justify-center text-3xl font-bold select-none ring-4 ring-slate-700 shadow-md`}>
-            {user?.first_name?.[0] || user?.name?.[0] || user?.full_name?.[0] || '?'}
+            {user?.first_name && user?.last_name
+              ? `${user.first_name[0]}${user.last_name[0]}`.toUpperCase()
+              : (user?.first_name?.[0] || user?.email?.[0] || '?').toUpperCase()}
           </div>
       }
       {editMode && (
@@ -184,12 +178,6 @@ export default function ProfilePage() {
   const [saving, setSaving]           = useState(false)
   const [editMode, setEditMode]       = useState(false)
 
-  const [showPwSection, setShowPwSection] = useState(false)
-  const [pwForm, setPwForm]   = useState({ current: '', next: '', confirm: '' })
-  const [pwErrors, setPwErrors] = useState({})
-  const [pwSaving, setPwSaving] = useState(false)
-  const [showPw, setShowPw]   = useState({ current: false, next: false, confirm: false })
-
   const { toasts, add: addToast, dismiss } = useToast()
 
   useEffect(() => { setForm(buildInitial()) }, [user])
@@ -209,9 +197,6 @@ export default function ProfilePage() {
     setAvatar(null)
     setFieldErrors({})
     setEditMode(false)
-    setShowPwSection(false)
-    setPwForm({ current: '', next: '', confirm: '' })
-    setPwErrors({})
   }
 
   const handleSave = async () => {
@@ -227,7 +212,6 @@ export default function ProfilePage() {
       addToast('Profile updated successfully.')
       setAvatar(null)
       setEditMode(false)
-      setShowPwSection(false)
     } catch {
       addToast('Failed to update profile. Please try again.', 'error')
     } finally {
@@ -235,26 +219,7 @@ export default function ProfilePage() {
     }
   }
 
-  const handlePasswordChange = async () => {
-    const errs = validatePassword(pwForm)
-    if (Object.keys(errs).length) { setPwErrors(errs); return }
-    setPwSaving(true)
-    try {
-      // TODO: connect to Django
-      addToast('Password changed successfully.')
-      setPwForm({ current: '', next: '', confirm: '' })
-      setPwErrors({})
-      setShowPwSection(false)
-    } catch {
-      addToast('Incorrect current password.', 'error')
-    } finally {
-      setPwSaving(false)
-    }
-  }
-
   const set      = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }))
-  const setPw    = (key) => (e) => { setPwForm((f) => ({ ...f, [key]: e.target.value })); setPwErrors((f) => ({ ...f, [key]: '' })) }
-  const togglePw = (key) => setShowPw((f) => ({ ...f, [key]: !f[key] }))
   const hasErrors = Object.values(fieldErrors).some(Boolean)
 
   const inputCls = (err) =>
@@ -322,8 +287,6 @@ export default function ProfilePage() {
         {/* EDIT MODE */}
         {editMode && (
           <div className="space-y-4">
-
-            {/* Profile fields */}
             {config.fields.map(({ key, label, type, hint, maxLength }) => (
               <Field key={key} label={label} error={fieldErrors[key]} hint={hint}>
                 <input type={type || 'text'} className={inputCls(fieldErrors[key])}
@@ -333,48 +296,6 @@ export default function ProfilePage() {
                 )}
               </Field>
             ))}
-
-            {/* Change Password toggle */}
-            <div className="pt-2 border-t border-slate-700/50">
-              <button type="button" onClick={() => setShowPwSection((v) => !v)}
-                className="flex items-center gap-2 text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition">
-                <svg className={`w-3.5 h-3.5 transition-transform ${showPwSection ? 'rotate-90' : ''}`}
-                  fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/>
-                </svg>
-                {showPwSection ? 'Hide password change' : 'Change password'}
-              </button>
-            </div>
-
-            {/* Change Password fields */}
-            {showPwSection && (
-              <div className="space-y-4 bg-slate-700/20 rounded-xl p-4 border border-slate-700/50">
-                <p className="text-xs text-slate-400 font-medium">Use a strong password you don't use elsewhere</p>
-                {(['current', 'next', 'confirm']).map((key) => (
-                  <Field key={key}
-                    label={key === 'current' ? 'Current Password' : key === 'next' ? 'New Password' : 'Confirm New Password'}
-                    error={pwErrors[key]} hint={key === 'next' ? 'Minimum 8 characters' : undefined}>
-                    <div className="relative">
-                      <input type={showPw[key] ? 'text' : 'password'}
-                        className={inputCls(pwErrors[key]) + ' pr-14'}
-                        value={pwForm[key]} onChange={setPw(key)} placeholder="••••••••" />
-                      <button type="button" onClick={() => togglePw(key)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 hover:text-slate-300 font-medium">
-                        {showPw[key] ? 'Hide' : 'Show'}
-                      </button>
-                    </div>
-                  </Field>
-                ))}
-                <button onClick={handlePasswordChange}
-                  disabled={!(pwForm.current || pwForm.next || pwForm.confirm) || pwSaving}
-                  className={`w-full py-2.5 rounded-xl text-sm font-semibold transition
-                    ${(pwForm.current || pwForm.next || pwForm.confirm)
-                      ? 'bg-slate-600 hover:bg-slate-500 text-white border border-slate-500'
-                      : 'bg-slate-700/30 text-slate-600 cursor-not-allowed border border-slate-700/50'}`}>
-                  {pwSaving ? 'Updating…' : 'Update Password'}
-                </button>
-              </div>
-            )}
 
             {/* Save / Cancel */}
             <div className="flex gap-3 pt-1">
@@ -394,3 +315,4 @@ export default function ProfilePage() {
     </div>
   )
 }
+
