@@ -89,3 +89,11 @@ class InternshipPlacement(models.Model):
     def save(self, *args, **kwargs):
         self.clean()
         super().save(*args, **kwargs)
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['student', 'status'],
+                condition=models.Q(status='ACTIVE'),
+                name='unique_active_placement_per_student'
+        )
+    ]

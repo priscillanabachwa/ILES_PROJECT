@@ -24,8 +24,9 @@ class CustomUserSerializer(serializers.ModelSerializer):
             "password",
             "is_staff",
             "is_superuser",
+            "is_active",
         ]
-        read_only_fields = ["id", "is_staff", "is_superuser"]
+        read_only_fields = ["id", "is_staff", "is_superuser", "is_active"]
 
     def validate_email(self, value):
 
@@ -50,11 +51,11 @@ class CustomUserSerializer(serializers.ModelSerializer):
         validated_data.pop("is_staff", None)
         validated_data.pop("is_superuser", None)
 
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
+        instance = super().update(instance,validated_date)
+        
         if password:
             instance.set_password(password)
-        instance.save()
+            instance.save()
         return instance
 
     def to_representation(self, instance):
