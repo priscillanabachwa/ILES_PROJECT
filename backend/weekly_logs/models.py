@@ -1,6 +1,7 @@
 
 from placements.models import InternshipPlacement
 from django.db import models
+from django.core.validators import MinValueValidator
 
 class WeeklyLogbook(models.Model):
     STATUS_CHOICE =[
@@ -15,7 +16,7 @@ class WeeklyLogbook(models.Model):
         on_delete = models.CASCADE,
         related_name = 'weekly_logs'
     )
-    week_number = models.PositiveIntegerField()
+    week_number = models.PositiveIntegerField(validators=[MinValueValidator(1)])
     activities = models.TextField()
     challenges = models.TextField(blank=True)
     lesson = models.TextField(blank=True)
@@ -31,6 +32,7 @@ class WeeklyLogbook(models.Model):
     updated_at = models.DateTimeField(auto_now =True)
     class Meta:
         unique_together=[['placement', 'week_number']]
+        ordering = ['-week_number']
         
     def __str__(self):
-        return f'week{self.week_number} log for {self.internship}'
+        return f'week{self.week_number} log for {self.placement}'

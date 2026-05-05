@@ -36,7 +36,7 @@ class CustomUser(AbstractUser):
         ('admin', 'Internship Administrator'),
     ]
 
-    username = models.CharField(max_length=150, blank=True, null=True)
+    username = None
     email = models.EmailField(unique=True)
 
     role = models.CharField(

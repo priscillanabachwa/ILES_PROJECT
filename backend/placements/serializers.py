@@ -24,7 +24,7 @@ class InternshipPlacementSerializer(serializers.ModelSerializer):
             'workplace_supervisor', 'academic_supervisor', 
             'start_date', 'end_date', 'status'
         ]
-        read_only_fields = ['status', 'workplace_supervisor', 'academic_supervisor','start_date','end date',
+        read_only_fields = ['status', 'workplace_supervisor', 'academic_supervisor','start_date','end_date',
                             'created_at','modified_at']
 
 
@@ -36,18 +36,25 @@ class PlacementSerializer(serializers.ModelSerializer):
         fields = '__all__'
         
     def validate(self,data):
-        if data ['end_date']<=data['start_date']:
-            raise serializers.ValidationError(
-                'End date must be after Start date'
+        instance = self.instance
+
+        start_date = data.get('start_date', getattr(instance, 'start_date', None))
+        end_date = data.get('end_date', getattr(instance, 'end_date', None))    
+        student = data.get('student', getattr(instance, 'student', None))
+
+        if start_date and end_date and end_date <= start_date:
+            raise serializers.ValidationError({"end_date": "End date must be after start date"})
+
+        if student and start_date and end_date:
+            overlapping = InternshipPlacement.objects.filter(
+                student=student,
+                start_date__lt=end_date,
+                end_date__gt=start_date
             )
-        student =data['student']
-        overlapping = InternshipPlacement.objects.filter(
-            student=student,
-            status='active'
-        )
-        if overlapping.exists():
-            raise serializers.ValidationError(
-                'This student already has an active placement'
-            )
+            if instance:
+                overlapping = overlapping.exclude(pk=instance.pk)
+
+            if overlapping.exists():
+                raise serializers.ValidationError("This student already has a placement scheduled during the specified time period.")
         return data
 

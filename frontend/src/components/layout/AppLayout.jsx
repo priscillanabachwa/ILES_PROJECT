@@ -1,30 +1,31 @@
 import React from 'react';
 import { NavLink, useNavigate, Outlet } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext'
 import ILESLogo from '../../assets/ILES_LOGO.png'
 
 const NAV = {
   ADMIN: [
-    { to: '/admin/dashboard',       label: 'Dashboard',       icon: 'dashboard'   },
-    { to: '/admin/logs',            label: 'Internship Logs', icon: 'assignment'  },
-    { to: '/admin/evaluations',     label: 'Evaluations',     icon: 'rate_review' },
-    { to: '/admin/profile',         label: 'Profile',         icon: 'person'      },
+    { to: '/admin/dashboard',       label: 'Dashboard'          },
+    { to: '/admin/logs',            label: 'Internship Logs'   },
+    { to: '/admin/evaluations',     label: 'Evaluations'      },
+    { to: '/admin/profile',         label: 'Profile'               },
   ],
   STUDENT: [
-    { to: '/student/dashboard',     label: 'Dashboard',       icon: 'dashboard'   },
-    { to: '/student/logs',          label: 'My Logs',         icon: 'assignment'  },
-    { to: '/student/profile',       label: 'Profile',         icon: 'person'      },
+    { to: '/student/dashboard',     label: 'Dashboard'         },
+    { to: '/student/logs',          label: 'My Logs'           },
+    { to: '/student/profile',       label: 'Profile'               },
   ],
   ACADEMIC_SUPERVISOR: [
-    { to: '/academic/dashboard',    label: 'Dashboard',       icon: 'dashboard'   },
-    { to: '/academic/logs',         label: 'Internship Logs', icon: 'assignment'  },
-    { to: '/academic/evaluations',  label: 'Evaluations',     icon: 'rate_review' },
-    { to: '/academic/profile',      label: 'Profile',         icon: 'person'      },
+    { to: '/academic/dashboard',    label: 'Dashboard'          },
+    { to: '/academic/logs',         label: 'Internship Logs'   },
+    { to: '/academic/evaluations',  label: 'Evaluations'      },
+    { to: '/academic/profile',      label: 'Profile'               },
   ],
   WORKPLACE_SUPERVISOR: [
-    { to: '/supervisor/dashboard',  label: 'Dashboard',       icon: 'dashboard'   },
-    { to: '/supervisor/reviews',    label: 'Reviews',         icon: 'rate_review' },
-    { to: '/supervisor/scores',     label: 'Scores',          icon: 'score'       },
-    { to: '/supervisor/profile',    label: 'Profile',         icon: 'person'      },
+    { to: '/supervisor/dashboard',  label: 'Dashboard'          },
+    { to: '/supervisor/reviews',    label: 'Reviews'          },
+    { to: '/supervisor/scores',     label: 'Scores'                 },
+    { to: '/supervisor/profile',    label: 'Profile'               },
   ],
 }
 
@@ -53,7 +54,7 @@ export default function AppLayout({ role = 'ADMIN' }) {
     <div className="flex min-h-screen bg-[#0f172a] text-[#e4e1ed]">
 
       {/* ── Sidebar ── */}
-      <aside className="w-64 h-screen sticky left-0 top-0 border-r border-white/10 bg-slate-900/50 backdrop-blur-xl flex flex-col py-6 overflow-hidden">
+      <aside className="w-64 h-screen sticky left-0 top-0 border-r border-white/10 bg-[#c5dff0] backdrop-blur-xl flex flex-col py-6 overflow-hidden">
 
         {/* Logo */}
 <div className="px-4 mb-8 flex items-center gap-3">
@@ -75,12 +76,12 @@ export default function AppLayout({ role = 'ADMIN' }) {
               key={to}
               to={to}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-3 transition-all duration-200 ${
-                  isActive
-                    ? 'text-white bg-indigo-600/10 border-r-2 border-indigo-500 shadow-md'
-                    : 'text-slate-400 hover:text-white hover:bg-white/5'
-                }`
-              }
+  `flex items-center gap-3 px-4 py-3 transition-all duration-200 ${
+    isActive
+      ? 'text-[#0f172a] bg-white/30 border-r-2 border-[#0f172a] shadow-md'
+      : 'text-[#1a3a5c] hover:text-[#0f172a] hover:bg-white/20'
+  }`
+}
             >
               <span className="material-symbols-outlined">{icon}</span>
               {label}
@@ -91,15 +92,14 @@ export default function AppLayout({ role = 'ADMIN' }) {
         {/* User info + logout */}
         <div className="px-4 mt-auto border-t border-white/5 pt-4">
           <div className="px-4 py-2 mb-2">
-            <p className="text-sm font-medium truncate text-white">{user?.full_name}</p>
-            <p className="text-xs text-indigo-400">{role.replace('_', ' ')}</p>
+            <p className="text-sm font-medium truncate text-[#0f172a]">{user?.full_name}</p>
+            <p className="text-xs text-[#1a3a5c]">{role.replace('_', ' ')}</p>
           </div>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-red-400 transition-colors"
+            className="w-full flex items-center gap-3 px-4 py-3 text-[#1a3a5c] hover:text-red-700 transition-colors"
           >
-            <span className="material-symbols-outlined">logout</span>
-            Logout
+            <span className="material-symbols-outlined">Logout</span>
           </button>
         </div>
       </aside>
