@@ -185,7 +185,6 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'your-gmail@gmail.com'
 EMAIL_HOST_PASSWORD = 'your-16-char-app-password'
 DEFAULT_FROM_EMAIL = 'your-gmail@gmail.com'
-DEFAULT_FROM_EMAIL = 'noreply@iles-system.com'
 
 # ==================== CACHING Configuration ====================
 # Using Django's default in-memory cache (suitable for development)
