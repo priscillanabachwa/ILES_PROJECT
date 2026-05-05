@@ -1,5 +1,6 @@
 import React from 'react';
 import { NavLink, useNavigate, Outlet } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext'
 import ILESLogo from '../../assets/ILES_LOGO.png'
 
 const NAV = {
@@ -98,8 +99,7 @@ export default function AppLayout({ role = 'ADMIN' }) {
             onClick={handleLogout}
             className="w-full flex items-center gap-3 px-4 py-3 text-[#1a3a5c] hover:text-red-700 transition-colors"
           >
-            <span className="material-symbols-outlined">logout</span>
-            Logout
+            <span className="material-symbols-outlined">Logout</span>
           </button>
         </div>
       </aside>
