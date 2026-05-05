@@ -145,7 +145,7 @@ function ForgotPasswordModal({ isOpen, onClose }) {
                 id="otp"
                 className="field-input"
                 type="text"
-                placeholder="Enter 6-digit code from console"
+                placeholder="Enter 6-digit code sent to your email"
                 value={otp}
                 onChange={(e) => setOtp(e.target.value)}
                 maxLength="6"
