@@ -108,7 +108,7 @@ function ForgotPasswordModal({ isOpen, onClose }) {
             {step === 2 && 'Enter Recovery Code'}
             {step === 3 && 'Set New Password'}
           </h2>
-          <button className="modal-close-btn" onClick={handleClose} type="button">✕</button>
+          <button className="modal-close-btn" onClick={handleClose} type="button" aria-label="Close">✕</button>
         </div>
 
         {error && <div className="error-msg">{error}</div>}
