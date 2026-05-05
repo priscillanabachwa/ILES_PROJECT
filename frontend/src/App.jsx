@@ -8,6 +8,7 @@ import InternshipAdministratorDashboard from './pages/dashboards/InternshipAdmin
 import ProfilePage from './pages/ProfilePage.jsx'
 import SubmitLogPage from './pages/SubmitLogPage.jsx'
 import Login from './pages/login.jsx'
+import Register from './pages/Register.jsx'
 
 // Error Boundary Component for catching React errors
 class ErrorBoundary extends React.Component {
@@ -66,6 +67,7 @@ function App() {
 
             {/* Login Route */}
             <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} /> 
 
             {/* Academic Supervisor Routes */}
             <Route element={<AppLayout role="ACADEMIC_SUPERVISOR" />}>

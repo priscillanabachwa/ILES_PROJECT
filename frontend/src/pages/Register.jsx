@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { registerUser } from '../services/authService';
 import './Register.css';
-import maklogo from '../assets/maklogo.png';
 
 export default function Register() {
   const [formData, setFormData] = useState({
