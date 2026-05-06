@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { toast } from 'react-toastify'
 import { useAuth } from '../context/AuthContext'
 
 const ROLE_CONFIG = {
@@ -64,34 +65,6 @@ const formatDate = (iso) =>
 
 const getFullName = (user) =>
   [user?.first_name, user?.last_name].filter(Boolean).join(' ') || '—'
-
-function useToast() {
-  const [toasts, setToasts] = useState([])
-  const add = (message, type = 'success') => {
-    const id = Date.now()
-    setToasts((prev) => [...prev, { id, message, type }])
-    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 4000)
-  }
-  const dismiss = (id) => setToasts((prev) => prev.filter((t) => t.id !== id))
-  return { toasts, add, dismiss }
-}
-
-function Toast({ toasts, onDismiss }) {
-  return (
-    <div className="fixed top-5 right-5 z-50 flex flex-col gap-2 min-w-[260px]">
-      {toasts.map((t) => (
-        <div key={t.id} onClick={() => onDismiss(t.id)}
-          className={`flex items-start gap-3 px-4 py-3 rounded-xl shadow-lg cursor-pointer text-sm font-medium
-            ${t.type === 'success'
-              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-              : 'bg-red-500/20 text-red-300 border border-red-500/30'}`}>
-          <span className="mt-0.5">{t.type === 'success' ? '✓' : '✕'}</span>
-          <span>{t.message}</span>
-        </div>
-      ))}
-    </div>
-  )
-}
 
 const PencilIcon = ({ className = 'w-3.5 h-3.5' }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -178,8 +151,6 @@ export default function ProfilePage() {
   const [saving, setSaving]           = useState(false)
   const [editMode, setEditMode]       = useState(false)
 
-  const { toasts, add: addToast, dismiss } = useToast()
-
   useEffect(() => { setForm(buildInitial()) }, [user])
 
   useEffect(() => {
@@ -209,17 +180,17 @@ export default function ProfilePage() {
     setSaving(true)
     try {
       // TODO: connect to Django
-      addToast('Profile updated successfully.')
+      toast.success('Profile updated successfully.')
       setAvatar(null)
       setEditMode(false)
     } catch {
-      addToast('Failed to update profile. Please try again.', 'error')
+      toast.error('Failed to update profile. Please try again.')
     } finally {
       setSaving(false)
     }
   }
 
-  const set      = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }))
+  const set       = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }))
   const hasErrors = Object.values(fieldErrors).some(Boolean)
 
   const inputCls = (err) =>
@@ -232,7 +203,6 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-lg mx-auto space-y-5">
-      <Toast toasts={toasts} onDismiss={dismiss} />
 
       <div>
         <h1 className="text-2xl font-bold text-white">My Profile</h1>
@@ -248,7 +218,7 @@ export default function ProfilePage() {
             <p className="text-lg font-bold text-white truncate">{displayName}</p>
             <p className="text-slate-400 text-sm truncate">{user?.email}</p>
             <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-              <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold ${config.badge}`}>{config.label}</span>    
+              <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold ${config.badge}`}>{config.label}</span>
             </div>
           </div>
           {!editMode && (
@@ -258,9 +228,6 @@ export default function ProfilePage() {
             </button>
           )}
         </div>
-
-        {/* Meta strip */}
-       
 
         <SectionDivider title="Profile Details" subtitle={editMode ? 'Make your changes below then save' : undefined} />
 
@@ -304,4 +271,3 @@ export default function ProfilePage() {
     </div>
   )
 }
-
