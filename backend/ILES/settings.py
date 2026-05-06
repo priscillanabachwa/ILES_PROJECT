@@ -40,8 +40,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'rest_framework.authtoken',
-    'placements',
-    'academic_evaluations',
+    'placements.apps.PlacementsConfig',
+    'academic_evaluations.apps.AcademicEvaluationsConfig',
     'user_accounts',
     'weekly_logs.apps.WeeklyLogsConfig',
 ]
