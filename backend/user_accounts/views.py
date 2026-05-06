@@ -77,20 +77,6 @@ def generate_reset_code(length=6):
 @api_view(['POST'])
 @permission_classes([permissions.AllowAny])
 def password_reset_request(request):
-    """
-    Request password reset - verifies email and returns recovery code to frontend
-    
-    Expected POST data:
-    {
-        "email": "user@example.com"
-    }
-    
-    Returns:
-    {
-        "message": "Recovery code generated",
-        "recovery_code": "123456"  (only if email exists)
-    }
-    """
     email = request.data.get('email')
     
     if not email:
@@ -101,23 +87,24 @@ def password_reset_request(request):
     
     try:
         user = CustomUser.objects.get(email=email)
+        recovery_code = generate_reset_code()
+        cache_key = f'password_reset_{email}'
+        cache.set(cache_key, recovery_code, timeout=900)  # 15 minutes
+
+        send_mail(
+            subject='Your recovery code for ILES',
+            message=f'Hello {user.first_name},\n\nYour recovery code is: {recovery_code}',
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[email],
+            fail_silently=False,
+        )
+
     except CustomUser.DoesNotExist:
         # For security, don't reveal if email exists
-        return Response(
-            {'detail': 'If an account with that email exists, a recovery code has been generated'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-    
-    # Generate and store recovery code (valid for 15 minutes)
-    recovery_code = generate_reset_code()
-    cache_key = f'password_reset_{email}'
-    cache.set(cache_key, recovery_code, timeout=900)  # 15 minutes
-    
+        pass
+
     return Response(
-        {
-            'message': 'Recovery code generated',
-            'recovery_code': recovery_code
-        },
+        {'detail': 'If an account with that email exists, a recovery code has been generated'},
         status=status.HTTP_200_OK
     )
 
@@ -126,18 +113,16 @@ def password_reset_request(request):
 @permission_classes([permissions.AllowAny])
 def verify_reset_code(request):
    
-
     email = request.data.get('email')
     code = request.data.get('code')
-    
+
     if not email or not code:
         return Response(
             {'detail': 'Email and code are required'},
             status=status.HTTP_400_BAD_REQUEST
         )
-    
     cache_key = f'password_reset_{email}'
-    stored_code = cache.get(cache_key)
+    stored_code = cache.get(cache_key)  
     
     if not stored_code:
         return Response(
@@ -145,13 +130,6 @@ def verify_reset_code(request):
             status=status.HTTP_400_BAD_REQUEST
         )
     
-    if stored_code != code:
-        return Response(
-            {'detail': 'Invalid recovery code'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-    
-    # Mark code as verified by setting a verification flag
     verify_key = f'password_reset_verified_{email}'
     cache.set(verify_key, True, timeout=900)  # 15 minutes
     
@@ -164,79 +142,36 @@ def verify_reset_code(request):
 @api_view(['POST'])
 @permission_classes([permissions.AllowAny])
 def password_reset_confirm(request):
-    """
-    Reset password after code verification
-    
-    Expected POST data:
-    {
-        "email": "user@example.com",
-        "code": "123456",
-        "new_password": "newpassword123"
-    }
-    
-    Returns:
-    {
-        "message": "Password reset successfully",
-        "detail": "You can now login with your new password"
-    }
-    """
     email = request.data.get('email')
-    code = request.data.get('code')
     new_password = request.data.get('new_password')
-    
-    if not all([email, code, new_password]):
+
+
+    if not all([email, new_password]):
         return Response(
-            {'detail': 'Email, code, and new password are required'},
+            {'detail': 'Missing required fields.'},
             status=status.HTTP_400_BAD_REQUEST
         )
-    
-    if len(new_password) < 8:
-        return Response(
-            {'detail': 'Password must be at least 8 characters long'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-    
-    # Verify code and email
-    cache_key = f'password_reset_{email}'
+
     verify_key = f'password_reset_verified_{email}'
-    
-    stored_code = cache.get(cache_key)
-    is_verified = cache.get(verify_key)
-    
-    if not stored_code or stored_code != code:
+    if not cache.get(verify_key):
         return Response(
-            {'detail': 'Invalid or expired recovery code'},
+            {'detail': 'Recovery code has not been verified.'},
             status=status.HTTP_400_BAD_REQUEST
         )
     
-    if not is_verified:
-        return Response(
-            {'detail': 'Code has not been verified'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
     
     try:
         user = CustomUser.objects.get(email=email)
-    except CustomUser.DoesNotExist:
-        return Response(
-            {'detail': 'User not found'},
-            status=status.HTTP_404_NOT_FOUND
-        )
-    
-    # Update password
-    user.set_password(new_password)
-    user.save()
-    
-    # Clear cache
-    cache.delete(cache_key)
-    cache.delete(verify_key)
-    
-    # Send confirmation email
-    try:
+        user.set_password(new_password)
+        user.save() 
+
+        cache.delete(f'password_reset_{email}')
+        cache.delete(verify_key)
+
         send_mail(
             subject='ILES - Password Reset Confirmation',
             message=f"""
-Hello {user.first_name or 'User'},
+Hello {user.first_name },
 
 Your password has been reset successfully.
 
@@ -249,15 +184,16 @@ ILES System
             recipient_list=[email],
             fail_silently=True,
         )
-    except:
-        pass  # Don't fail if confirmation email doesn't send
+
+        return Response(
+            {'message': 'Password reset successfully'},
+            status=status.HTTP_200_OK
+        )
+    except CustomUser.DoesNotExist:
+        return Response(
+            {'detail': 'User not found'},
+            status=status.HTTP_404_NOT_FOUND
+        )
     
-    return Response(
-        {
-            'message': 'Password reset successfully',
-            'detail': 'You can now login with your new password'
-        },
-        status=status.HTTP_200_OK
-    )
 
 
