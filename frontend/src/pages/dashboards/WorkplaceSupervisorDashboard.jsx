@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useAuth } from '../../Context/AuthContext'
+import { useAuth } from '../../context/AuthContext'
 import { Link } from 'react-router-dom'
 import dashboardService from "../../services/dashboardService"
 
@@ -147,7 +147,6 @@ function Card({ title, actionLabel, actionLink, children }) {
   )
 }
 
-// No Navbar, no outer wrapper — AppLayout handles sidebar, header and padding
 export default function WorkplaceSupervisorDashboard() {
   const { user } = useAuth()
 
