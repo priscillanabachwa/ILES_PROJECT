@@ -248,9 +248,7 @@ export default function ProfilePage() {
             <p className="text-lg font-bold text-white truncate">{displayName}</p>
             <p className="text-slate-400 text-sm truncate">{user?.email}</p>
             <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-              <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold ${config.badge}`}>{config.label}</span>
-              <span className="text-slate-600 text-xs">·</span>
-              <span className="text-slate-500 text-xs">Joined {formatDate(user?.date_joined)}</span>
+              <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold ${config.badge}`}>{config.label}</span>    
             </div>
           </div>
           {!editMode && (
@@ -262,16 +260,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Meta strip */}
-        <div className="grid grid-cols-2 gap-3 bg-slate-700/30 rounded-xl px-4 py-3 text-xs border border-slate-700/50">
-          <div>
-            <p className="text-slate-500">Last login</p>
-            <p className="font-semibold text-white mt-0.5">{formatDate(user?.last_login)}</p>
-          </div>
-          <div>
-            <p className="text-slate-500">Member since</p>
-            <p className="font-semibold text-white mt-0.5">{formatDate(user?.date_joined)}</p>
-          </div>
-        </div>
+       
 
         <SectionDivider title="Profile Details" subtitle={editMode ? 'Make your changes below then save' : undefined} />
 
