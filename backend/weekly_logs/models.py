@@ -33,6 +33,12 @@ class WeeklyLogbook(models.Model):
     class Meta:
         unique_together=[['placement', 'week_number']]
         ordering = ['-week_number']
+
+        permissions = [
+            ('can_submit_weekly_log', 'Can submit weekly log'),
+            ('can_review_weekly_log', 'Can review weekly log'),
+            ('can_approve_weekly_log', 'Can approve weekly log'),
+        ]
         
     def __str__(self):
         return f'week{self.week_number} log for {self.placement}'
