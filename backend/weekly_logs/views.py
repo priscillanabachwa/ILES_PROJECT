@@ -3,6 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
+from django.core.mail import send_mail
 from .models import WeeklyLogbook
 from .serializers import WeeklyLogbookSerializer
 
@@ -70,7 +71,42 @@ class WeeklyLogbookViewSet(viewsets.ModelViewSet):
         log.status = 'submitted'
         log.submitted_at = timezone.now()
         log.save()
-        return Response(WeeklyLogbookSerializer(log).data)
+        
+        student = log.placement.student
+        academic_supervisor=log.placement.academic_supervisor
+        workplace_supervisor=log.placement.workplace_supervisor
+        
+        # Send email notifications
+        
+        send_mail(
+            subject=f'week{log.week_number} Log submitted sucessfully',
+            message=f'Hello {student.get_full_name()},\n\n your week {log.week_number} log has been submitted for review.',
+            from_email=None,
+            recipient_list=[student.email],
+            fail_silently=True
+        )
+        
+        if academic_supervisor:
+            send_mail( 
+                subject=f'New Weekly log Submitted for -{student.get_full_name()}',
+                message=f'Hello {academic_supervisor.get_full_name()},\n\n Student{student.get_full_name()}  submitted week{log.week_number} log.',
+                from_email=None
+                recipient_list=[academic_supervisor.email],
+                fail_silently=True
+            )
+                
+             
+            
+        if workplace_supervisor:
+            send_mail(
+                subject=f'New Weekly Log Submitted - {student.get_full_name()}',
+                message=f'Hello {workplace_supervisor.get_full_name()},\n\nStudent {student.get_full_name()} submitted Week {log.week_number} log.',
+                from_email=None,
+                recipient_list=[workplace_supervisor.email],
+                fail_silently=True,
+            )
+
+            return Response(WeeklyLogbookSerializer(log).data)
 
     @action(detail=True, methods=['post'], url_path='review')
     def review(self, request, pk=None):
@@ -98,6 +134,17 @@ class WeeklyLogbookViewSet(viewsets.ModelViewSet):
         log.status = 'reviewed'
         log.supervisor_comment = comment
         log.save()
+        
+    
+        student = log.placement.student
+        send_mail(
+           subject=f'Your Week {log.week_number} Log Has Been Reviewed',
+           message=f'Hi {student.get_full_name()},\n\nYour Week {log.week_number} log was reviewed.\n\nComment: {comment}',
+           from_email=None,
+           recipient_list=[student.email],
+           fail_silently=True,
+        )
+           
         return Response(WeeklyLogbookSerializer(log).data)
 
     @action(detail=True, methods=['post'], url_path='approve')
@@ -117,6 +164,15 @@ class WeeklyLogbookViewSet(viewsets.ModelViewSet):
 
         log.status = 'approved'
         log.save()
+        student = log.placement.student
+        send_mail(
+            subject=f'Your Week {log.week_number} Log Has Been Approved!',
+            message=f'Hi {student.get_full_name()},\n\nYour Week {log.week_number} log has been approved!\n\nILES System',
+            from_email=None,
+            recipient_list=[student.email],
+            fail_silently=True,
+        )
+            
         return Response(WeeklyLogbookSerializer(log).data)
 
         @action(detail=True, methods=['post'], url_path='reject')
@@ -145,4 +201,14 @@ class WeeklyLogbookViewSet(viewsets.ModelViewSet):
             log.status = 'draft'
             log.supervisor_comment = comment
             log.save()
+            
+            student = log.placement.student
+            send_mail(
+                subject=f'Your Week {log.week_number} Log Needs Revision',
+                message=f'Hi {student.get_full_name()},\n\nYour Week {log.week_number} log was sent back for revision.\n\nComment: {comment}\n\nILES System',
+                from_email=None,
+                recipient_list=[student.email],
+                fail_silently=True,
+                
+            )
             return Response(WeeklyLogbookSerializer(log).data)  
