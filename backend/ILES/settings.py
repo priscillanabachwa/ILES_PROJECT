@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'placements.apps.PlacementsConfig',
     'academic_evaluations.apps.AcademicEvaluationsConfig',
-    'user_accounts',
+    'user_accounts.apps.UserAccountsConfig',
     'weekly_logs.apps.WeeklyLogsConfig',
 ]
 
