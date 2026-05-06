@@ -268,83 +268,74 @@ export default function Login() {
   }
 
   return (
-    <div className="login-root">
-      <div className="login-card">
-        {/* Header — Logo + Brand */}
-        <div className="card-header">
-          <img src={ILES_LOGO} alt="ILES Logo" className="logo-img" />
-          <div className="brand-content">
-            <div className="brand-name">INTERNSHIP LOGIN AND EVALUATION SYSTEM</div>
-            
-          </div>
+    <div className="login-container">
+      <div className="login-box">
+        {/* Header with Logo and System Title - Inside Box */}
+        <div className="login-box-header">
+          <img src={ILES_LOGO} alt="ILES Logo" className="ILES_LOGO" />
+          <span className="system-title">INTERNSHIP LOGIN AND EVALUATION SYSTEM</span>
         </div>
 
-        <h1 className="login-title">Welcome , Login to ILES</h1>
-        
-
-        <form onSubmit={handleSubmit}>
-          <div className="field-group">
-            <label className="field-label" htmlFor="email">Email address</label>
+        <h1>Welcome, Login to ILES</h1>
+        <form onSubmit={handleSubmit} className="login-form">
+          <div className="form-group">
+            <label htmlFor="email">Email</label>
             <input
               id="email"
-              className="field-input"
               type="email"
-              placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
               required
               disabled={loading}
             />
           </div>
 
-          <div className="field-group">
-            <label className="field-label" htmlFor="password">Password</label>
-            <div className="password-wrapper">
+          <div className="form-group">
+            <label htmlFor="password">Password</label>
+            <div className="password-input-wrapper">
               <input
                 id="password"
-                className="field-input"
-                type={showPassword ? 'text' : 'password'}
-                placeholder="••••••••"
+                type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
                 required
-                autoComplete="current-password"
                 disabled={loading}
               />
               <button
                 type="button"
-                className="password-toggle"
+                className="password-toggle-btn"
                 onClick={togglePasswordVisibility}
                 disabled={loading}
-                title={showPassword ? 'Hide password' : 'Show password'}
-                
+                title={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? "👁️" : "👁️‍🗨️"}
               </button>
             </div>
           </div>
 
-          {error && <p className="error-msg">{error}</p>}
+          {error && <div className="error-message">{error}</div>}
 
-          <div className="button-group-login">
-            <button type="submit" className="login-btn" disabled={loading}>
-              {loading ? 'Signing in…' : 'Sign In'}
+          {/* Login and Forgot Password Buttons */}
+          <div className="button-group">
+            <button type="submit" disabled={loading} className="submit-btn">
+              {loading ? 'Logging in...' : 'Login'}
             </button>
             <button
               type="button"
-              className="forgot-pwd-btn"
               onClick={() => setShowForgotPassword(true)}
               disabled={loading}
+              className="forgot-password-btn"
             >
               🔑 Forgot Password?
             </button>
           </div>
         </form>
 
-        <p className="login-footer">
-          No account? <a href="/register">Register here</a>
-        </p>
+        <div className="register-section">
+          <p>Don't have an account? <a href="/register">Register here</a></p>
+        </div>
       </div>
 
       {/* Forgot Password Modal */}
@@ -355,4 +346,3 @@ export default function Login() {
     </div>
   )
 }
-
