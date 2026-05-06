@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../Context/AuthContext'
@@ -236,20 +237,6 @@ export default function Login() {
   }
 
   return (
-<<<<<<< HEAD
-    <div className="login-container">
-      <div className="login-box">
-        {/* Header with Logo and System Title - Inside Box */}
-        <div className="login-box-header">
-          <img src={ILES_LOGO} alt="ILES Logo" className="ILES_LOGO" />
-          <span className="system-title">INTERNSHIP LOGIN AND EVALUATION SYSTEM</span>
-        </div>
-
-        <h1>Welcome, Login to ILES</h1>
-        <form onSubmit={handleSubmit} className="login-form">
-          <div className="form-group">
-            <label htmlFor="email">Email</label>
-=======
     <div className="login-root">
       <div className="login-card">
 
@@ -265,13 +252,12 @@ export default function Login() {
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label htmlFor="email">Email address</label>
->>>>>>> 27022ba6e55fd5ecaed589cc4d2dcd4093afa15d
             <input
               id="email"
               type="email"
+              placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
               required
               disabled={loading}
             />
@@ -279,53 +265,29 @@ export default function Login() {
 
           <div className="form-group">
             <label htmlFor="password">Password</label>
-<<<<<<< HEAD
-            <div className="password-input-wrapper">
-              <input
-                id="password"
-                type={showPassword ? "text" : "password"}
-=======
             <div className="password-wrapper">
               <input
                 id="password"
                 type={showPassword ? 'text' : 'password'}
                 placeholder="Enter your password"
->>>>>>> 27022ba6e55fd5ecaed589cc4d2dcd4093afa15d
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                autoComplete="current-password"
                 disabled={loading}
               />
               <button
                 type="button"
-<<<<<<< HEAD
-                className="password-toggle-btn"
-                onClick={togglePasswordVisibility}
-                disabled={loading}
-                title={showPassword ? "Hide password" : "Show password"}
-=======
                 className="password-toggle"
                 onClick={() => setShowPassword(!showPassword)}
                 disabled={loading}
                 title={showPassword ? 'Hide password' : 'Show password'}
->>>>>>> 27022ba6e55fd5ecaed589cc4d2dcd4093afa15d
               >
-                {showPassword ? '👁️' : '👁️‍🗨️'}
+                {showPassword ? 'Hide' : 'Show'}
               </button>
             </div>
           </div>
 
-<<<<<<< HEAD
-          {error && <div className="error-message">{error}</div>}
-
-          {/* Login and Forgot Password Buttons */}
-          <div className="button-group">
-            <button type="submit" disabled={loading} className="submit-btn">
-              {loading ? 'Logging in...' : 'Login'}
-            </button>
-            <button
-              type="button"
-=======
           {error && <p className="alert alert--error">{error}</p>}
 
           <button type="submit" className="btn btn--primary btn--full" disabled={loading}>
@@ -336,19 +298,17 @@ export default function Login() {
             <button
               type="button"
               className="forgot-link"
->>>>>>> 27022ba6e55fd5ecaed589cc4d2dcd4093afa15d
               onClick={() => setShowForgotPassword(true)}
               disabled={loading}
-              className="forgot-password-btn"
             >
               Forgot Password?
             </button>
           </div>
         </form>
 
-        <div className="register-section">
-          <p>Don't have an account? <a href="/register">Register here</a></p>
-        </div>
+        <p className="login-footer">
+          No account? <Link to="/register">Register here</Link>
+        </p>
       </div>
 
       <ForgotPasswordModal
@@ -357,8 +317,4 @@ export default function Login() {
       />
     </div>
   )
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 27022ba6e55fd5ecaed589cc4d2dcd4093afa15d
