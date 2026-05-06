@@ -63,6 +63,7 @@ function NotFound() {
 function App() {
   return (
     <ErrorBoundary>
+      
         <BrowserRouter>
           <Routes>
             {/* Default route - redirect to login */}
