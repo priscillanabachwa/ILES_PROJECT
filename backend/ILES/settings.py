@@ -43,7 +43,7 @@ INSTALLED_APPS = [
     'placements',
     'academic_evaluations',
     'user_accounts',
-    'weekly_logs',
+    'weekly_logs.apps.WeeklyLogsConfig',
 ]
 
 
