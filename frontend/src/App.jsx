@@ -9,8 +9,11 @@ import ProfilePage from './pages/ProfilePage.jsx'
 import SubmitLogPage from './pages/SubmitLogPage.jsx'
 import Login from './pages/login.jsx'
 import Register from './pages/Register.jsx'
+import { ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 
-// Error Boundary Component for catching React errors
+
+
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props)
@@ -105,6 +108,7 @@ function App() {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
+         <ToastContainer position="top-right" autoClose={3000} />
     </ErrorBoundary>
   )
 }
