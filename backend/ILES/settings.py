@@ -49,7 +49,7 @@ INSTALLED_APPS = [
 
 
 
-AUTH_USER_MODEL = 'user_accounts.CustomUser'
+
 
 # REST Framework Configuration
 REST_FRAMEWORK = {
