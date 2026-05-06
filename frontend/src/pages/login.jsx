@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../Context/AuthContext'
@@ -282,7 +283,7 @@ export default function Login() {
                 disabled={loading}
                 title={showPassword ? 'Hide password' : 'Show password'}
               >
-                {showPassword ? '👁️' : '👁️‍🗨️'}
+                {showPassword ? 'Hide' : 'Show'}
               </button>
             </div>
           </div>
@@ -306,7 +307,7 @@ export default function Login() {
         </form>
 
         <p className="login-footer">
-          No account? <a href="/register">Register here</a>
+          No account? <Link to="/register">Register here</Link>
         </p>
       </div>
 
