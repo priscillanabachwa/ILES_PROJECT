@@ -11,6 +11,7 @@ import Login from './pages/login.jsx'
 import Register from './pages/Register.jsx'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
+import MyLogsPage from './pages/MyLogPage'
 
 
 
@@ -84,9 +85,9 @@ function App() {
             {/* Student Routes */}
             <Route element={<AppLayout role="STUDENT" />}>
               <Route path="/student/dashboard" element={<StudentDashboard />} />
-              <Route path="/student/logs" element={<div className="p-6 text-white">My Logs</div>} />
-              <Route path="/student/profile" element={<ProfilePage />} />
+              <Route path="/student/logs" element={<MyLogsPage />} />
               <Route path="/student/logs/new" element={<SubmitLogPage />} />
+              <Route path="/student/profile" element={<ProfilePage />} />
             </Route>
 
             {/* Workplace Supervisor Routes */}
