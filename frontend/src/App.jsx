@@ -13,17 +13,11 @@ import Login from './pages/login.jsx'
 import Register from './pages/Register.jsx'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
+import AdminUsersPage from './pages/AdminUsersPage.jsx'
 
 import MyLogsPage from './pages/MyLogsPage'
 import AdminLogsPage from './pages/AdminLogsPage.jsx'
 import AdminEvaluationsPage from './pages/AdminEvaluationsPage.jsx'
-import AdminUsersPage from './pages/AdminUsersPage.jsx'
-<<<<<<< HEAD
-
-=======
-import { AuthProvider, useAuth } from './context/AuthContext.jsx'
->>>>>>> f588de94a6e37d4f934a30426a7b8bb8bea44065
-
 
 const ProtectedRoute = ({children, allowedRoles}) => {
   const {user, loading} = useAuth();
