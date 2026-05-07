@@ -92,6 +92,7 @@ export default function MyLogsPage() {
   const [activeView,        setActiveView]        = useState(location.state?.openForm? 'new':'history') // 'history' | 'new'
     // 'entry' | 'documents'
   const [weekNumber,        setWeekNumber]        = useState('')
+   const [WorkHours,        setWorkHours]        = useState('')
   const [activities,        setActivities]        = useState('')
   const [challenges,        setChallenges]        = useState('')
   const [submitStatus,      setSubmitStatus]      = useState('draft')
@@ -517,11 +518,26 @@ export default function MyLogsPage() {
           className="w-full rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 bg-slate-700/50 border border-slate-600 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
         />
       </div>
+      {/* hours */}
+      <div className="space-y-1.5">
+        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
+          hours in field <span className="text-red-400">*</span>
+        </label>
+        <input
+          type="number"
+          min="1"
+          max="52"
+          placeholder="e.g. 6"
+          value={WorkHours}
+          onChange={(e) =>setWorkHours(e.target.value)}
+          className="w-full rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 bg-slate-700/50 border border-slate-600 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+        />
+      </div>
 
       {/* Activities */}
       <div className="space-y-1.5">
         <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
-          Activities This Week <span className="text-red-400">*</span>
+          Description <span className="text-red-400">*</span>
         </label>
         <textarea
           rows={5}
