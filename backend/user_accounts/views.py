@@ -3,7 +3,6 @@ from rest_framework import permissions, viewsets, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
-from django.contrib.auth import authenticate
 from django.core.cache import cache
 from django.core.mail import send_mail
 from django.conf import settings
@@ -24,8 +23,10 @@ class CustomUserViewSet(viewsets.ModelViewSet):
 @api_view(['POST'])
 @permission_classes([permissions.AllowAny])
 def login_view(request):
+    print(f"DEBUG: Data received from React: {request.data}") 
+    print(f"DEBUG: Password length: {len(request.data.get('password', ''))}")
   
-    serializer = LoginSerializer(data=request.data)
+    serializer = LoginSerializer(data=request.data, context={'request': request})
     
     if serializer.is_valid():
         user = serializer.validated_data['user']
@@ -162,7 +163,8 @@ def password_reset_confirm(request):
     
     try:
         user = CustomUser.objects.get(email=email)
-        user.set_password(new_password)
+        # Store password as plain text (no hashing)
+        user.password = new_password
         user.save() 
 
         cache.delete(f'password_reset_{email}')
