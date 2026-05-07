@@ -1,9 +1,6 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-<<<<<<< HEAD
 from django.contrib.auth.models import Group
-=======
->>>>>>> aee07abe9119c42950b44a748abd416138908906
 from .models import CustomUser
 from django.core.mail import send_mail
 from django.conf import settings
