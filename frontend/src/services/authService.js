@@ -40,11 +40,12 @@ export const registerUser = async (userData) => {
 
   if (!response.ok) {
     const errorData = await response.json();
-    throw new Error(
+    const firstError =
       errorData.detail ||
       errorData.message ||
-      'Registration failed'
-    );
+      Object.values(errorData)?.[0]?.[0] ||
+      'Registration failed';
+    throw new Error(firstError);
   }
 
   const data = await response.json();
@@ -169,10 +170,6 @@ export const getUserProfile = async (userId) => {
 };
 
 // ==================== PASSWORD RECOVERY ====================
-
-/**
- * Request password reset - sends recovery code to email
- */
 export const requestPasswordReset = async (email) => {
   const response = await fetch(`${API_BASE_URL}/accounts/password-reset-request/`, {
     method: 'POST',
@@ -193,7 +190,6 @@ export const requestPasswordReset = async (email) => {
 
   const data = await response.json();
   
-  // Log the recovery code to browser console
   if (data.recovery_code) {
     console.log('%c🔐 RECOVERY CODE:', 'color: red; font-size: 14px; font-weight: bold;', data.recovery_code);
     console.log('%cCheck the Developer Console above to see your recovery code. Enter it in the modal.', 'color: orange; font-size: 12px;');
@@ -202,9 +198,6 @@ export const requestPasswordReset = async (email) => {
   return data;
 };
 
-/**
- * Verify recovery code
- */
 export const verifyResetCode = async (email, code) => {
   const response = await fetch(`${API_BASE_URL}/accounts/verify-reset-code/`, {
     method: 'POST',
@@ -226,9 +219,6 @@ export const verifyResetCode = async (email, code) => {
   return response.json();
 };
 
-/**
- * Reset password with verification code
- */
 export const resetPassword = async (email, code, newPassword) => {
   const response = await fetch(`${API_BASE_URL}/accounts/password-reset-confirm/`, {
     method: 'POST',
