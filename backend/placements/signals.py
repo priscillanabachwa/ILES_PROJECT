@@ -9,7 +9,7 @@ def notify_on_update(sender, instance, created, **kwargs):
     if not created:
         # Logic for creating notification when a placement is updated
         send_mail(
-            subject='Placement Updated',
+            subject='InternshipPlacement Updated',
             message=f'The placement for {instance.student} has been updated.',
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[instance.student.email],

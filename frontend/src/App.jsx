@@ -11,6 +11,11 @@ import Login from './pages/login.jsx'
 import Register from './pages/Register.jsx'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
+import MyLogsPage from './pages/MyLogPage'
+import AdminLogsPage from './pages/AdminLogsPage.jsx'
+import AdminEvaluationsPage from './pages/AdminEvaluationsPage.jsx'
+import AdminUsersPage from './pages/AdminUsersPage.jsx'
+
 
 
 
@@ -63,6 +68,7 @@ function NotFound() {
 function App() {
   return (
     <ErrorBoundary>
+      
         <BrowserRouter>
           <Routes>
             {/* Default route - redirect to login */}
@@ -83,9 +89,9 @@ function App() {
             {/* Student Routes */}
             <Route element={<AppLayout role="STUDENT" />}>
               <Route path="/student/dashboard" element={<StudentDashboard />} />
-              <Route path="/student/logs" element={<div className="p-6 text-white">My Logs</div>} />
-              <Route path="/student/profile" element={<ProfilePage />} />
+              <Route path="/student/logs" element={<MyLogsPage />} />
               <Route path="/student/logs/new" element={<SubmitLogPage />} />
+              <Route path="/student/profile" element={<ProfilePage />} />
             </Route>
 
             {/* Workplace Supervisor Routes */}
@@ -99,9 +105,10 @@ function App() {
             {/* Admin Routes */}
             <Route element={<AppLayout role="ADMIN" />}>
               <Route path="/admin/dashboard" element={<InternshipAdministratorDashboard />} />
-              <Route path="/admin/logs" element={<div className="p-6 text-white">All Logs Table</div>} />
-              <Route path="/admin/evaluations" element={<div className="p-6 text-white">Evaluations Page</div>} />
+              <Route path="/admin/logs" element={<AdminLogsPage />} />
+              <Route path="/admin/evaluations" element={<AdminEvaluationsPage />} />
               <Route path="/admin/profile" element={<ProfilePage />} />
+              <Route path="/admin/users" element={<AdminUsersPage />} />
             </Route>
 
             {/* 404 - Not Found Route (must be last) */}
