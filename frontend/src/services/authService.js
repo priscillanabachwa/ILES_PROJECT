@@ -15,18 +15,24 @@ export const loginUser = async (email, password) => {
       localStorage.setItem('authToken', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
     } else {
-      throw new Error('Login failed');
+      throw new Error('Login failed: No token returned');
     }
     return response.data;
   }
-    catch (error){
-      const message = error.response?.data?.detail || 
-                      error.response?.data?.non_field_errors?.[0] || 
-                      error.response?.data?.email?.[0] || 
-                      'Login failed';
-      throw new Error(message);
+  catch (error){
+    // Network/connection error
+    if (!error.response) {
+      throw new Error('Cannot connect to server. Make sure the backend is running on port 8000.');
     }
+    const message = error.response?.data?.detail ||
+                    error.response?.data?.non_field_errors?.[0] ||
+                    error.response?.data?.email?.[0] ||
+                    error.response?.data?.error ||
+                    `Login failed (${error.response.status})`;
+    throw new Error(message);
+  }
 };
+
 export const loginAdmin = async (email, password) => {
   return loginUser(email, password);
 };
@@ -249,5 +255,3 @@ export const resetPassword = async (email, code, newPassword) => {
 
   return response.json();
 };
-
-
