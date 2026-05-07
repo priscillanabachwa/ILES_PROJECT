@@ -24,10 +24,18 @@ def send_welcome_email(sender, instance, created, **kwargs):
 @receiver(post_save, sender=CustomUser)
 def assign_user_to_group(sender, instance, created, **kwargs):
     if created:
-        if hasattr(instance, 'role'): 
-            role_name = instance.role.capitalize() + 's'  # Convert role to group name (e.g., 'Student' -> 'Students')
+        role_mapping = {
+            'student': 'Student',
+            'workplace_supervisor': 'Workplace Supervisor',
+            'academic_supervisor': 'Academic Supervisor',
+            'admin': 'Admin',
+        }
+        target_group_name = role_mapping.get(instance.role)
+
+        if target_group_name:
             try:
-                group = Group.objects.get(name=role_name)
+                group = Group.objects.get(name=target_group_name)
                 instance.groups.add(group)
             except Group.DoesNotExist:
                 pass
+        
