@@ -7,6 +7,9 @@ from django.core.mail import send_mail
 from .models import WeeklyLogbook
 from .serializers import WeeklyLogbookSerializer
 
+class WeeklyLogCreateView(APIView):
+    permission_classes = [CanSubmitLog]
+
 
 class WeeklyLogbookViewSet(viewsets.ModelViewSet):
     serializer_class = WeeklyLogbookSerializer
