@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'rest_framework.authtoken',
+    'ILES',
     'placements.apps.PlacementsConfig',
     'academic_evaluations.apps.AcademicEvaluationsConfig',
     'user_accounts.apps.UserAccountsConfig',
@@ -75,7 +76,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'iles.urls'
+ROOT_URLCONF = 'ILES.urls'
 
 TEMPLATES = [
     {
@@ -92,7 +93,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'iles.wsgi.application'
+WSGI_APPLICATION = 'ILES.wsgi.application'
 
 
 # Database
