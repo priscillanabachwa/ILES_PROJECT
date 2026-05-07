@@ -61,6 +61,12 @@ class AcademicEvaluation(models.Model):
     class Meta:
         unique_together=[['placement','evaluator']] 
         ordering =['-created_at']
+
+        permissions = [
+            ('can_submit_academic_evaluation','Can submit academic evaluation'),
+            ('can_view_academic_evaluation','Can view their own academic evaluation'),
+            ('can_edit_academic_evaluation','Can edit academic evaluation'),
+        ]
         
     def calculate_total_score(self):
         total = Decimal('0')

@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from .models import CustomUserManager
-
 from .models import CustomUser
 
 
