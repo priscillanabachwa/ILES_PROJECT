@@ -96,7 +96,7 @@ export default function MyLogsPage() {
         const response = await axios.get('http://127.0.0.1:8000/api/weeklylogs/', {
           headers: { Authorization: 'Bearer ' + token }
         })
-        setLogs(response.data)
+        setLogs(Array.isArray(response.data) ? response.data : response.data.results || [])
       } catch {
         setError('Failed to load your logbooks. Please refresh the page.')
       } finally {
