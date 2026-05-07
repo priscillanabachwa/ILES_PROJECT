@@ -3,7 +3,6 @@ import { toast, ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import axios from 'axios'
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 const formatDate = (iso) =>
   iso ? new Date(iso).toLocaleDateString('en-UG', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
 
@@ -13,7 +12,6 @@ const getInitials = (name) =>
 const isOverdue = (deadline) =>
   deadline ? new Date(deadline) < new Date() : false
 
-// ─── Status Badge ─────────────────────────────────────────────────────────────
 const STATUS_STYLES = {
   draft:     'bg-slate-500/20 text-slate-400 border border-slate-500/30',
   submitted: 'bg-amber-500/20 text-amber-300 border border-amber-500/30',
@@ -31,7 +29,6 @@ function Badge({ status, overdue = false }) {
   )
 }
 
-// ─── Avatar ───────────────────────────────────────────────────────────────────
 const AVATAR_COLORS = ['bg-indigo-600','bg-emerald-600','bg-amber-500','bg-rose-500','bg-teal-600','bg-violet-600']
 
 function AvatarCircle({ name, index = 0 }) {
@@ -43,7 +40,6 @@ function AvatarCircle({ name, index = 0 }) {
   )
 }
 
-// ─── Skeleton ─────────────────────────────────────────────────────────────────
 function Skeleton({ className = '' }) {
   return <div className={`bg-slate-700/50 animate-pulse rounded-lg ${className}`} />
 }
@@ -66,7 +62,6 @@ function LogSkeleton() {
   )
 }
 
-// ─── Log Detail Modal ─────────────────────────────────────────────────────────
 function LogDetailModal({ log, onClose, onStatusChange }) {
   const [feedback, setFeedback] = useState('')
   const [saving,   setSaving]   = useState(false)
@@ -187,8 +182,6 @@ function LogDetailModal({ log, onClose, onStatusChange }) {
   )
 }
 
-// ─── Main Admin Logs Page ─────────────────────────────────────────────────────
-// No AppLayout wrapper — renders inside AppLayout's <Outlet />
 export default function AdminLogsPage() {
   const [logs,    setLogs]    = useState([])
   const [loading, setLoading] = useState(true)
