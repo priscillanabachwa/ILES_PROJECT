@@ -25,7 +25,7 @@ class CustomUserViewSet(viewsets.ModelViewSet):
     serializer_class = CustomUserSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-user = get_user_model()
+User = get_user_model()
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def login_view(request):
@@ -193,7 +193,7 @@ def password_reset_confirm(request):
     try:
         user = CustomUser.objects.get(email=email)
         # Store password as plain text (no hashing)
-        user.password = new_password
+        user.set_password(new_password)
         user.save() 
 
         cache.delete(f'password_reset_{email}')

@@ -1,6 +1,6 @@
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, post_migrate
 from django.dispatch import receiver
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, Permission
 from .models import CustomUser,PasswordResetOTP
 from django.core.mail import send_mail
 from django.conf import settings
@@ -10,14 +10,11 @@ def send_welcome_email(sender, instance, created, **kwargs):
     if created:
         subject = 'Welcome to ILES!'
         message = f'Hello {instance.first_name},\n\nYour account for the Internship Logging and Evaluation System (ILES) has been created successfully. We are excited to have you on board.\n\nBest regards'
-        from_email = settings.EMAIL_HOST_USER
-        recipient_list = [instance.email]
-        
         send_mail(
             subject= subject,
             message= message,
             from_email= settings.EMAIL_HOST_USER,
-            recipient_list= recipient_list,
+            recipient_list= [instance.email],
             fail_silently=True,
         )
 @receiver(post_save, sender=PasswordResetOTP)
@@ -43,9 +40,20 @@ def assign_user_to_group(sender, instance, created, **kwargs):
         target_group_name = role_mapping.get(instance.role)
 
         if target_group_name:
-            try:
-                group = Group.objects.get(name=target_group_name)
+            
+                group, created = Group.objects.get_or_create(name=target_group_name)
                 instance.groups.add(group)
-            except Group.DoesNotExist:
-                pass
+            
+@receiver(post_migrate)
+def create_user_groups(sender, **kwargs):
+    groups = [
+        'Student', 
+        'Workplace Supervisor', 
+        'Academic Supervisor', 
+        'Admin'
+    ]
+    for group_name in groups:
+        Group.objects.get_or_create(name=group_name)
+
+
         
