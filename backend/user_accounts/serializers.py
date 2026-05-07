@@ -6,7 +6,6 @@ from .models import CustomUserManager, CustomUser, PasswordResetOTP
 import random
 
 
-
 class CustomUserSerializer(serializers.ModelSerializer):
 
     email = serializers.EmailField()
