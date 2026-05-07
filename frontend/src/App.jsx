@@ -7,12 +7,14 @@ import StudentDashboard from './pages/dashboards/StudentDashboard.jsx'
 import WorkplaceSupervisorDashboard from './pages/dashboards/WorkplaceSupervisorDashboard.jsx'
 import InternshipAdministratorDashboard from './pages/dashboards/InternshipAdministratorDashboard.jsx'
 import ProfilePage from './pages/ProfilePage.jsx'
-import SubmitLogPage from './pages/SubmitLogPage.jsx'
+import { AuthProvider } from './Context/AuthContext'
+
 import Login from './pages/login.jsx'
 import Register from './pages/Register.jsx'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
-import MyLogsPage from './pages/MyLogPage'
+
+import MyLogsPage from './pages/MyLogsPage'
 import AdminLogsPage from './pages/AdminLogsPage.jsx'
 import AdminEvaluationsPage from './pages/AdminEvaluationsPage.jsx'
 import AdminUsersPage from './pages/AdminUsersPage.jsx'
@@ -83,7 +85,7 @@ function NotFound() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#0f172a] text-white p-6">
         <h1 className="text-6xl font-bold mb-4">Page Not Found</h1>
         <p className="text-xl text-slate-400 mb-8">The page you are looking for does not exist.</p>
-        <Navigate to="/login" replace className="text-indigo-400 underline">Return to Login</Navigate>
+        <a href="/login" className="text-indigo-400 underline hover:text-indigo-300 text-lg">Return to Login</a>
     </div>
   )
 }
@@ -122,8 +124,8 @@ function App() {
             }>
               <Route path="/student/dashboard" element={<StudentDashboard />} />
               <Route path="/student/logs" element={<MyLogsPage />} />
-              <Route path="/student/logs/new" element={<SubmitLogPage />} />
               <Route path="/student/profile" element={<ProfilePage />} />
+
             </Route>
 
             {/* Workplace Supervisor Routes */}
