@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react'
+import { loginUser } from '../services/authService';
 
 const AuthContext = createContext(null)
 
@@ -14,11 +15,15 @@ export function AuthProvider({ children }) {
     setLoading(false);
   }, []);
 
-  const login = (userData, token) => {
-    localStorage.setItem('authToken', token)
-    localStorage.setItem('user', JSON.stringify(userData))
-    setUser(userData)
-  }
+  const login = async (email, password) => {
+    // Simulate an API call
+    const response = await loginUser(email, password );
+    if (response.status === 200) { 
+      localStorage.setItem('authToken', response.data.token);
+      setUser(response.data.user);
+      Navigate('/admin/dashboard');
+    }
+  };
 
   const logout = () => {
     localStorage.removeItem('authToken')

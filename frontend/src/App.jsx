@@ -1,3 +1,4 @@
+import { useAuth } from './Context/AuthContext.jsx'
 import React from 'react'
 import { BrowserRouter, Routes, Route, Navigate} from 'react-router-dom'
 import AppLayout from './components/layout/AppLayout'
@@ -18,6 +19,7 @@ import AdminLogsPage from './pages/AdminLogsPage.jsx'
 import AdminEvaluationsPage from './pages/AdminEvaluationsPage.jsx'
 import AdminUsersPage from './pages/AdminUsersPage.jsx'
 import { AuthProvider } from './Context/AuthContext.jsx'
+
 
 const ProtectedRoute = ({children, allowedRoles}) => {
   const {user, loading} = useAuth();
