@@ -76,7 +76,14 @@ export default function Register() {
       });
       localStorage.setItem('authToken', response.token);
       localStorage.setItem('user', JSON.stringify(response.user));
-      navigate('/dashboard');
+      const roleRoutes = {
+        student: '/student/dashboard',
+        admin: '/admin/dashboard',
+        academic_supervisor: '/academic/dashboard',
+        workplace_supervisor: '/supervisor/dashboard',
+      };
+        navigate(roleRoutes[response.user.role] || '/login');
+          
     } catch (err) {
       setError(err.message || 'Registration failed. Please try again.');
     } finally {
@@ -154,6 +161,7 @@ export default function Register() {
               <option value="student">Student Intern</option>
               <option value="workplace_supervisor">Workplace Supervisor</option>
               <option value="academic_supervisor">Academic Supervisor</option>
+              <option value="admin">Internship Administrator</option>
             </select>
           </div>
 

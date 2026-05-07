@@ -18,7 +18,7 @@ def send_welcome_email(sender, instance, created, **kwargs):
             message= message,
             from_email= settings.EMAIL_HOST_USER,
             recipient_list= recipient_list,
-            fail_silently=False,
+            fail_silently=True,
         )
 
 @receiver(post_save, sender=CustomUser)

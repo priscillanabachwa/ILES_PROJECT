@@ -28,6 +28,12 @@ class CustomUserSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "is_staff", "is_superuser", "is_active"]
 
     def validate_email(self, value):
+        value = value.lower()
+        # Check for duplicate email on create (not on update)
+        if self.instance is None:  # only on create
+            if CustomUser.objects.filter(email=value).exists():
+                raise serializers.ValidationError("A user with this email already exists.")
+        return value
 
         return value.lower()
 
