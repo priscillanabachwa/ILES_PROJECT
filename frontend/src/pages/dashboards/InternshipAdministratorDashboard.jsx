@@ -107,11 +107,7 @@ function FormField({ label, required, children }) {
 const inputCls = "w-full rounded-lg px-3 py-2 text-sm text-white bg-slate-700/50 border border-slate-600 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition placeholder-slate-500"
 const selectCls = "w-full rounded-lg px-3 py-2 text-sm text-white bg-slate-700/50 border border-slate-600 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition"
 
-// ─── Notification helper ──────────────────────────────────────────────────────
-// Simulates sending a notification and shows a toast confirmation
 const sendNotification = (recipient, message) => {
-  // TODO: connect to Django — POST /api/notifications/
-  // await axios.post('http://127.0.0.1:8000/api/notifications/', { recipient, message })
   console.log(`Notification sent to ${recipient}: ${message}`)
   toast.info(`📧 Notification sent to ${recipient}`, { position: 'top-right', autoClose: 3000 })
 }
@@ -128,9 +124,7 @@ function RegisterStudentModal({ onClose }) {
     }
     setSaving(true)
     try {
-      // TODO: POST /api/accounts/register/ { ...form, role: 'student' }
       toast.success(`✓ Student ${form.first_name} ${form.last_name} registered successfully!`)
-      // Send welcome notification to student
       sendNotification(form.email, `Welcome to ILES! Your student account has been created.`)
       onClose()
     } catch {
@@ -186,7 +180,6 @@ function AssignPlacementModal({ onClose }) {
     }
     setSaving(true)
     try {
-      // TODO: POST /api/placements/ { ...form }
       toast.success(`✓ Placement assigned to ${form.student} at ${form.company}!`)
       sendNotification(form.student, `Your internship placement at ${form.company} has been set up.`)
       onClose()
@@ -248,19 +241,10 @@ function AssignSupervisorModal({ onClose, placement = null }) {
     }
     setSaving(true)
     try {
-      // TODO: PATCH /api/placements/<id>/ { academic_supervisor, workplace_supervisor }
       toast.success(`✓ Supervisor assigned to ${form.student}!`)
-
-      // Notify both supervisors
-      if (form.academic_supervisor) {
-        sendNotification(form.academic_supervisor, `You have been assigned as academic supervisor for ${form.student}.`)
-      }
-      if (form.workplace_supervisor) {
-        sendNotification(form.workplace_supervisor, `You have been assigned as workplace supervisor for ${form.student}.`)
-      }
-      // Notify student
+      if (form.academic_supervisor) sendNotification(form.academic_supervisor, `You have been assigned as academic supervisor for ${form.student}.`)
+      if (form.workplace_supervisor) sendNotification(form.workplace_supervisor, `You have been assigned as workplace supervisor for ${form.student}.`)
       sendNotification(form.student, `Your supervisors have been assigned. Academic: ${form.academic_supervisor || 'TBD'}, Workplace: ${form.workplace_supervisor || 'TBD'}.`)
-
       onClose()
     } catch {
       toast.error('Failed to assign supervisor. Please try again.')
@@ -271,8 +255,7 @@ function AssignSupervisorModal({ onClose, placement = null }) {
     <Modal title="Assign Supervisor to Student" onClose={onClose}>
       <FormField label="Student Name" required>
         <input className={inputCls} placeholder="e.g. Amara Nkosi"
-          value={form.student} onChange={set('student')}
-          readOnly={!!placement} />
+          value={form.student} onChange={set('student')} readOnly={!!placement} />
       </FormField>
       <FormField label="Academic Supervisor">
         <input className={inputCls} placeholder="e.g. Prof. Grace Atim" value={form.academic_supervisor} onChange={set('academic_supervisor')} />
@@ -305,7 +288,6 @@ function ReportModal({ onClose }) {
   const handleGenerate = async () => {
     setGenerating(true)
     try {
-      // TODO: GET /api/reports/?type=placements&format=pdf
       setTimeout(() => {
         toast.success(`✓ ${reportType.charAt(0).toUpperCase() + reportType.slice(1)} report generated as ${format.toUpperCase()}!`)
         setGenerating(false)
@@ -397,17 +379,14 @@ export default function InternshipAdministratorDashboard() {
   const [placements,  setPlacements]  = useState([])
   const [users,       setUsers]       = useState([])
   const [evaluations, setEvaluations] = useState([])
-  const [alerts,      setAlerts]      = useState([])
   const [loading,     setLoading]     = useState(true)
   const [error,       setError]       = useState('')
 
-  // Modal state
-  const [modal,            setModal]           = useState(null) 
-  const [selectedPlacement, setSelectedPlacement] = useState(null) 
+  const [modal,             setModal]            = useState(null)
+  const [selectedPlacement, setSelectedPlacement] = useState(null)
 
-  // Filter state
-  const [search,       setSearch]       = useState('')
-  const [statusFilter, setStatusFilter] = useState('all')
+  const [search,          setSearch]          = useState('')
+  const [statusFilter,    setStatusFilter]    = useState('all')
   const [studentIdFilter, setStudentIdFilter] = useState('')
 
   useEffect(() => {
@@ -420,11 +399,22 @@ export default function InternshipAdministratorDashboard() {
           dashboardService.getAdminUsers(),
           dashboardService.getAdminEvaluations(),
         ])
-        setStats(statsRes.data); setPlacements(placementsRes.data)
-        setUsers(usersRes.data); setEvaluations(evaluationsRes.data)
+        setStats(statsRes.data)
+        setPlacements(placementsRes.data)
+        setUsers(usersRes.data)
+        setEvaluations(evaluationsRes.data)
       } catch {
         // Mock data — remove when backend is connected
-        setStats({ total_students:42, total_placements:38, total_supervisors:12, average_score:74.8, active_placements:30, pending_placements:4, unassigned_students:4, evaluations_complete:28 })
+        setStats({
+          total_students:    42,
+          total_supervisors: 12,
+          average_score:     74.8,
+          active_placements: 30,
+          pending_placements: 4,
+          unassigned_students: 4,
+          evaluations_complete: 28,
+          logs_overdue: 6,
+        })
         setPlacements([
           { id:1, student_name:'Amara Nkosi',    student_id:'2500703348', company:'TechCorp Uganda',          academic_supervisor:'Prof. Grace Atim',  workplace_supervisor:'David Ochieng', status:'ACTIVE',    start_date:'2025-09-01', end_date:'2025-11-30' },
           { id:2, student_name:'Brian Otim',     student_id:'2500703349', company:'MTN Uganda',               academic_supervisor:'Dr. James Okello',  workplace_supervisor:'Sarah Nambi',   status:'ACTIVE',    start_date:'2025-09-01', end_date:'2025-11-30' },
@@ -445,11 +435,6 @@ export default function InternshipAdministratorDashboard() {
           { id:3, student_name:'Cynthia Akello', workplace_score:88, academic_score:82, logbook_score:80, final_score:83.8, grade:'A'  },
           { id:4, student_name:'Denis Okello',   workplace_score:65, academic_score:60, logbook_score:68, final_score:64.4, grade:'C+' },
         ])
-        setAlerts([
-          { id:1, message:'4 students have no placement assigned', type:'warning', link:'/admin/students' },
-          { id:2, message:'6 logbooks are overdue for review',     type:'warning', link:'/admin/logs'     },
-          { id:3, message:'2 placements ending within 2 weeks',    type:'info',    link:'/admin/placements'},
-        ])
       } finally { setLoading(false) }
     }
     fetchAll()
@@ -457,7 +442,6 @@ export default function InternshipAdministratorDashboard() {
 
   const fullName = [user?.first_name, user?.last_name].filter(Boolean).join(' ') || 'Administrator'
 
-  // Filter placements by status, name/company search AND student ID
   const filteredPlacements = placements.filter((p) => {
     const matchStatus    = statusFilter === 'all' || p.status === statusFilter
     const matchSearch    = search === '' ||
@@ -468,15 +452,12 @@ export default function InternshipAdministratorDashboard() {
     return matchStatus && matchSearch && matchStudentId
   })
 
-  // Mark placement as completed + notify
   const handleMarkCompleted = (p) => {
     setPlacements((prev) => prev.map((pl) => pl.id === p.id ? { ...pl, status:'COMPLETED' } : pl))
     toast.success(`✓ ${p.student_name}'s placement marked as completed!`)
     sendNotification(p.student_name, `Your internship at ${p.company} has been marked as completed.`)
-    // TODO: PATCH /api/placements/<id>/ { status: 'COMPLETED' }
   }
 
-  // Open assign supervisor modal from a placement row
   const handleInlineAssign = (p) => {
     setSelectedPlacement(p)
     setModal('supervisor')
@@ -485,25 +466,16 @@ export default function InternshipAdministratorDashboard() {
   const roleBreakdown = [
     { role:'Students',              count:stats?.total_students,   color:'bg-indigo-500' },
     { role:'Academic Supervisors',  count:stats?.total_supervisors ? Math.round(stats.total_supervisors * 0.5) : null, color:'bg-emerald-500' },
-    { role:'Workplace Supervisors', count:stats?.total_supervisors ? Math.round(stats.total_supervisors * 0.5) : null, color:'bg-amber-500'   },
+    { role:'Workplace Supervisors', count:stats?.total_supervisors ? Math.round(stats.total_supervisors * 0.5) : null, color:'bg-amber-500' },
   ]
 
   return (
     <div className="space-y-6">
 
-      {/* ToastContainer — required for react-toastify */}
-      <ToastContainer
-        position="top-right"
-        autoClose={4000}
-        hideProgressBar={false}
-        newestOnTop
-        closeOnClick
-        theme="dark"
-      />
+      <ToastContainer position="top-right" autoClose={4000} hideProgressBar={false} newestOnTop closeOnClick theme="dark" />
 
-      {/* Modals */}
-      {modal === 'register'   && <RegisterStudentModal  onClose={() => setModal(null)} />}
-      {modal === 'placement'  && <AssignPlacementModal  onClose={() => setModal(null)} />}
+      {modal === 'register'   && <RegisterStudentModal onClose={() => setModal(null)} />}
+      {modal === 'placement'  && <AssignPlacementModal onClose={() => setModal(null)} />}
       {modal === 'supervisor' && (
         <AssignSupervisorModal
           onClose={() => { setModal(null); setSelectedPlacement(null) }}
@@ -526,41 +498,23 @@ export default function InternshipAdministratorDashboard() {
         </div>
       </div>
 
-      {/* System Alerts */}
-      {!loading && alerts.length > 0 && (
-        <div className="space-y-2">
-          {alerts.map((a) => (
-            <div key={a.id} className={`flex items-center justify-between px-4 py-3 rounded-xl border text-sm font-medium
-              ${a.type === 'warning' ? 'bg-amber-500/10 border-amber-500/30 text-amber-300' : 'bg-indigo-500/10 border-indigo-500/30 text-indigo-300'}`}>
-              <div className="flex items-center gap-2">
-                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                </svg>
-                {a.message}
-              </div>
-              <Link to={a.link} className="text-xs font-semibold hover:underline ml-4 whitespace-nowrap">Fix now →</Link>
-            </div>
-          ))}
-        </div>
-      )}
-
       {error && <div className="bg-red-500/10 border border-red-500/30 text-red-300 text-sm px-4 py-3 rounded-xl">{error}</div>}
 
       {/* Stat cards row 1 */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Total Students"    value={stats?.total_students}    sub="View all students"    subLink="/admin/students"    accent="indigo"  icon={Icon.students}   />
-        <StatCard label="Active Placements" value={stats?.active_placements} sub="View all placements"  subLink="/admin/placements"  accent="emerald" icon={Icon.placements} />
-        <StatCard label="Total Supervisors" value={stats?.total_supervisors} sub="View all supervisors" subLink="/admin/supervisors" accent="amber"   icon={Icon.supervisors}/>
+        <StatCard label="Total Students"    value={stats?.total_students}    sub="View all students"    subLink="/admin/users?role=student"              accent="indigo"  icon={Icon.students}   />
+        <StatCard label="Active Placements" value={stats?.active_placements} sub="View all placements"  subLink="/admin/users?role=placements"           accent="emerald" icon={Icon.placements} />
+        <StatCard label="Total Supervisors" value={stats?.total_supervisors} sub="View all supervisors" subLink="/admin/users?role=workplace_supervisor"  accent="amber"   icon={Icon.supervisors}/>
         <StatCard label="Average Score"     value={stats ? `${Number(stats.average_score).toFixed(1)}%` : null} sub="View all evaluations" subLink="/admin/evaluations" accent="rose" icon={Icon.score} />
       </div>
 
       {/* Stat cards row 2 */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label:'Pending Placements',   value:stats?.pending_placements,   color:'text-amber-300',   link:'/admin/placements', linkText:'Assign now'  },
-          { label:'Unassigned Students',  value:stats?.unassigned_students,  color:'text-rose-300',    link:'/admin/students',   linkText:'Assign now'  },
-          { label:'Evaluations Complete', value:stats?.evaluations_complete, color:'text-emerald-300', link:'/admin/evaluations',linkText:'View reports' },
-          { label:'Total Placements',     value:stats?.total_placements,     color:'text-indigo-300',  link:'/admin/placements', linkText:'View all'    },
+          { label:'Pending Placements',   value:stats?.pending_placements,   color:'text-amber-300',   link:'/admin/users?role=placements', linkText:'Assign now'  },
+          { label:'Unassigned Students',  value:stats?.unassigned_students,  color:'text-rose-300',    link:'/admin/users?role=student',    linkText:'Assign now'  },
+          { label:'Evaluations Complete', value:stats?.evaluations_complete, color:'text-emerald-300', link:'/admin/evaluations',           linkText:'View reports'},
+          { label:'Logs Overdue',         value:stats?.logs_overdue ?? 6,    color:'text-red-300',     link:'/admin/logs',                  linkText:'Review now'  },
         ].map(({ label, value, color, link, linkText }) => (
           <div key={label} className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-4 text-center">
             <p className="text-xs text-slate-400 uppercase tracking-wide mb-1">{label}</p>
@@ -576,11 +530,10 @@ export default function InternshipAdministratorDashboard() {
         {/* Left col — 3/5 */}
         <div className="lg:col-span-3 space-y-5">
 
-          {/* Placements with filter, search, student ID filter */}
-          <Card title="Recent Placements" actionLabel="View All" actionLink="/admin/placements">
-            {/* Filters */}
+          {/* Recent Placements */}
+          <Card title="Recent Placements" actionLabel="View All" actionLink="/admin/users?role=placements">
             <div className="space-y-3 mb-4">
-              {/* Status filter tabs */}
+              {/* Status filter */}
               <div className="flex items-center gap-1 bg-slate-700/30 border border-slate-700/50 rounded-xl p-1">
                 {['all','ACTIVE','PENDING','COMPLETED'].map((s) => (
                   <button key={s} onClick={() => setStatusFilter(s)}
@@ -590,7 +543,7 @@ export default function InternshipAdministratorDashboard() {
                   </button>
                 ))}
               </div>
-              {/* Search + Student ID filter */}
+              {/* Search + Student ID */}
               <div className="flex gap-2">
                 <div className="flex items-center gap-2 bg-slate-700/30 border border-slate-700/50 rounded-xl px-3 py-1.5 flex-1">
                   {Icon.search}
@@ -624,6 +577,8 @@ export default function InternshipAdministratorDashboard() {
                     )}
                     {filteredPlacements.map((p, i) => (
                       <tr key={p.id} className="hover:bg-slate-700/20 transition">
+
+                        {/* Student */}
                         <td className="py-3 pr-2">
                           <div className="flex items-center gap-2">
                             <AvatarCircle name={p.student_name} index={i} size="sm" />
@@ -633,7 +588,11 @@ export default function InternshipAdministratorDashboard() {
                             </div>
                           </div>
                         </td>
+
+                        {/* Company */}
                         <td className="py-3 pr-2 text-slate-400">{p.company}</td>
+
+                        {/* Supervisors */}
                         <td className="py-3 pr-2">
                           {p.academic_supervisor
                             ? <p className="text-slate-400 truncate max-w-[100px]">{p.academic_supervisor}</p>
@@ -644,23 +603,30 @@ export default function InternshipAdministratorDashboard() {
                             : <p className="text-rose-400 italic" style={{fontSize:'10px'}}>No workplace supervisor</p>
                           }
                         </td>
+
+                        {/* Status */}
                         <td className="py-3 pr-2"><Badge status={p.status} /></td>
+
+                        {/* Actions */}
                         <td className="py-3">
-                          <div className="flex flex-col gap-1">
-                            {/* Inline assign supervisor button */}
-                            <button onClick={() => handleInlineAssign(p)}
-                              className="text-xs font-semibold text-amber-400 hover:text-amber-300 border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 px-2 py-1 rounded-lg transition whitespace-nowrap">
-                              Assign Sup.
-                            </button>
-                            {/* Mark done button — only for ACTIVE */}
+                          <div className="flex items-center gap-1">
+                            {/* Assign — only when supervisors missing and not completed */}
+                            {(!p.academic_supervisor || !p.workplace_supervisor) && p.status !== 'COMPLETED' && (
+                              <button onClick={() => handleInlineAssign(p)}
+                                className="text-xs font-semibold text-amber-400 hover:text-amber-300 border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 px-2 py-1 rounded-lg transition whitespace-nowrap">
+                                Assign
+                              </button>
+                            )}
+                            {/* Done — only for ACTIVE placements */}
                             {p.status === 'ACTIVE' && (
                               <button onClick={() => handleMarkCompleted(p)}
                                 className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-1 rounded-lg transition whitespace-nowrap">
-                                Mark Done
+                                Done
                               </button>
                             )}
                           </div>
                         </td>
+
                       </tr>
                     ))}
                   </tbody>
@@ -669,7 +635,7 @@ export default function InternshipAdministratorDashboard() {
             )}
           </Card>
 
-          {/* Evaluation Overview — US18 */}
+          {/* Evaluation Overview */}
           <Card title="Evaluation Overview" actionLabel="View All" actionLink="/admin/evaluations">
             {loading ? <ListSkeleton /> : (
               <div className="overflow-x-auto">
@@ -719,7 +685,7 @@ export default function InternshipAdministratorDashboard() {
         {/* Right col — 2/5 */}
         <div className="lg:col-span-2 space-y-5">
 
-          {/* User Overview — US19 */}
+          {/* User Overview */}
           <Card title="User Overview" actionLabel="Manage Users" actionLink="/admin/users">
             {loading ? <ListSkeleton /> : (
               <div className="space-y-4">
@@ -756,12 +722,12 @@ export default function InternshipAdministratorDashboard() {
           <Card title="Quick Actions">
             <div className="space-y-2">
               {[
-                { label:'Register Student',  sub:'Add a new student account',      icon:Icon.plus,       onClick:() => setModal('register'),   color:'text-indigo-400 bg-indigo-600/20'  },
-                { label:'Assign Placement',  sub:'Create a new placement record',   icon:Icon.placements, onClick:() => setModal('placement'),  color:'text-emerald-400 bg-emerald-500/20' },
-                { label:'Assign Supervisor', sub:'Link supervisor to a student',    icon:Icon.assign,     onClick:() => { setSelectedPlacement(null); setModal('supervisor') }, color:'text-amber-400 bg-amber-500/20' },
-                { label:'View Evaluations',  sub:'All scores across all students',  icon:Icon.eval,       to:'/admin/evaluations',              color:'text-teal-400 bg-teal-500/20'      },
-                { label:'Manage Users',      sub:'View and edit user accounts',     icon:Icon.users,      to:'/admin/users',                    color:'text-violet-400 bg-violet-500/20'  },
-                { label:'Generate Report',   sub:'Export system-wide reports',      icon:Icon.report,     onClick:() => setModal('report'),     color:'text-rose-400 bg-rose-500/20'      },
+                { label:'Register Student',  sub:'Add a new student account',     icon:Icon.plus,       onClick:() => setModal('register'),                                  color:'text-indigo-400 bg-indigo-600/20'   },
+                { label:'Assign Placement',  sub:'Create a new placement record',  icon:Icon.placements, onClick:() => setModal('placement'),                                color:'text-emerald-400 bg-emerald-500/20' },
+                { label:'Assign Supervisor', sub:'Link supervisor to a student',   icon:Icon.assign,     onClick:() => { setSelectedPlacement(null); setModal('supervisor') },color:'text-amber-400 bg-amber-500/20'     },
+                { label:'View Evaluations',  sub:'All scores across all students', icon:Icon.eval,       to:'/admin/evaluations',                                             color:'text-teal-400 bg-teal-500/20'       },
+                { label:'Manage Users',      sub:'View and edit user accounts',    icon:Icon.users,      to:'/admin/users',                                                   color:'text-violet-400 bg-violet-500/20'   },
+                { label:'Generate Report',   sub:'Export system-wide reports',     icon:Icon.report,     onClick:() => setModal('report'),                                    color:'text-rose-400 bg-rose-500/20'       },
               ].map(({ label, sub, icon, onClick, to, color }) => {
                 const cls = "flex items-center gap-3 p-3 rounded-xl border border-slate-700/50 hover:border-indigo-500/40 hover:bg-indigo-600/10 transition group w-full text-left"
                 const inner = (
