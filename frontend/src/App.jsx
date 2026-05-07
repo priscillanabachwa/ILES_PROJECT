@@ -12,6 +12,7 @@ import Register from './pages/Register.jsx'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import MyLogsPage from './pages/MyLogPage'
+import AdminLogsPage from './pages/AdminLogsPage.jsx'
 
 
 
@@ -101,7 +102,7 @@ function App() {
             {/* Admin Routes */}
             <Route element={<AppLayout role="ADMIN" />}>
               <Route path="/admin/dashboard" element={<InternshipAdministratorDashboard />} />
-              <Route path="/admin/logs" element={<div className="p-6 text-white">All Logs Table</div>} />
+              <Route path="/admin/logs" element={<AdminLogsPage />} />
               <Route path="/admin/evaluations" element={<div className="p-6 text-white">Evaluations Page</div>} />
               <Route path="/admin/profile" element={<ProfilePage />} />
             </Route>
