@@ -6,14 +6,18 @@ from django.utils import timezone
 from django.core.mail import send_mail
 from .models import WeeklyLogbook
 from .serializers import WeeklyLogbookSerializer
-
-class WeeklyLogCreateView(APIView):
-    permission_classes = [CanSubmitLog]
+from .permissions import CanSubmitLog, CanApproveLog, CanReviewLog
+    
 
 
 class WeeklyLogbookViewSet(viewsets.ModelViewSet):
     serializer_class = WeeklyLogbookSerializer
     permission_classes = [IsAuthenticated]
+
+    permission_classes = [CanSubmitLog]
+    permission_classes = [CanApproveLog]
+    permission_classes = [CanReviewLog]
+
 
     def get_queryset(self):
         user = self.request.user
@@ -59,6 +63,16 @@ class WeeklyLogbookViewSet(viewsets.ModelViewSet):
     def submit(self, request, pk=None):
         log = self.get_object()
 
+        if request.user.has_perm('weekly_logs.can_submit_weekly_log'):
+            log.status = 'submitted'
+            log.save()
+            return Response({'status': 'Log submitted successfully.'})
+        else:
+                return Response(
+                    {'error': 'You do not have permission to submit logs.'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+
         if log.status != 'draft':
             return Response(
                 {'detail': f'Cannot submit a log with status "{log.status}".'},
@@ -79,6 +93,16 @@ class WeeklyLogbookViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'], url_path='review')
     def review(self, request, pk=None):
         log = self.get_object()
+
+        if request.user.has_perm('weekly_logs.can_review_weekly_log'):
+            log.status = 'reviewed'
+            log.save()  
+            return Response({'status': 'Log reviewed successfully.'})
+        else:
+                return Response(
+                    {'error': 'You do not have permission to review logs.'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
 
         if request.user.role not in ('workplace_supervisor', 'academic_supervisor', 'admin'):
             return Response(
@@ -107,6 +131,16 @@ class WeeklyLogbookViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'], url_path='approve')
     def approve(self, request, pk=None):
         log = self.get_object()
+
+        if request.user.has_perm('weekly_logs.can_approve_weekly_log'):
+                log.status = 'approved'
+                log.save()
+                return Response({'status': 'Log approved successfully.'})
+        else:
+            return Response(
+                {'error': 'You do not have permission to approve logs.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
 
         if request.user.role not in ('academic_supervisor', 'admin'):
             return Response(

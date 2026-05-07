@@ -7,4 +7,8 @@ class CanSubmitLog(BasePermission):
 class CanApproveLog(BasePermission):
     def has_permission(self, request, view):
          return request.user.has_perm('weekly_logs.can_approve_weekly_log')
+
+class CanReviewLog(BasePermission):
+    def has_permission(self, request, view):
+         return request.user.has_perm('weekly_logs.can_review_weekly_log')
         
