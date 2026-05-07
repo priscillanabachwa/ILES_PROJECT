@@ -18,7 +18,11 @@ import MyLogsPage from './pages/MyLogsPage'
 import AdminLogsPage from './pages/AdminLogsPage.jsx'
 import AdminEvaluationsPage from './pages/AdminEvaluationsPage.jsx'
 import AdminUsersPage from './pages/AdminUsersPage.jsx'
+<<<<<<< HEAD
 
+=======
+import { AuthProvider, useAuth } from './context/AuthContext.jsx'
+>>>>>>> f588de94a6e37d4f934a30426a7b8bb8bea44065
 
 
 const ProtectedRoute = ({children, allowedRoles}) => {
@@ -92,8 +96,8 @@ function NotFound() {
 
 function App() {
   return (
-    <ErrorBoundary>
-      <AuthProvider>
+    <AuthProvider>
+      <ErrorBoundary>
         <BrowserRouter>
           <Routes>
             {/* Default route - redirect to login */}
@@ -157,8 +161,8 @@ function App() {
           </Routes>
         </BrowserRouter>
          <ToastContainer position="top-right" autoClose={3000} theme='dark'/>
-      </AuthProvider>
-    </ErrorBoundary>
+      </ErrorBoundary>
+    </AuthProvider>
   )
 }
 
