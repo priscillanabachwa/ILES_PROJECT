@@ -16,6 +16,7 @@ import AdminLogsPage from './pages/AdminLogsPage.jsx'
 import AdminEvaluationsPage from './pages/AdminEvaluationsPage.jsx'
 import AdminUsersPage from './pages/AdminUsersPage.jsx'
 import { AuthProvider } from './Context/AuthContext.jsx'
+import { useAuth } from './Context/AuthContext.jsx'
 
 const ProtectedRoute = ({children, allowedRoles}) => {
   const {user, loading} = useAuth();
