@@ -7,11 +7,14 @@ from django.contrib.auth import authenticate
 from django.core.cache import cache
 from django.core.mail import send_mail
 from django.conf import settings
-import random
-import string
+
 
 from .models import CustomUser
-from .serializers import CustomUserSerializer, LoginSerializer
+from .serializers import (CustomUserSerializer, 
+                          LoginSerializer,
+                          PasswordResetRequestSerializer,
+                          PasswordResetVerifyOTPSerializer,
+                          PasswordResetConfirmSerializer)
 
 
 class CustomUserViewSet(viewsets.ModelViewSet):
@@ -67,17 +70,15 @@ def register_view(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# ==================== PASSWORD RECOVERY ENDPOINTS ====================
-
-def generate_reset_code(length=6):
-    """Generate a random 6-digit recovery code"""
-    return ''.join(random.choices(string.digits, k=length))
+# ==================== PASSWORD RECOVERY ENDPOINTS =====================
 
 
 @api_view(['POST'])
 @permission_classes([permissions.AllowAny])
 def password_reset_request(request):
     email = request.data.get('email')
+    
+    
     
     if not email:
         return Response(

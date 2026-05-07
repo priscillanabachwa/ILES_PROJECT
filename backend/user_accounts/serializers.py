@@ -1,8 +1,10 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
-from .models import CustomUserManager
+from django.core.mail import send_mail
+from django.conf import settings
+from .models import CustomUserManager, CustomUser, PasswordResetOTP
+import random
 
-from .models import CustomUser
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
@@ -94,3 +96,111 @@ class LoginSerializer(serializers.Serializer):
 
         attrs['user'] = user
         return attrs
+    
+# Password Reset Serializers
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        try:
+            CustomUser.objects.get(email=value.lower())
+        except CustomUser.DoesNotExist:
+            raise serializers.ValidationError("No account found with this email.")
+        return value.lower()
+
+    def save(self):
+        from .sms import send_sms
+
+        user = CustomUser.objects.get(email=self.validated_data['email'])
+
+        # Generate 5 digit OTP
+        otp_code = str(random.randint(10000, 99999))
+
+        # Save OTP to database
+        PasswordResetOTP.objects.create(user=user, otp=otp_code)
+        
+        # Send email with OTP
+        send_mail(
+            subject='Your password reset OTP for ILES',
+            message=f'Hello {user.first_name} {user.last_name},\n\nYour recovery code is: {otp_code}\n\nit expires in 10 minutes. Do not share with anyone.',
+            from_email=settings.EMAIL_HOST_USER,
+            recipient_list=[user.email],
+            fail_silently=False,
+        )
+
+        # SMS with OTP
+        if user.phone_number:
+            send_sms(
+                user.phone_number,
+                f"Hello {user.first_name} {user.last_name}, "
+                f"your ILES password reset OTP is {otp_code}. "
+                f"It expires in 10 minutes. Do not share this code with anyone."
+            )
+
+
+class PasswordResetVerifyOTPSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    otp = serializers.CharField(max_length=5)
+
+    def validate(self, attrs):
+        try:
+            user = CustomUser.objects.get(email=attrs['email'].lower())
+        except CustomUser.DoesNotExist:
+            raise serializers.ValidationError("No account found with this email.")
+
+        try:
+            otp_obj = PasswordResetOTP.objects.filter(
+                user=user,
+                otp=attrs['otp'],
+                is_used=False
+            ).latest('created_at')
+        except PasswordResetOTP.DoesNotExist:
+            raise serializers.ValidationError("Invalid OTP.")
+
+        if otp_obj.is_expired():
+            raise serializers.ValidationError("OTP has expired. Please request a new one.")
+
+        attrs['user'] = user
+        attrs['otp_obj'] = otp_obj
+        return attrs
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    otp = serializers.CharField(max_length=5)
+    new_password = serializers.CharField(min_length=8, write_only=True)
+
+    def validate(self, attrs):
+        try:
+            user = CustomUser.objects.get(email=attrs['email'].lower())
+        except CustomUser.DoesNotExist:
+            raise serializers.ValidationError("No account found with this email.")
+
+        try:
+            otp_obj = PasswordResetOTP.objects.filter(
+                user=user,
+                otp=attrs['otp'],
+                is_used=False
+            ).latest('created_at')
+        except PasswordResetOTP.DoesNotExist:
+            raise serializers.ValidationError("Invalid OTP.")
+
+        if otp_obj.is_expired():
+            raise serializers.ValidationError("OTP has expired. Please request a new one.")
+
+        attrs['user'] = user
+        attrs['otp_obj'] = otp_obj
+        return attrs
+
+    def save(self):
+        user = self.validated_data['user']
+        otp_obj = self.validated_data['otp_obj']
+
+        
+        user.set_password(self.validated_data['new_password'])
+        user.save()
+
+        
+        otp_obj.is_used = True
+        otp_obj.save()
