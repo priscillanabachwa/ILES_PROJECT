@@ -147,7 +147,6 @@ function Card({ title, actionLabel, actionLink, children }) {
   )
 }
 
-// No Navbar, no outer wrapper — AppLayout handles sidebar, header and padding
 export default function WorkplaceSupervisorDashboard() {
   const { user } = useAuth()
 

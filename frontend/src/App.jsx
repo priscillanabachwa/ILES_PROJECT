@@ -1,3 +1,4 @@
+import { useAuth } from './Context/AuthContext.jsx'
 import React from 'react'
 import { BrowserRouter, Routes, Route, Navigate} from 'react-router-dom'
 import AppLayout from './components/layout/AppLayout'
@@ -6,8 +7,42 @@ import StudentDashboard from './pages/dashboards/StudentDashboard.jsx'
 import WorkplaceSupervisorDashboard from './pages/dashboards/WorkplaceSupervisorDashboard.jsx'
 import InternshipAdministratorDashboard from './pages/dashboards/InternshipAdministratorDashboard.jsx'
 import ProfilePage from './pages/ProfilePage.jsx'
-import SubmitLogPage from './pages/SubmitLogPage.jsx'
+import { AuthProvider } from './Context/AuthContext'
+
 import Login from './pages/login.jsx'
+import Register from './pages/Register.jsx'
+import { ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
+
+import MyLogsPage from './pages/MyLogsPage'
+import AdminLogsPage from './pages/AdminLogsPage.jsx'
+import AdminEvaluationsPage from './pages/AdminEvaluationsPage.jsx'
+import AdminUsersPage from './pages/AdminUsersPage.jsx'
+import { AuthProvider } from './Context/AuthContext.jsx'
+
+
+const ProtectedRoute = ({children, allowedRoles}) => {
+  const {user, loading} = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#0f172a] text-white">
+        <p>Loading ILES...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (allowedRoles && !allowedRoles.includes(user.role)) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+};
+
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -50,7 +85,7 @@ function NotFound() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#0f172a] text-white p-6">
         <h1 className="text-6xl font-bold mb-4">Page Not Found</h1>
         <p className="text-xl text-slate-400 mb-8">The page you are looking for does not exist.</p>
-        <Navigate to="/login" replace className="text-indigo-400 underline">Return to Login</Navigate>
+        <a href="/login" className="text-indigo-400 underline hover:text-indigo-300 text-lg">Return to Login</a>
     </div>
   )
 }
@@ -58,50 +93,71 @@ function NotFound() {
 function App() {
   return (
     <ErrorBoundary>
+      <AuthProvider>
         <BrowserRouter>
           <Routes>
             {/* Default route - redirect to login */}
             <Route path="/" element={<Navigate to="/login" replace />} />
 
             {/* Login Route */}
+            <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} /> 
 
             {/* Academic Supervisor Routes */}
-            <Route element={<AppLayout role="ACADEMIC_SUPERVISOR" />}>
+            <Route element={
+              <ProtectedRoute allowedRoles={['academic_supervisor']}>
+                <AppLayout />
+              </ProtectedRoute> 
+            }>
               <Route path="/academic/dashboard" element={<AcademicSupervisorDashboard />} />
-              <Route path="/academic/logs" element={<div className="p-6 text-white">Internship Logs</div>} />
-              <Route path="/academic/evaluations" element={<div className="p-6 text-white">Evaluations Page</div>} />
+              <Route path="/academic/logs" element={<div className="p-6 text-white">Logs</div>} />
+              <Route path="/academic/evaluations" element={<div className="p-6 text-white">Evaluations</div>} />
               <Route path="/academic/profile" element={<ProfilePage />} />
             </Route>
 
             {/* Student Routes */}
-            <Route element={<AppLayout role="STUDENT" />}>
+            <Route element={
+              <ProtectedRoute allowedRoles={['student']}>
+                <AppLayout />
+              </ProtectedRoute>
+            }>
               <Route path="/student/dashboard" element={<StudentDashboard />} />
-              <Route path="/student/logs" element={<div className="p-6 text-white">My Logs</div>} />
+              <Route path="/student/logs" element={<MyLogsPage />} />
               <Route path="/student/profile" element={<ProfilePage />} />
-              <Route path="/student/logs/new" element={<SubmitLogPage />} />
+
             </Route>
 
             {/* Workplace Supervisor Routes */}
-            <Route element={<AppLayout role="WORKPLACE_SUPERVISOR" />}>
+            <Route element={
+              <ProtectedRoute allowedRoles={['workplace_supervisor']}>
+                <AppLayout />
+              </ProtectedRoute>
+            }>
               <Route path="/supervisor/dashboard" element={<WorkplaceSupervisorDashboard />} />
-              <Route path="/supervisor/reviews" element={<div className="p-6 text-white">Reviews Page</div>} />
-              <Route path="/supervisor/scores" element={<div className="p-6 text-white">Scores Page</div>} />
+              <Route path="/supervisor/reviews" element={<div className="p-6 text-white">Reviews</div>} />
               <Route path="/supervisor/profile" element={<ProfilePage />} />
             </Route>
 
             {/* Admin Routes */}
-            <Route element={<AppLayout role="ADMIN" />}>
+            <Route element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AppLayout />
+              </ProtectedRoute>
+            }>
               <Route path="/admin/dashboard" element={<InternshipAdministratorDashboard />} />
-              <Route path="/admin/logs" element={<div className="p-6 text-white">All Logs Table</div>} />
-              <Route path="/admin/evaluations" element={<div className="p-6 text-white">Evaluations Page</div>} />
+              <Route path="/admin/logs" element={<AdminLogsPage />} />
+              <Route path="/admin/evaluations" element={<AdminEvaluationsPage />} />
               <Route path="/admin/profile" element={<ProfilePage />} />
+              <Route path="/admin/users" element={<AdminUsersPage />} />
             </Route>
 
             {/* 404 - Not Found Route (must be last) */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
+         <ToastContainer position="top-right" autoClose={3000} theme='dark'/>
+      </AuthProvider>
     </ErrorBoundary>
   )
 }

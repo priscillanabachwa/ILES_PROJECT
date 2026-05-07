@@ -1,0 +1,17 @@
+import {toast} from 'react-toastify';
+
+export const notifySuccess = (message) => {
+  toast.success(message);
+};
+
+export const notifyError = (message) => {
+  toast.error(message || 'An error occurred. Please try again.');
+};
+
+export const notifyInfo = (message) => {
+  toast.info(message);
+};
+
+export const notifyWarning = (message) => {
+  toast.warning(message);
+};

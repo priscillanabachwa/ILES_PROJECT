@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from .models import CustomUserManager
-
 from .models import CustomUser
 
 
@@ -51,7 +50,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
         validated_data.pop("is_staff", None)
         validated_data.pop("is_superuser", None)
 
-        instance = super().update(instance,validated_date)
+        instance = super().update(instance,validated_data)
         
         if password:
             instance.set_password(password)

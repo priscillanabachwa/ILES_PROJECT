@@ -8,19 +8,24 @@ export const loginUser = async (email, password) => {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      email,
-      password,
+      username: email,
+      password: password,
     }),
   });
 
   if (!response.ok) {
     const errorData = await response.json();  
+    console.error('Login error:', errorData);
     throw new Error(
-      errorData.detail || 
-      errorData.message || 
-      'Authentication failed'
+      errorData.detail ||
+      errorData.non_field_errors?.[0] ||
+      'Login failed'
     );
   }
+  return await response.json();
+};
+
+export const loginAdmin = async (email, password) => {
 
   const data = await response.json();
   return {

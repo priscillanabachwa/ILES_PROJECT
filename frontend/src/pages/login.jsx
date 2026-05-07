@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../Context/AuthContext'
@@ -222,10 +223,15 @@ export default function Login() {
     try {
       const response = await loginUser(email, password)
       if (response.token && response.user) {
-        login(response.user, response.token)
+        await login(response.user, response.token)
+
         localStorage.setItem('authToken', response.token)
         localStorage.setItem('user', JSON.stringify(response.user))
-        const path = ROLE_REDIRECTS[response.user.role] || '/student/dashboard'
+
+        const userRole = response.user.role.toLowerCase().replace(/\s+/g, '_');
+        const path = ROLE_REDIRECTS[userRole] || '/student/dashboard'
+
+        console.log('Navigating to:', path);
         navigate(path)
       }
     } catch (err) {
@@ -282,7 +288,7 @@ export default function Login() {
                 disabled={loading}
                 title={showPassword ? 'Hide password' : 'Show password'}
               >
-                {showPassword ? '👁️' : '👁️‍🗨️'}
+                {showPassword ? 'Hide' : 'Show'}
               </button>
             </div>
           </div>
@@ -306,7 +312,7 @@ export default function Login() {
         </form>
 
         <p className="login-footer">
-          No account? <a href="/register">Register here</a>
+          No account? <Link to="/register">Register here</Link>
         </p>
       </div>
 
