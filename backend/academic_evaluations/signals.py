@@ -3,6 +3,7 @@ from django.dispatch import receiver
 from .models import AcademicEvaluation
 from django.core.mail import send_mail
 from django.conf import settings
+from .sms import send_sms
 
 
 @receiver(post_save, sender=AcademicEvaluation)
@@ -20,3 +21,12 @@ def send_evaluation_notification(sender, instance, created, **kwargs):
             recipient_list=[instance.student.email],
             fail_silently=False,
         )
+         # SMS notification
+        if student.phone_number:
+            send_sms(
+                student.phone_number,
+                f"Hello {student.first_name} {student.last_name}, "
+                f"your internship evaluation results are out. "
+                f"Total Score: {instance.total_score}, Grade: {instance.grade}. "
+                f"Login to the website to view full details."
+            )
