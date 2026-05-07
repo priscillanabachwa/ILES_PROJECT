@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../Context/AuthContext'
 import { loginUser, requestPasswordReset, verifyResetCode, resetPassword } from '../services/authService'
 import './Login.css'
 import ILES_LOGO from '../assets/ILES_LOGO.png'

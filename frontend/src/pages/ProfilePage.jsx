@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { toast } from 'react-toastify'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../Context/AuthContext'
 
 const ROLE_CONFIG = {
   student: {

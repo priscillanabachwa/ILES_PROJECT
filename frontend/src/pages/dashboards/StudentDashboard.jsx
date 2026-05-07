@@ -343,8 +343,8 @@ export default function StudentDashboard() {
                     <div className="flex items-center gap-2">
                       <Badge status={l.status} />
                       {l.status === 'draft' && (
-                        <Link to={`/student/logs/${l.id}/edit`} className="text-xs text-indigo-400 font-semibold hover:underline">
-                          Continue
+                        <Link to="/student/logs" state ={{openForm: true}} className="">  
+                        {Icon.draft}
                         </Link>
                       )}
                     </div>
@@ -417,17 +417,18 @@ export default function StudentDashboard() {
             )}
           </Card>
 
-          <Card title="Quick Actions">
+          <Card title="Quick Links">
             <div className="space-y-2">
               {[
-                { label: 'Submit New Log',  sub: "Document this week's activities", icon: Icon.plus,     to: '/student/logs/new',   color: 'text-indigo-400 bg-indigo-600/20'  },
-                { label: 'Continue Draft',  sub: 'Resume your saved draft log',     icon: Icon.draft,    to: '/student/logs',       color: 'text-amber-400 bg-amber-500/20'    },
+                { label: 'Submit New Log',  sub: "Document this week's activities", icon: Icon.plus,     to: '/student/logs', state: {openForm:true}, color: 'text-indigo-400 bg-indigo-600/20'  },
+                { label: 'View All Logs',   sub: 'See your complete log history',    icon: Icon.draft,    to: '/student/logs', state: {openForm:false}, color: 'text-amber-400 bg-amber-500/20'    },
                 { label: 'View Feedback',   sub: 'Read supervisor comments',        icon: Icon.feedback, to: '/student/feedback',   color: 'text-rose-400 bg-rose-500/20'      },
                 { label: 'View Evaluation', sub: 'Check your scores and grade',     icon: Icon.score,    to: '/student/evaluation', color: 'text-emerald-400 bg-emerald-500/20'},
-              ].map(({ label, sub, icon, to, color }) => (
+              ].map(({ label, sub, icon, to, state, color }) => (
                 <Link
                   key={label}
                   to={to}
+                  state ={state}
                   className="flex items-center gap-3 p-3 rounded-xl border border-slate-700/50 hover:border-indigo-500/40 hover:bg-indigo-600/10 transition group"
                 >
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${color}`}>{icon}</div>
