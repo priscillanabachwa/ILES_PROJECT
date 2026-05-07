@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { registerUser } from '../services/authService';
 import './Register.css';
-import ILES_LOGO from '../assets/iles_logo.png';
+import ILES_LOGO from '../assets/ILES_LOGO.png';
 
 // ==================== EYE ICONS ====================
 const EyeIcon = () => (

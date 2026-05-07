@@ -194,7 +194,7 @@ DEFAULT_FROM_EMAIL = 'your-email@gmail.com'
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'iles-cache',
+        'LOCATION': 'ILES-cache',
     }
 }
 

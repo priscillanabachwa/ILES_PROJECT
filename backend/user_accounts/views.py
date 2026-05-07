@@ -94,7 +94,7 @@ def password_reset_request(request):
         cache.set(cache_key, recovery_code, timeout=900)  # 15 minutes
 
         send_mail(
-            subject='Your recovery code for iles',
+            subject='Your recovery code for ILES',
             message=f'Hello {user.first_name},\n\nYour recovery code is: {recovery_code}',
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[email],
@@ -172,7 +172,7 @@ def password_reset_confirm(request):
         cache.delete(verify_key)
 
         send_mail(
-            subject='iles - Password Reset Confirmation',
+            subject='ILES - Password Reset Confirmation',
             message=f"""
 Hello {user.first_name },
 
@@ -181,7 +181,7 @@ Your password has been reset successfully.
 If you did not make this change, please contact support immediately.
 
 Best regards,
-iles System
+ILES System
             """,
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[email],
