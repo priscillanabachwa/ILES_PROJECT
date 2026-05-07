@@ -221,7 +221,7 @@ export default function Login() {
     setError('')
     setLoading(true)
     try {
-      const response = await loginUser(email, password)
+      const response = await loginUser(email.trim(), password)
       if (response.token && response.user) {
         await login(response.user, response.token)
 

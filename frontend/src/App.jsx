@@ -7,7 +7,7 @@ import StudentDashboard from './pages/dashboards/StudentDashboard.jsx'
 import WorkplaceSupervisorDashboard from './pages/dashboards/WorkplaceSupervisorDashboard.jsx'
 import InternshipAdministratorDashboard from './pages/dashboards/InternshipAdministratorDashboard.jsx'
 import ProfilePage from './pages/ProfilePage.jsx'
-
+import { AuthProvider } from './Context/AuthContext.jsx'
 
 import Login from './pages/login.jsx'
 import Register from './pages/Register.jsx'
@@ -18,7 +18,7 @@ import MyLogsPage from './pages/MyLogsPage'
 import AdminLogsPage from './pages/AdminLogsPage.jsx'
 import AdminEvaluationsPage from './pages/AdminEvaluationsPage.jsx'
 import AdminUsersPage from './pages/AdminUsersPage.jsx'
-import { AuthProvider } from './Context/AuthContext.jsx'
+
 
 
 const ProtectedRoute = ({children, allowedRoles}) => {

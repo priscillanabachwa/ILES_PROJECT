@@ -1,38 +1,36 @@
+import axios from 'axios';
 const API_BASE_URL = 'http://localhost:8000/api';
+
 
 // ==================== AUTHENTICATION ====================
 export const loginUser = async (email, password) => {
-  const response = await fetch(`${API_BASE_URL}/accounts/login/`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      username: email,
+  try {
+    const emailString = typeof email === 'object' ? email.email : email;
+    const response = await axios.post(`${API_BASE_URL}/accounts/login/`, {
+      email: emailString,
       password: password,
-    }),
-  });
+    });
 
-  if (!response.ok) {
-    const errorData = await response.json();  
-    console.error('Login error:', errorData);
-    throw new Error(
-      errorData.detail ||
-      errorData.non_field_errors?.[0] ||
-      'Login failed'
-    );
+    if (response.data.token){
+      localStorage.setItem('authToken', response.data.token);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+    } else {
+      throw new Error('Login failed');
+    }
+    return response.data;
   }
-  return await response.json();
+    catch (error){
+      const message = error.response?.data?.detail || 
+                      error.response?.data?.non_field_errors?.[0] || 
+                      error.response?.data?.email?.[0] || 
+                      'Login failed';
+      throw new Error(message);
+    }
 };
-
 export const loginAdmin = async (email, password) => {
-
-  const data = await response.json();
-  return {
-    token: data.token,
-    user: data.user,
-  };
+  return loginUser(email, password);
 };
+
 
 export const registerUser = async (userData) => {
   const response = await fetch(`${API_BASE_URL}/accounts/register/`, {
@@ -53,10 +51,13 @@ export const registerUser = async (userData) => {
   }
 
   const data = await response.json();
-  return {
-    token: data.token,
-    user: data.user,
-  };
+
+  if (data.token) {
+    localStorage.setItem('authToken', data.token);
+    localStorage.setItem('user', JSON.stringify(data.user));
+  }
+  return data;
+  
 };
 
 export const logoutUser = () => {
