@@ -7,7 +7,7 @@ import StudentDashboard from './pages/dashboards/StudentDashboard.jsx'
 import WorkplaceSupervisorDashboard from './pages/dashboards/WorkplaceSupervisorDashboard.jsx'
 import InternshipAdministratorDashboard from './pages/dashboards/InternshipAdministratorDashboard.jsx'
 import ProfilePage from './pages/ProfilePage.jsx'
-import { AuthProvider } from './Context/AuthContext'
+
 
 import Login from './pages/login.jsx'
 import Register from './pages/Register.jsx'
