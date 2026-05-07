@@ -224,9 +224,22 @@ export default function MyLogsPage() {
   }
 
   useEffect(() => {
-    fetchLogs()
-  }, [])
-
+  const fetchLogs = async () => {
+    setLoading(true)
+    setError('')
+    try {
+      const response = await axios.get('http://127.0.0.1:8000/api/weeklylogs/', {
+        headers: { Authorization: 'Bearer ' + token }
+      })
+      setLogs(Array.isArray(response.data) ? response.data : response.data.results ?? [])
+    } catch {
+      setError('Failed to load your logbooks. Please refresh the page.')
+    } finally {
+      setLoading(false)
+    }
+  }
+  fetchLogs()
+}, [token])
   // Filter and search
   const safeLogs = Array.isArray(logs) ? logs : []
   const filtered = safeLogs.filter((l) => {
