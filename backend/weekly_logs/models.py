@@ -2,6 +2,7 @@
 from placements.models import InternshipPlacement
 from django.db import models
 from django.core.validators import MinValueValidator
+from django.conf import settings
 
 class WeeklyLogbook(models.Model):
     STATUS_CHOICE =[
@@ -46,7 +47,7 @@ class WeeklyLogbook(models.Model):
 
 class LogBookReview(models.Model):
     logbook = models.ForeignKey(WeeklyLogbook, on_delete=models.CASCADE, related_name='reviews')
-    supervisor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    supervisor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
     comment = models.TextField()
     status_at_review = models.CharField(max_length=20)
     created_at = models.DateTimeField(auto_now_add=True)
