@@ -64,7 +64,7 @@ const validateField = (key, value) => validators[key]?.(value) || ''
 const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '')
 
 const getFullName = (user) =>
-  [user?.first_name, user?.last_name].filter(Boolean).map(cap).join(' ') || 'N/A'
+  [user?.first_name, user?.last_name].filter(Boolean).map(cap).join(' ') || '—'
 
 const PencilIcon = ({ className = 'w-3.5 h-3.5' }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

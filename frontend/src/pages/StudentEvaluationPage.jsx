@@ -139,7 +139,7 @@ export default function StudentEvaluationPage() {
               totalScore >= 60   ? 'text-amber-400' :
                                    'text-red-400'
             }`}>
-              {totalScore != null ? `${totalScore.toFixed(0)}%` : 'N/A'}
+              {totalScore != null ? `${totalScore.toFixed(0)}%` : '—'}
             </p>
             {totalScore != null && (
               <div className="mt-3 h-2 bg-slate-700 rounded-full overflow-hidden">
@@ -159,7 +159,7 @@ export default function StudentEvaluationPage() {
           <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6">
             <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Grade</p>
             <p className={`text-4xl font-black ${GradeColor(grade)}`}>
-              {grade || 'N/A'}
+              {grade || '—'}
             </p>
             <p className="text-xs text-slate-600 mt-2">
               {grade === 'A' ? 'Excellent performance' :
@@ -276,7 +276,7 @@ export default function StudentEvaluationPage() {
                       totalScore >= 60   ? 'text-amber-400' :
                                            'text-red-400'
                     }`}>
-                      {totalScore != null ? `${totalScore.toFixed(0)}%` : 'N/A'}
+                      {totalScore != null ? `${totalScore.toFixed(0)}%` : '—'}
                     </span>
                   </td>
                   <td className="px-6 py-4">

@@ -4,7 +4,7 @@ import { fetchWithAuth } from '../services/authService'
 const API = '/api'
 
 const formatDate = (iso) =>
-  iso ? new Date(iso).toLocaleDateString('en-UG', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A'
+  iso ? new Date(iso).toLocaleDateString('en-UG', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
 
 const STATUS_STYLES = {
   draft:     'bg-slate-500/20 text-slate-400 border-slate-500/30',

@@ -9,7 +9,7 @@ function Skeleton({ className = '' }) {
 }
 
 function ScoreBadge({ score }) {
-  if (score == null) return <span className="text-slate-600 text-sm">N/A</span>
+  if (score == null) return <span className="text-slate-600 text-sm">—</span>
   const color =
     score >= 80 ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' :
     score >= 60 ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' :
@@ -45,7 +45,7 @@ function EvaluationModal({ evaluation, onClose }) {
             <div>
               <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Total Score</p>
               <p className="text-3xl font-black text-white">
-                {evaluation.total_score != null ? `${Number(evaluation.total_score).toFixed(0)}%` : 'N/A'}
+                {evaluation.total_score != null ? `${Number(evaluation.total_score).toFixed(0)}%` : '—'}
               </p>
             </div>
             <div className="text-right">
@@ -56,7 +56,7 @@ function EvaluationModal({ evaluation, onClose }) {
                 evaluation.grade === 'C' ? 'text-amber-400' :
                 evaluation.grade ? 'text-red-400' : 'text-slate-600'
               }`}>
-                {evaluation.grade || 'N/A'}
+                {evaluation.grade || '—'}
               </span>
             </div>
           </div>
@@ -118,7 +118,7 @@ export default function AdminEvaluationsPage() {
           (Array.isArray(evalsData) ? evalsData : []).map(e => ({
             ...e,
             student_name: pm[e.placement]?.student_name || `Placement #${e.placement}`,
-            company:      pm[e.placement]?.company_name || 'N/A',
+            company:      pm[e.placement]?.company_name || '—',
           }))
         )
       } catch {
@@ -164,7 +164,7 @@ export default function AdminEvaluationsPage() {
           { label:'Total Interns', value:total,                       color:'text-white',       bg:'bg-slate-800/50 border-slate-700/50'      },
           { label:'Evaluated',     value:submitted,                   color:'text-emerald-400', bg:'bg-emerald-500/10 border-emerald-500/20'   },
           { label:'Pending',       value:pending,                     color:'text-amber-400',   bg:'bg-amber-500/10 border-amber-500/20'       },
-          { label:'Avg. Score',    value:avgScore != null ? `${avgScore}%` : 'N/A', color:'text-indigo-400', bg:'bg-indigo-600/10 border-indigo-500/20' },
+          { label:'Avg. Score',    value:avgScore != null ? `${avgScore}%` : '—', color:'text-indigo-400', bg:'bg-indigo-600/10 border-indigo-500/20' },
         ].map(({ label, value, color, bg }) => (
           <div key={label} className={`rounded-2xl p-5 border ${bg}`}>
             <p className="text-slate-400 text-xs uppercase tracking-wider mb-2">{label}</p>
@@ -252,7 +252,7 @@ export default function AdminEvaluationsPage() {
                         ev.grade === 'C' ? 'text-amber-400' :
                         ev.grade ? 'text-red-400' : 'text-slate-600'
                       }`}>
-                        {ev.grade || 'N/A'}
+                        {ev.grade || '—'}
                       </span>
                     </td>
                     <td className="px-5 py-4">

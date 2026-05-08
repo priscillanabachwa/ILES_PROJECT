@@ -433,7 +433,7 @@ function StatCard({ label, value, sub, subLink, icon, accent }) {
       <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${A.icon}`}>{icon}</div>
       <div>
         <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">{label}</p>
-        <p className={`text-3xl font-bold mt-0.5 ${A.val}`}>{value ?? 'N/A'}</p>
+        <p className={`text-3xl font-bold mt-0.5 ${A.val}`}>{value ?? '—'}</p>
         {sub && subLink
           ? <Link to={subLink} className={`text-xs font-medium mt-1 block hover:underline ${A.sub}`}>{sub} </Link>
           : sub && <p className={`text-xs font-medium mt-1 ${A.sub}`}>{sub}</p>}
@@ -590,7 +590,7 @@ export default function InternshipAdministratorDashboard() {
         ].map(({ label, value, color, link, linkText }) => (
           <div key={label} className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-4 text-center">
             <p className="text-xs text-slate-400 uppercase tracking-wide mb-1">{label}</p>
-            <p className={`text-2xl font-bold ${color}`}>{value ?? 'N/A'}</p>
+            <p className={`text-2xl font-bold ${color}`}>{value ?? '—'}</p>
             <Link to={link} className={`text-xs hover:underline mt-1 block ${color}`}>{linkText} </Link>
           </div>
         ))}
@@ -731,18 +731,18 @@ export default function InternshipAdministratorDashboard() {
                             <span className="font-semibold text-white">{e.student_name}</span>
                           </div>
                         </td>
-                        <td className="py-3 pr-3 text-center text-slate-400">{e.workplace_score ?? 'N/A'}</td>
-                        <td className="py-3 pr-3 text-center text-slate-400">{e.academic_score ?? 'N/A'}</td>
-                        <td className="py-3 pr-3 text-center text-slate-400">{e.logbook_score ?? 'N/A'}</td>
+                        <td className="py-3 pr-3 text-center text-slate-400">{e.workplace_score ?? '—'}</td>
+                        <td className="py-3 pr-3 text-center text-slate-400">{e.academic_score ?? '—'}</td>
+                        <td className="py-3 pr-3 text-center text-slate-400">{e.logbook_score ?? '—'}</td>
                         <td className="py-3 pr-3 text-center font-semibold text-white">
-                          {e.final_score != null ? `${Number(e.final_score).toFixed(1)}%` : 'N/A'}
+                          {e.final_score != null ? `${Number(e.final_score).toFixed(1)}%` : '—'}
                         </td>
                         <td className="py-3 text-center">
                           <span className={`font-bold text-sm
                             ${e.grade?.startsWith('A') ? 'text-emerald-400' :
                               e.grade?.startsWith('B') ? 'text-indigo-400' :
                               e.grade?.startsWith('C') ? 'text-amber-400' : 'text-red-400'}`}>
-                            {e.grade || 'N/A'}
+                            {e.grade || '—'}
                           </span>
                         </td>
                       </tr>
@@ -765,7 +765,7 @@ export default function InternshipAdministratorDashboard() {
                   <div key={role}>
                     <div className="flex justify-between text-xs mb-1">
                       <span className="text-slate-400">{role}</span>
-                      <span className="font-semibold text-white">{count ?? 'N/A'}</span>
+                      <span className="font-semibold text-white">{count ?? '—'}</span>
                     </div>
                     <div className="w-full bg-slate-700 rounded-full h-2">
                       <div className={`${color} h-2 rounded-full transition-all`}
