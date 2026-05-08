@@ -385,7 +385,7 @@ export default function AdminLogsPage() {
             </div>
           )}
 
-          {filtered.map((log, i) => (
+          {filtered.map((log) => (
             <div
               key={log.id}
               className={`bg-slate-800/50 border rounded-2xl p-4 transition
