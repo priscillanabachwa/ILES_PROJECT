@@ -1,16 +1,24 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
-from django.core.mail import send_mail
-from django.conf import settings
-from .models import CustomUserManager, CustomUser, PasswordResetOTP
-import random
+from .models import CustomUserManager, CustomUser, Notification
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
 
     email = serializers.EmailField()
     profile_picture = serializers.ImageField(required=False, allow_null=True)
-    password = serializers.CharField(write_only=True, required=True, min_length=8)
+    password = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    first_name   = serializers.CharField(required=False, allow_blank=True)
+    last_name    = serializers.CharField(required=False, allow_blank=True)
+    phone_number = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    institution  = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    department   = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    student_id   = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    faculty      = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    staff_id     = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    organisation = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    job_title    = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+
     class Meta:
         model = CustomUser
         fields = [
@@ -18,7 +26,6 @@ class CustomUserSerializer(serializers.ModelSerializer):
             "email",
             "first_name",
             "last_name",
-            "username",
             "role",
             "phone_number",
             "profile_picture",
@@ -26,23 +33,40 @@ class CustomUserSerializer(serializers.ModelSerializer):
             "is_staff",
             "is_superuser",
             "is_active",
+            "institution",
+            "department",
+            "student_id",
+            "faculty",
+            "staff_id",
+            "organisation",
+            "job_title",
         ]
         read_only_fields = ["id", "is_staff", "is_superuser", "is_active"]
 
+    def validate(self, attrs):
+        # Password is required only during creation
+        if not self.instance and not attrs.get('password'):
+            raise serializers.ValidationError({"password": "Password is required for new users."})
+        return attrs
+
     def validate_email(self, value):
         value = value.lower()
-        # Check for duplicate email on create (not on update)
-        if self.instance is None:  # only on create
-            if CustomUser.objects.filter(email=value).exists():
+        # Only check for duplicates if it's a new user or the email is being changed
+        if self.instance is None or self.instance.email != value:
+            if CustomUser.objects.filter(email=value).exclude(id=self.instance.id if self.instance else None).exists():
                 raise serializers.ValidationError("A user with this email already exists.")
         return value
-
-        return value.lower()
 
     def validate_role(self, value):
         roles = [choice[0] for choice in self.Meta.model.ROLE_CHOICES]
         if value not in roles:
             raise serializers.ValidationError("Invalid role.")
+        return value
+
+    def validate_password(self, value):
+        # Password is optional, but if provided, must be min 8 chars
+        if value and len(value) < 8:
+            raise serializers.ValidationError("Password must be at least 8 characters long.")
         return value
 
     def create(self, validated_data):
@@ -105,111 +129,10 @@ class LoginSerializer(serializers.Serializer):
 
         attrs['user'] = user
         return attrs
-    
-# Password Reset Serializers
-
-class PasswordResetRequestSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-
-    def validate_email(self, value):
-        try:
-            CustomUser.objects.get(email=value.lower())
-        except CustomUser.DoesNotExist:
-            raise serializers.ValidationError("No account found with this email.")
-        return value.lower()
-
-    def save(self):
-        from .sms import send_sms
-
-        user = CustomUser.objects.get(email=self.validated_data['email'])
-
-        # Generate 5 digit OTP
-        otp_code = str(random.randint(10000, 99999))
-
-        # Save OTP to database
-        PasswordResetOTP.objects.create(user=user, otp=otp_code)
-        
-        # Send email with OTP
-        send_mail(
-            subject='Your password reset OTP for ILES',
-            message=f'Hello {user.first_name} {user.last_name},\n\nYour recovery code is: {otp_code}\n\nit expires in 10 minutes. Do not share with anyone.',
-            from_email=settings.EMAIL_HOST_USER,
-            recipient_list=[user.email],
-            fail_silently=False,
-        )
-
-        # SMS with OTP
-        if user.phone_number:
-            send_sms(
-                user.phone_number,
-                f"Hello {user.first_name} {user.last_name}, "
-                f"your ILES password reset OTP is {otp_code}. "
-                f"It expires in 10 minutes. Do not share this code with anyone."
-            )
 
 
-class PasswordResetVerifyOTPSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-    otp = serializers.CharField(max_length=5)
-
-    def validate(self, attrs):
-        try:
-            user = CustomUser.objects.get(email=attrs['email'].lower())
-        except CustomUser.DoesNotExist:
-            raise serializers.ValidationError("No account found with this email.")
-
-        try:
-            otp_obj = PasswordResetOTP.objects.filter(
-                user=user,
-                otp=attrs['otp'],
-                is_used=False
-            ).latest('created_at')
-        except PasswordResetOTP.DoesNotExist:
-            raise serializers.ValidationError("Invalid OTP.")
-
-        if otp_obj.is_expired():
-            raise serializers.ValidationError("OTP has expired. Please request a new one.")
-
-        attrs['user'] = user
-        attrs['otp_obj'] = otp_obj
-        return attrs
-
-
-class PasswordResetConfirmSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-    otp = serializers.CharField(max_length=5)
-    new_password = serializers.CharField(min_length=8, write_only=True)
-
-    def validate(self, attrs):
-        try:
-            user = CustomUser.objects.get(email=attrs['email'].lower())
-        except CustomUser.DoesNotExist:
-            raise serializers.ValidationError("No account found with this email.")
-
-        try:
-            otp_obj = PasswordResetOTP.objects.filter(
-                user=user,
-                otp=attrs['otp'],
-                is_used=False
-            ).latest('created_at')
-        except PasswordResetOTP.DoesNotExist:
-            raise serializers.ValidationError("Invalid OTP.")
-
-        if otp_obj.is_expired():
-            raise serializers.ValidationError("OTP has expired. Please request a new one.")
-
-        attrs['user'] = user
-        attrs['otp_obj'] = otp_obj
-        return attrs
-
-    def save(self):
-        user = self.validated_data['user']
-        otp_obj = self.validated_data['otp_obj']
-
-        
-        user.set_password(self.validated_data['new_password'])
-        user.save()
-
-        
-        otp_obj.is_used = True
-        otp_obj.save()
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model  = Notification
+        fields = ['id', 'title', 'message', 'notification_type', 'is_read', 'created_at']
+        read_only_fields = ['id', 'title', 'message', 'notification_type', 'created_at']

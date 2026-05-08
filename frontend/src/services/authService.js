@@ -1,36 +1,31 @@
-import axios from 'axios';
-const API_BASE_URL = 'http://localhost:8000/api';
+﻿const API_BASE_URL = '/api';
 
 
 // ==================== AUTHENTICATION ====================
 export const loginUser = async (email, password) => {
+  let response;
   try {
-    const emailString = typeof email === 'object' ? email.email : email;
-    const response = await axios.post(`${API_BASE_URL}/accounts/login/`, {
-      email: emailString,
-      password: password,
+    response = await fetch(`${API_BASE_URL}/accounts/login/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
     });
+  } catch {
+    throw new Error('Cannot reach the server. Please make sure the backend is running.');
+  }
 
-    if (response.data.token){
-      localStorage.setItem('authToken', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
-    } else {
-      throw new Error('Login failed: No token returned');
-    }
-    return response.data;
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(
+      errorData.detail ||
+      errorData.message ||
+      (Array.isArray(errorData.non_field_errors) ? errorData.non_field_errors[0] : null) ||
+      'Invalid email or password.'
+    );
   }
-  catch (error){
-    // Network/connection error
-    if (!error.response) {
-      throw new Error('Cannot connect to server. Make sure the backend is running on port 8000.');
-    }
-    const message = error.response?.data?.detail ||
-                    error.response?.data?.non_field_errors?.[0] ||
-                    error.response?.data?.email?.[0] ||
-                    error.response?.data?.error ||
-                    `Login failed (${error.response.status})`;
-    throw new Error(message);
-  }
+
+  const data = await response.json();
+  return { token: data.token, user: data.user };
 };
 
 export const loginAdmin = async (email, password) => {
@@ -39,16 +34,19 @@ export const loginAdmin = async (email, password) => {
 
 
 export const registerUser = async (userData) => {
-  const response = await fetch(`${API_BASE_URL}/accounts/register/`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(userData),
-  });
+  let response;
+  try {
+    response = await fetch(`${API_BASE_URL}/accounts/register/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(userData),
+    });
+  } catch {
+    throw new Error('Cannot reach the server. Please make sure the backend is running.');
+  }
 
   if (!response.ok) {
-    const errorData = await response.json();
+    const errorData = await response.json().catch(() => ({}));
     const firstError =
       errorData.detail ||
       errorData.message ||
@@ -58,13 +56,7 @@ export const registerUser = async (userData) => {
   }
 
   const data = await response.json();
-
-  if (data.token) {
-    localStorage.setItem('authToken', data.token);
-    localStorage.setItem('user', JSON.stringify(data.user));
-  }
-  return data;
-  
+  return { token: data.token, user: data.user };
 };
 
 export const logoutUser = () => {
@@ -172,7 +164,7 @@ export const updateUserProfile = async (userData) => {
   }
 
   return fetchWithAuth(`${API_BASE_URL}/accounts/users/${user.id}/`, {
-    method: 'PUT',
+    method: 'PATCH',
     body: JSON.stringify(userData),
   });
 };
@@ -185,14 +177,12 @@ export const getUserProfile = async (userId) => {
 export const requestPasswordReset = async (email) => {
   const response = await fetch(`${API_BASE_URL}/accounts/password-reset-request/`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email }),
-  });
+  }).catch(() => { throw new Error('Cannot reach the server.'); });
 
   if (!response.ok) {
-    const errorData = await response.json();
+    const errorData = await response.json().catch(() => ({}));
     throw new Error(
       errorData.detail ||
       errorData.message ||
@@ -203,7 +193,7 @@ export const requestPasswordReset = async (email) => {
   const data = await response.json();
   
   if (data.recovery_code) {
-    console.log('%c🔐 RECOVERY CODE:', 'color: red; font-size: 14px; font-weight: bold;', data.recovery_code);
+    console.log('%c RECOVERY CODE:', 'color: red; font-size: 14px; font-weight: bold;', data.recovery_code);
     console.log('%cCheck the Developer Console above to see your recovery code. Enter it in the modal.', 'color: orange; font-size: 12px;');
   }
   
@@ -213,14 +203,12 @@ export const requestPasswordReset = async (email) => {
 export const verifyResetCode = async (email, code) => {
   const response = await fetch(`${API_BASE_URL}/accounts/verify-reset-code/`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, code }),
-  });
+  }).catch(() => { throw new Error('Cannot reach the server.'); });
 
   if (!response.ok) {
-    const errorData = await response.json();
+    const errorData = await response.json().catch(() => ({}));
     throw new Error(
       errorData.detail ||
       errorData.message ||
@@ -234,18 +222,12 @@ export const verifyResetCode = async (email, code) => {
 export const resetPassword = async (email, code, newPassword) => {
   const response = await fetch(`${API_BASE_URL}/accounts/password-reset-confirm/`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ 
-      email, 
-      code, 
-      new_password: newPassword 
-    }),
-  });
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, code, new_password: newPassword }),
+  }).catch(() => { throw new Error('Cannot reach the server.'); });
 
   if (!response.ok) {
-    const errorData = await response.json();
+    const errorData = await response.json().catch(() => ({}));
     throw new Error(
       errorData.detail ||
       errorData.message ||

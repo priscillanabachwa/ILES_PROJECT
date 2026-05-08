@@ -29,6 +29,7 @@ class WeeklyLogbook(models.Model):
     supervisor_comment = models.TextField(blank=True, null=True)
     deadline = models.DateField()
     submitted_at = models.DateTimeField(null=True, blank=True)
+    attachment = models.FileField(upload_to='log_attachments/', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now =True)
     class Meta:

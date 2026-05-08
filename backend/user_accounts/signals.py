@@ -1,21 +1,30 @@
 from django.db.models.signals import post_save, post_migrate
 from django.dispatch import receiver
-from django.contrib.auth.models import Group, Permission
-from .models import CustomUser,PasswordResetOTP
+from django.contrib.auth.models import Group
+from .models import CustomUser
+from .models import PasswordResetOTP
 from django.core.mail import send_mail
 from django.conf import settings
 
+
 @receiver(post_save, sender=CustomUser)
-def send_welcome_email(sender, instance, created, **kwargs):
+def send_welcome_notification(sender, instance, created, **kwargs):
+    """Send welcome email + in-app notification when a new user registers."""
     if created:
-        subject = 'Welcome to ILES!'
-        message = f'Hello {instance.first_name},\n\nYour account for the Internship Logging and Evaluation System (ILES) has been created successfully. We are excited to have you on board.\n\nBest regards'
-        send_mail(
-            subject= subject,
-            message= message,
-            from_email= settings.EMAIL_HOST_USER,
-            recipient_list= [instance.email],
-            fail_silently=True,
+        from .notifications import notify_user
+        notify_user(
+            instance,
+            title='Welcome to ILES!',
+            message=(
+                f'Hello {instance.first_name},\n\n'
+                f'Your account for the Internship Logging and Evaluation System (ILES) '
+                f'has been created successfully.\n\n'
+                f'Complete your profile to get started.\n\n'
+                f'Best regards,\nThe ILES Team'
+            ),
+            notification_type='welcome',
+            send_email=True,
+            send_sms_alert=False,
         )
 @receiver(post_save, sender=PasswordResetOTP)
 def send_password_reset_confirmation(sender, instance, **kwargs):
@@ -28,32 +37,20 @@ def send_password_reset_confirmation(sender, instance, **kwargs):
             fail_silently=False,
         )
 
+
 @receiver(post_save, sender=CustomUser)
 def assign_user_to_group(sender, instance, created, **kwargs):
     if created:
         role_mapping = {
-            'student': 'Student',
+            'student':              'Student',
             'workplace_supervisor': 'Workplace Supervisor',
-            'academic_supervisor': 'Academic Supervisor',
-            'admin': 'Admin',
+            'academic_supervisor':  'Academic Supervisor',
+            'admin':                'Admin',
         }
         target_group_name = role_mapping.get(instance.role)
-
         if target_group_name:
-            
+            try:
                 group, created = Group.objects.get_or_create(name=target_group_name)
                 instance.groups.add(group)
-            
-@receiver(post_migrate)
-def create_user_groups(sender, **kwargs):
-    groups = [
-        'Student', 
-        'Workplace Supervisor', 
-        'Academic Supervisor', 
-        'Admin'
-    ]
-    for group_name in groups:
-        Group.objects.get_or_create(name=group_name)
-
-
-        
+            except Group.DoesNotExist:
+                pass

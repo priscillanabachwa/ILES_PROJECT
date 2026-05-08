@@ -5,14 +5,14 @@ import { fetchWithAuth } from '../services/authService'
 const API = '/api'
 
 const formatDate = (iso) =>
-  iso ? new Date(iso).toLocaleDateString('en-UG', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A'
+  iso ? new Date(iso).toLocaleDateString('en-UG', { day: 'numeric', month: 'short', year: 'numeric' }) : '"?'
 
 function Skeleton({ className = '' }) {
   return <div className={`bg-slate-700/50 animate-pulse rounded-lg ${className}`} />
 }
 
 function ScoreBadge({ score }) {
-  if (score == null) return <span className="text-slate-600 text-sm">N/A</span>
+  if (score == null) return <span className="text-slate-600 text-sm">"?</span>
   const color =
     score >= 80 ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' :
     score >= 60 ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' :
@@ -26,7 +26,6 @@ function ScoreBadge({ score }) {
 
 function EvaluationModal({ evaluation, onClose }) {
   if (!evaluation) return null
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
@@ -42,13 +41,12 @@ function EvaluationModal({ evaluation, onClose }) {
             </svg>
           </button>
         </div>
-
         <div className="p-6 space-y-6">
           <div className="flex items-center justify-between bg-slate-700/30 rounded-xl p-4 border border-slate-700/50">
             <div>
               <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Total Score</p>
               <p className="text-3xl font-black text-white">
-                {evaluation.total_score != null ? `${Number(evaluation.total_score).toFixed(0)}%` : 'N/A'}
+                {evaluation.total_score != null ? `${Number(evaluation.total_score).toFixed(0)}%` : '"?'}
               </p>
             </div>
             <div className="text-right">
@@ -59,7 +57,7 @@ function EvaluationModal({ evaluation, onClose }) {
                 evaluation.grade === 'C' ? 'text-amber-400' :
                 evaluation.grade ? 'text-red-400' : 'text-slate-600'
               }`}>
-                {evaluation.grade || 'N/A'}
+                {evaluation.grade || '"?'}
               </span>
             </div>
           </div>
@@ -99,9 +97,8 @@ function EvaluationModal({ evaluation, onClose }) {
   )
 }
 
-export default function AdminEvaluationsPage() {
+export default function AcademicEvaluationsPage() {
   const [evaluations,        setEvaluations]        = useState([])
-  const [placements,         setPlacements]         = useState({})
   const [loading,            setLoading]            = useState(true)
   const [search,             setSearch]             = useState('')
   const [statusFilter,       setStatusFilter]       = useState('all')
@@ -118,12 +115,11 @@ export default function AdminEvaluationsPage() {
         const pm = Object.fromEntries(
           (Array.isArray(placementsData) ? placementsData : []).map(p => [p.id, p])
         )
-        setPlacements(pm)
         setEvaluations(
           (Array.isArray(evalsData) ? evalsData : []).map(e => ({
             ...e,
             student_name: pm[e.placement]?.student_name || `Placement #${e.placement}`,
-            company:      pm[e.placement]?.company_name || 'N/A',
+            company:      pm[e.placement]?.company_name || '"?',
           }))
         )
       } catch {
@@ -134,8 +130,8 @@ export default function AdminEvaluationsPage() {
   }, [])
 
   const total     = evaluations.length
-  const submitted = evaluations.filter((e) => e.status === 'SUBMITTED').length
-  const pending   = evaluations.filter((e) => e.status !== 'SUBMITTED').length
+  const submitted = evaluations.filter(e => e.status === 'SUBMITTED').length
+  const pending   = evaluations.filter(e => e.status !== 'SUBMITTED').length
   const avgScore  = evaluations.filter(e => e.total_score != null).length
     ? Math.round(
         evaluations.filter(e => e.total_score != null).reduce((acc, e) => acc + Number(e.total_score), 0) /
@@ -153,23 +149,21 @@ export default function AdminEvaluationsPage() {
 
   return (
     <div className="space-y-6">
-
       {selectedEvaluation && (
         <EvaluationModal evaluation={selectedEvaluation} onClose={() => setSelectedEvaluation(null)} />
       )}
 
       <div>
         <h1 className="text-2xl font-bold text-white">Evaluations</h1>
-        <p className="text-sm text-slate-400 mt-1">Monitor evaluations for all interns across the system</p>
+        <p className="text-sm text-slate-400 mt-1">View evaluation results for your assigned interns</p>
       </div>
 
-      {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label:'Total Interns', value:total,                       color:'text-white',       bg:'bg-slate-800/50 border-slate-700/50'      },
-          { label:'Evaluated',     value:submitted,                   color:'text-emerald-400', bg:'bg-emerald-500/10 border-emerald-500/20'   },
-          { label:'Pending',       value:pending,                     color:'text-amber-400',   bg:'bg-amber-500/10 border-amber-500/20'       },
-          { label:'Avg. Score',    value:avgScore != null ? `${avgScore}%` : 'N/A', color:'text-indigo-400', bg:'bg-indigo-600/10 border-indigo-500/20' },
+          { label: 'Total Interns', value: total,                                 color: 'text-white',       bg: 'bg-slate-800/50 border-slate-700/50'    },
+          { label: 'Evaluated',     value: submitted,                              color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
+          { label: 'Pending',       value: pending,                                color: 'text-amber-400',   bg: 'bg-amber-500/10 border-amber-500/20'    },
+          { label: 'Avg. Score',    value: avgScore != null ? `${avgScore}%` : '"?', color: 'text-indigo-400',  bg: 'bg-indigo-600/10 border-indigo-500/20'  },
         ].map(({ label, value, color, bg }) => (
           <div key={label} className={`rounded-2xl p-5 border ${bg}`}>
             <p className="text-slate-400 text-xs uppercase tracking-wider mb-2">{label}</p>
@@ -178,18 +172,14 @@ export default function AdminEvaluationsPage() {
         ))}
       </div>
 
-      {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"
             fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
           </svg>
-          <input
-            type="text"
-            placeholder="Search by student name or company..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+          <input type="text" placeholder="Search by student name or company..."
+            value={search} onChange={(e) => setSearch(e.target.value)}
             className="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl pl-9 pr-4 py-2.5 text-sm text-slate-300 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition"
           />
         </div>
@@ -210,7 +200,6 @@ export default function AdminEvaluationsPage() {
         </div>
       </div>
 
-      {/* Table */}
       <div className="bg-slate-800/30 border border-slate-700/50 rounded-2xl overflow-hidden">
         {loading ? (
           <div className="p-6 space-y-3">
@@ -221,7 +210,7 @@ export default function AdminEvaluationsPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-slate-700/50">
-                  {['Intern','Company','Score','Grade','Status','Actions'].map((h) => (
+                  {['Intern', 'Company', 'Score', 'Grade', 'Status', 'Actions'].map(h => (
                     <th key={h} className="text-left text-xs text-slate-500 uppercase tracking-wider px-5 py-4 font-semibold">{h}</th>
                   ))}
                 </tr>
@@ -229,9 +218,7 @@ export default function AdminEvaluationsPage() {
               <tbody className="divide-y divide-slate-700/30">
                 {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="text-center py-12 text-slate-500 text-sm">
-                      {loading ? 'Loading...' : 'No evaluations found.'}
-                    </td>
+                    <td colSpan={6} className="text-center py-12 text-slate-500 text-sm">No evaluations found.</td>
                   </tr>
                 )}
                 {filtered.map((ev) => (
@@ -257,7 +244,7 @@ export default function AdminEvaluationsPage() {
                         ev.grade === 'C' ? 'text-amber-400' :
                         ev.grade ? 'text-red-400' : 'text-slate-600'
                       }`}>
-                        {ev.grade || 'N/A'}
+                        {ev.grade || '"?'}
                       </span>
                     </td>
                     <td className="px-5 py-4">
@@ -286,7 +273,6 @@ export default function AdminEvaluationsPage() {
             </table>
           </div>
         )}
-
         <div className="px-5 py-3 border-t border-slate-700/50 flex items-center justify-between">
           <p className="text-slate-500 text-xs">Showing {filtered.length} of {total} interns</p>
           <p className="text-slate-500 text-xs">{submitted} evaluated x {pending} pending</p>
