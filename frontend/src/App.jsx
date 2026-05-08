@@ -23,7 +23,7 @@ import WorkplaceScoresPage from './pages/WorkplaceScoresPage.jsx'
 import StudentEvaluationPage from './pages/StudentEvaluationPage.jsx'
 import StudentFeedbackPage from './pages/StudentFeedbackPage.jsx'
 import NotificationsPage from './pages/NotificationsPage.jsx'
-import { AuthProvider, useAuth } from './context/AuthContext.jsx'
+import { AuthProvider, useAuth } from './Context/AuthContext.jsx'
 
 const ProtectedRoute = ({children, allowedRoles}) => {
   const {user, loading} = useAuth();

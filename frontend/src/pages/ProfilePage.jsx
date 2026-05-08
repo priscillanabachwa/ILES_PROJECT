@@ -1,6 +1,6 @@
 ﻿import { useState, useRef, useEffect } from 'react'
 import { toast } from 'react-toastify'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../Context/AuthContext'
 import { updateUserProfile, getAuthToken } from '../services/authService'
 
 const ROLE_CONFIG = {
