@@ -4,9 +4,6 @@ import { fetchWithAuth } from '../services/authService'
 
 const API = '/api'
 
-const formatDate = (iso) =>
-  iso ? new Date(iso).toLocaleDateString('en-UG', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A'
-
 function Skeleton({ className = '' }) {
   return <div className={`bg-slate-700/50 animate-pulse rounded-lg ${className}`} />
 }
@@ -101,7 +98,6 @@ function EvaluationModal({ evaluation, onClose }) {
 
 export default function AdminEvaluationsPage() {
   const [evaluations,        setEvaluations]        = useState([])
-  const [placements,         setPlacements]         = useState({})
   const [loading,            setLoading]            = useState(true)
   const [search,             setSearch]             = useState('')
   const [statusFilter,       setStatusFilter]       = useState('all')
@@ -118,7 +114,6 @@ export default function AdminEvaluationsPage() {
         const pm = Object.fromEntries(
           (Array.isArray(placementsData) ? placementsData : []).map(p => [p.id, p])
         )
-        setPlacements(pm)
         setEvaluations(
           (Array.isArray(evalsData) ? evalsData : []).map(e => ({
             ...e,

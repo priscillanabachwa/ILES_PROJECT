@@ -48,8 +48,8 @@ function Skeleton({ className = '' }) {
 function LogSkeleton() {
   return (
     <div className="space-y-3">
-      {[1,2,3,4,5].map((i) => (
-        <div key={i} className="p-4 rounded-xl border border-slate-700/50 space-y-2">
+      {[1,2,3,4,5].map((_i) => (
+        <div key={_i} className="p-4 rounded-xl border border-slate-700/50 space-y-2">
           <div className="flex items-center gap-3">
             <Skeleton className="w-8 h-8 rounded-full flex-shrink-0" />
             <Skeleton className="h-3 w-1/3" />
@@ -385,7 +385,7 @@ export default function AdminLogsPage() {
             </div>
           )}
 
-          {filtered.map((log, i) => (
+          {filtered.map((log) => (
             <div
               key={log.id}
               className={`bg-slate-800/50 border rounded-2xl p-4 transition

@@ -6,9 +6,6 @@ import dashboardService from '../services/dashboardService'
 
 const API = '/api'
 
-const formatDate = (iso) =>
-  iso ? new Date(iso).toLocaleDateString('en-UG', { day:'numeric', month:'short', year:'numeric' }) : '"?'
-
 const getInitials = (first, last) =>
   `${first?.[0] || ''}${last?.[0] || ''}`.toUpperCase() || '?'
 
