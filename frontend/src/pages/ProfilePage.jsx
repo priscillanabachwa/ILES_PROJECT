@@ -61,9 +61,6 @@ const validators = {
 
 const validateField = (key, value) => validators[key]?.(value) || ''
 
-const formatDate = (iso) =>
-  iso ? new Date(iso).toLocaleDateString('en-UG', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A'
-
 const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '')
 
 const getFullName = (user) =>

@@ -5,9 +5,6 @@ import { toast, ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import dashboardService from "../../services/dashboardService"
 
-const formatDate = (iso) =>
-  iso ? new Date(iso).toLocaleDateString('en-UG', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A'
-
 const getInitials = (name) =>
   name?.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() || '?'
 
@@ -106,11 +103,6 @@ function FormField({ label, required, children }) {
 
 const inputCls = "w-full rounded-lg px-3 py-2 text-sm text-white bg-slate-700/50 border border-slate-600 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition placeholder-slate-500"
 const selectCls = "w-full rounded-lg px-3 py-2 text-sm text-white bg-slate-700/50 border border-slate-600 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition"
-
-const sendNotification = (recipient, message) => {
-  console.log(`Notification sent to ${recipient}: ${message}`)
-  toast.info(` Notification sent to ${recipient}`, { position: 'top-right', autoClose: 3000 })
-}
 
 function RegisterStudentModal({ onClose, onSuccess }) {
   const [form, setForm] = useState({ first_name: '', last_name: '', email: '', password: '' })
