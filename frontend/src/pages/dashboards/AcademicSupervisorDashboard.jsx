@@ -360,7 +360,7 @@ export default function AcademicDashboard() {
                     <div className="flex items-start gap-3">
                       <AvatarCircle name={l.student_name} index={i} size="sm" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-white">Week {l.week_number} N/A {l.student_name}</p>
+                        <p className="text-xs font-semibold text-white">Week {l.week_number} — {l.student_name}</p>
                         <p className="text-xs text-slate-400 mt-0.5">Submitted {formatDate(l.submitted_at)}</p>
                         {isOverdue(l.deadline) && (
                           <p className="text-xs text-red-400 font-medium mt-0.5">Past deadline</p>

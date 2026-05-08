@@ -177,7 +177,7 @@ export default function StudentFeedbackPage() {
                   <div className="flex items-center gap-3">
                     <WeekBadge weekNumber={log.week_number} />
                     <div>
-                      <p className="text-sm font-bold text-white">Week {log.week_number} N/A Logbook Entry</p>
+                      <p className="text-sm font-bold text-white">Week {log.week_number} — Logbook Entry</p>
                       <p className="text-xs text-slate-500 mt-0.5">
                         Submitted: {formatDate(log.submitted_at)}
                       </p>
@@ -207,7 +207,7 @@ export default function StudentFeedbackPage() {
                     <span className="text-xs text-emerald-400 font-medium">Approved by supervisor</span>
                   )}
                   {log.status === 'reviewed' && (
-                    <span className="text-xs text-blue-400 font-medium">Reviewed N/A awaiting approval</span>
+                    <span className="text-xs text-blue-400 font-medium">Reviewed — awaiting approval</span>
                   )}
                 </div>
               </div>

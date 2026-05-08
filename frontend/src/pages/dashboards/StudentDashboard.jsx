@@ -227,7 +227,7 @@ export default function StudentDashboard() {
             <span className="text-slate-500">{Icon.calendar}</span>
             {deadlineUrgent
               ? `Week ${deadline.week_number} due in ${days} day${days !== 1 ? 's' : ''}!`
-              : `Next deadline: Week ${deadline.week_number} N/A ${formatDate(deadline.due_date)}`
+              : `Next deadline: Week ${deadline.week_number} — ${formatDate(deadline.due_date)}`
             }
           </div>
         )}
@@ -260,7 +260,7 @@ export default function StudentDashboard() {
                   <div className="flex items-center justify-between">
                     <Badge status={placement.status} />
                     <div className="text-xs text-slate-500">
-                      {formatDate(placement.start_date)} N/A {formatDate(placement.end_date)}
+                      {formatDate(placement.start_date)} — {formatDate(placement.end_date)}
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
@@ -303,7 +303,7 @@ export default function StudentDashboard() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-white truncate">
-                        Week {l.week_number} N/A {l.activities?.slice(0, 40) || 'No activities recorded'}...
+                        Week {l.week_number} — {l.activities?.slice(0, 40) || 'No activities recorded'}...
                       </p>
                       <p className="text-xs text-slate-400 mt-0.5">
                         {l.submitted_at ? `Submitted ${formatDate(l.submitted_at)}` : `Due ${formatDate(l.deadline)}`}
