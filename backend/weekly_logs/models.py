@@ -38,6 +38,7 @@ class WeeklyLogbook(models.Model):
             ('can_submit_weekly_log', 'Can submit weekly log'),
             ('can_review_weekly_log', 'Can review weekly log'),
             ('can_approve_weekly_log', 'Can approve weekly log'),
+            ('can_reject_weekly_log', 'Can reject weekly log'),
         ]
         
     def __str__(self):
