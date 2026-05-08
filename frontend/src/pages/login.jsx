@@ -223,15 +223,10 @@ export default function Login() {
     try {
       const response = await loginUser(email, password)
       if (response.token && response.user) {
-        await login(response.user, response.token)
-
+        login(response.user, response.token)
         localStorage.setItem('authToken', response.token)
         localStorage.setItem('user', JSON.stringify(response.user))
-
-        const userRole = response.user.role.toLowerCase().replace(/\s+/g, '_');
-        const path = ROLE_REDIRECTS[userRole] || '/student/dashboard'
-
-        console.log('Navigating to:', path);
+        const path = ROLE_REDIRECTS[response.user.role] || '/student/dashboard'
         navigate(path)
       }
     } catch (err) {
