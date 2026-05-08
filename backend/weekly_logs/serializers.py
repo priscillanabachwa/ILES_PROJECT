@@ -14,7 +14,7 @@ class WeeklyLogbookSerializer(serializers.ModelSerializer):
             'challenges', 'lesson', 'status', 'supervisor_comment', 
             'deadline', 'submitted_at'
         ]
-        read_only_fields = ['id','submitted_at','supervisor_comment','deadline']
+        read_only_fields = ['id','submitted_at','deadline']
 
     def validate_week_number(self,value):
             if value <=0:
@@ -22,7 +22,7 @@ class WeeklyLogbookSerializer(serializers.ModelSerializer):
             return value
 
       
-    def validate(self, date):
+    def validate(self, data):
         if data.get('status') == 'submitted':
             current_deadline = getattr(self.instance, 'deadline', None)
 
@@ -36,5 +36,5 @@ class WeeklyLogbookSerializer(serializers.ModelSerializer):
                 'Approved logs cannot be modified.'
             )
     
-        return date 
+        return data 
 
