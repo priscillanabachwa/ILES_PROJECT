@@ -1,14 +1,24 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
-from .models import CustomUserManager
-from .models import CustomUser
+from .models import CustomUserManager, CustomUser, Notification
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
 
     email = serializers.EmailField()
     profile_picture = serializers.ImageField(required=False, allow_null=True)
-    password = serializers.CharField(write_only=True, required=True, min_length=8)
+    password = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    first_name   = serializers.CharField(required=False, allow_blank=True)
+    last_name    = serializers.CharField(required=False, allow_blank=True)
+    phone_number = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    institution  = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    department   = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    student_id   = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    faculty      = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    staff_id     = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    organisation = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    job_title    = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+
     class Meta:
         model = CustomUser
         fields = [
@@ -16,7 +26,6 @@ class CustomUserSerializer(serializers.ModelSerializer):
             "email",
             "first_name",
             "last_name",
-            "username",
             "role",
             "phone_number",
             "profile_picture",
@@ -24,23 +33,40 @@ class CustomUserSerializer(serializers.ModelSerializer):
             "is_staff",
             "is_superuser",
             "is_active",
+            "institution",
+            "department",
+            "student_id",
+            "faculty",
+            "staff_id",
+            "organisation",
+            "job_title",
         ]
         read_only_fields = ["id", "is_staff", "is_superuser", "is_active"]
 
+    def validate(self, attrs):
+        # Password is required only during creation
+        if not self.instance and not attrs.get('password'):
+            raise serializers.ValidationError({"password": "Password is required for new users."})
+        return attrs
+
     def validate_email(self, value):
         value = value.lower()
-        # Check for duplicate email on create (not on update)
-        if self.instance is None:  # only on create
-            if CustomUser.objects.filter(email=value).exists():
+        # Only check for duplicates if it's a new user or the email is being changed
+        if self.instance is None or self.instance.email != value:
+            if CustomUser.objects.filter(email=value).exclude(id=self.instance.id if self.instance else None).exists():
                 raise serializers.ValidationError("A user with this email already exists.")
         return value
-
-        return value.lower()
 
     def validate_role(self, value):
         roles = [choice[0] for choice in self.Meta.model.ROLE_CHOICES]
         if value not in roles:
             raise serializers.ValidationError("Invalid role.")
+        return value
+
+    def validate_password(self, value):
+        # Password is optional, but if provided, must be min 8 chars
+        if value and len(value) < 8:
+            raise serializers.ValidationError("Password must be at least 8 characters long.")
         return value
 
     def create(self, validated_data):
@@ -99,3 +125,10 @@ class LoginSerializer(serializers.Serializer):
 
         attrs['user'] = user
         return attrs
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model  = Notification
+        fields = ['id', 'title', 'message', 'notification_type', 'is_read', 'created_at']
+        read_only_fields = ['id', 'title', 'message', 'notification_type', 'created_at']

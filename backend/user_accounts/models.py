@@ -50,6 +50,19 @@ class CustomUser(AbstractUser):
         blank=True,
         null=True
     )
+
+    # Student fields
+    institution = models.CharField(max_length=200, blank=True, null=True)
+    department  = models.CharField(max_length=200, blank=True, null=True)
+    student_id  = models.CharField(max_length=50,  blank=True, null=True)
+
+    # Academic supervisor fields
+    faculty  = models.CharField(max_length=200, blank=True, null=True)
+    staff_id = models.CharField(max_length=50,  blank=True, null=True)
+
+    # Workplace supervisor fields
+    organisation = models.CharField(max_length=200, blank=True, null=True)
+    job_title    = models.CharField(max_length=200, blank=True, null=True)
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['first_name', 'last_name']
 
@@ -57,3 +70,29 @@ class CustomUser(AbstractUser):
 
     def __str__(self):
         return f'{self.email} ({self.get_role_display()})'
+
+
+class Notification(models.Model):
+    TYPE_CHOICES = [
+        ('log_submitted', 'Log Submitted'),
+        ('log_reviewed',  'Log Reviewed'),
+        ('log_approved',  'Log Approved'),
+        ('log_rejected',  'Log Rejected'),
+        ('evaluation',    'Evaluation'),
+        ('placement',     'Placement Update'),
+        ('welcome',       'Welcome'),
+        ('general',       'General'),
+    ]
+
+    user              = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='notifications')
+    title             = models.CharField(max_length=200)
+    message           = models.TextField()
+    notification_type = models.CharField(max_length=30, choices=TYPE_CHOICES, default='general')
+    is_read           = models.BooleanField(default=False)
+    created_at        = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.user.email} — {self.title}'

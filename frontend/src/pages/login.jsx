@@ -1,8 +1,9 @@
-import { Link } from 'react-router-dom'
+﻿import { Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../Context/AuthContext'
+import { useAuth } from '../context/AuthContext'
 import { loginUser, requestPasswordReset, verifyResetCode, resetPassword } from '../services/authService'
+import { toast } from 'react-toastify'
 import './Login.css'
 import ILES_LOGO from '../assets/ILES_LOGO.png'
 
@@ -98,11 +99,11 @@ function ForgotPasswordModal({ isOpen, onClose }) {
             {step === 2 && 'Enter Recovery Code'}
             {step === 3 && 'Set New Password'}
           </h2>
-          <button className="modal-close-btn" onClick={onClose} type="button" aria-label="Close">✕</button>
+          <button className="modal-close-btn" onClick={onClose} type="button" aria-label="Close"></button>
         </div>
 
         {error && <div className="alert alert--error">{error}</div>}
-        {success && <div className="alert alert--success">✓ {success}</div>}
+        {success && <div className="alert alert--success"> {success}</div>}
 
         {step === 1 && (
           <form className="modal-form" onSubmit={handleEmailSubmit}>
@@ -119,7 +120,7 @@ function ForgotPasswordModal({ isOpen, onClose }) {
               />
             </div>
             <button type="submit" className="btn btn--primary btn--full" disabled={loading}>
-              {loading ? 'Sending…' : 'Send Recovery Code'}
+              {loading ? 'Sending...' : 'Send Recovery Code'}
             </button>
           </form>
         )}
@@ -140,7 +141,7 @@ function ForgotPasswordModal({ isOpen, onClose }) {
               />
             </div>
             <button type="submit" className="btn btn--primary btn--full" disabled={loading}>
-              {loading ? 'Verifying…' : 'Verify Code'}
+              {loading ? 'Verifying...' : 'Verify Code'}
             </button>
           </form>
         )}
@@ -183,7 +184,7 @@ function ForgotPasswordModal({ isOpen, onClose }) {
               </label>
             </div>
             <button type="submit" className="btn btn--primary btn--full" disabled={loading}>
-              {loading ? 'Resetting…' : 'Reset Password'}
+              {loading ? 'Resetting...' : 'Reset Password'}
             </button>
           </form>
         )}
@@ -200,8 +201,8 @@ function ForgotPasswordModal({ isOpen, onClose }) {
 
 const ROLE_REDIRECTS = {
   student: '/student/dashboard',
-  academic_supervisor: '/academic-supervisor/dashboard',
-  supervisor: '/supervisor/dashboard',
+  academic_supervisor: '/academic/dashboard',
+  workplace_supervisor: '/supervisor/dashboard',
   admin: '/admin/dashboard',
 }
 
@@ -224,8 +225,10 @@ export default function Login() {
       const response = await loginUser(email, password)
       if (response.token && response.user) {
         login(response.user, response.token)
-        localStorage.setItem('authToken', response.token)
-        localStorage.setItem('user', JSON.stringify(response.user))
+        const firstName = response.user.first_name
+          ? response.user.first_name.charAt(0).toUpperCase() + response.user.first_name.slice(1)
+          : ''
+        toast.success(`Welcome back${firstName ? ', ' + firstName : ''}!`)
         const path = ROLE_REDIRECTS[response.user.role] || '/student/dashboard'
         navigate(path)
       }
@@ -291,7 +294,7 @@ export default function Login() {
           {error && <p className="alert alert--error">{error}</p>}
 
           <button type="submit" className="btn btn--primary btn--full" disabled={loading}>
-            {loading ? 'Signing in…' : 'Sign In'}
+            {loading ? 'Signing in...' : 'Sign In'}
           </button>
 
           <div className="forgot-link-wrap">

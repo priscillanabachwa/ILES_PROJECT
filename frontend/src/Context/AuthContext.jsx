@@ -26,8 +26,13 @@ export function AuthProvider({ children }) {
     setUser(null)
   }
 
+  const updateUser = (updatedUserData) => {
+    localStorage.setItem('user', JSON.stringify(updatedUserData))
+    setUser(updatedUserData)
+  }
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, updateUser, loading }}>
       {!loading ? children : <div className='spinner'>Loading ILES...</div>}
     </AuthContext.Provider>
   )

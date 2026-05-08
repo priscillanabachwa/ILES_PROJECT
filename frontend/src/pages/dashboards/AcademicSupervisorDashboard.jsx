@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react'
-import { useAuth } from "../../Context/AuthContext"
+﻿import { useState, useEffect } from 'react'
+import { useAuth } from "../../context/AuthContext"
 import { Link } from 'react-router-dom'
+import { toast } from 'react-toastify'
 import dashboardService from "../../services/dashboardService"
 
 const formatDate = (iso) =>
-  iso ? new Date(iso).toLocaleDateString('en-UG', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
+  iso ? new Date(iso).toLocaleDateString('en-UG', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A'
 
 const getInitials = (name) =>
   name?.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() || '?'
@@ -127,9 +128,9 @@ function StatCard({ label, value, sub, subLink, icon, accent }) {
       <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${A.icon}`}>{icon}</div>
       <div>
         <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">{label}</p>
-        <p className={`text-3xl font-bold mt-0.5 ${A.val}`}>{value ?? '—'}</p>
+        <p className={`text-3xl font-bold mt-0.5 ${A.val}`}>{value ?? 'N/A'}</p>
         {sub && subLink
-          ? <Link to={subLink} className={`text-xs font-medium mt-1 block hover:underline ${A.sub}`}>{sub} →</Link>
+          ? <Link to={subLink} className={`text-xs font-medium mt-1 block hover:underline ${A.sub}`}>{sub} </Link>
           : sub && <p className={`text-xs font-medium mt-1 ${A.sub}`}>{sub}</p>
         }
       </div>
@@ -146,7 +147,7 @@ function Card({ title, actionLabel, actionLink, children, headerRight }) {
           {headerRight}
           {actionLabel && actionLink && (
             <Link to={actionLink} className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 hover:underline">
-              {actionLabel} →
+              {actionLabel} 
             </Link>
           )}
         </div>
@@ -168,6 +169,7 @@ export default function AcademicDashboard() {
   const [error,      setError]          = useState('')
   const [search,     setSearch]         = useState('')
   const [semester,   setSemester]       = useState('2024-II')
+  const [approvingId,   setApprovingId]   = useState(null)
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -186,32 +188,8 @@ export default function AcademicDashboard() {
         setLogbooks(logbooksRes.data)
         setRecentActivity(activityRes.data)
         setScores(scoresRes.data)
-      } catch {
-        // Mock data for frontend preview — remove when backend is connected
-        setStats({ assigned_students: 12, pending_reviews: 4, completed_evaluations: 8, average_score: 76.4 })
-        setPlacements([
-          { id: 1, student_name: 'Amara Nkosi',    student_id: '2500703348', company: 'TechCorp Uganda',         status: 'ACTIVE'    },
-          { id: 2, student_name: 'Brian Otim',     student_id: '2500703349', company: 'MTN Uganda',              status: 'ACTIVE'    },
-          { id: 3, student_name: 'Cynthia Akello', student_id: '2500703350', company: 'Stanbic Bank',            status: 'ACTIVE'    },
-          { id: 4, student_name: 'Denis Okello',   student_id: '2500703351', company: 'Uganda Revenue Authority', status: 'COMPLETED' },
-        ])
-        setLogbooks([
-          { id: 1, student_name: 'Amara Nkosi',    week_number: 6, submitted_at: '2026-04-05', deadline: '2026-03-01', status: 'submitted' },
-          { id: 2, student_name: 'Brian Otim',     week_number: 7, submitted_at: '2026-04-04', deadline: '2026-03-01', status: 'submitted' },
-          { id: 3, student_name: 'Cynthia Akello', week_number: 5, submitted_at: '2026-04-03', deadline: '2026-04-10', status: 'reviewed'  },
-        ])
-        setRecentActivity([
-          { id: 1, student_name: 'Amara Nkosi',    activity: 'Weekly Log — Week 6',  date: '2026-04-05', status: 'submitted' },
-          { id: 2, student_name: 'Brian Otim',     activity: 'Weekly Log — Week 7',  date: '2026-04-04', status: 'submitted' },
-          { id: 3, student_name: 'Cynthia Akello', activity: 'Evaluation Submitted', date: '2026-04-03', status: 'reviewed'  },
-          { id: 4, student_name: 'Denis Okello',   activity: 'Final Report Draft',   date: '2026-04-01', status: 'approved'  },
-        ])
-        setScores([
-          { criteria: 'Technical',       score: 80 },
-          { criteria: 'Communication',   score: 74 },
-          { criteria: 'Professionalism', score: 78 },
-          { criteria: 'Report Quality',  score: 70 },
-        ])
+      } catch (err) {
+        setError(err.message || 'Failed to load dashboard data. Please refresh.')
       } finally {
         setLoading(false)
       }
@@ -219,7 +197,21 @@ export default function AcademicDashboard() {
     fetchAll()
   }, [semester])
 
-  const fullName = [user?.first_name, user?.last_name].filter(Boolean).join(' ') || 'Supervisor'
+  const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '')
+  const fullName = [user?.first_name, user?.last_name].filter(Boolean).map(cap).join(' ') || 'Supervisor'
+
+  const handleApprove = async (logId) => {
+    setApprovingId(logId)
+    try {
+      await dashboardService.approveLog(logId)
+      toast.success('Log approved successfully.')
+      setLogbooks(prev => prev.filter(l => l.id !== logId))
+      setStats(prev => prev ? { ...prev, pending_reviews: Math.max(0, prev.pending_reviews - 1) } : prev)
+    } catch (err) {
+      toast.error(err.message || 'Failed to approve log.')
+    } finally { setApprovingId(null) }
+  }
+
   const filtered = placements.filter((p) =>
     p.student_name?.toLowerCase().includes(search.toLowerCase()) ||
     p.student_id?.toLowerCase().includes(search.toLowerCase())
@@ -229,10 +221,10 @@ export default function AcademicDashboard() {
   return (
     <div className="space-y-6">
 
-      {/* ── Header ── */}
+      {/*  Header  */}
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-white">Welcome, {fullName} 👋</h1>
+          <h1 className="text-2xl font-bold text-white">Welcome, {fullName} </h1>
           <p className="text-sm text-slate-400 mt-1">
             Manage your assigned students, review internship logs, and track evaluations.
           </p>
@@ -253,12 +245,12 @@ export default function AcademicDashboard() {
         </div>
       </div>
 
-      {/* ── Error ── */}
+      {/*  Error  */}
       {error && (
         <div className="bg-red-500/10 border border-red-500/30 text-red-300 text-sm px-4 py-3 rounded-xl">{error}</div>
       )}
 
-      {/* ── Stat cards ── */}
+      {/*  Stat cards  */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="Assigned Students"    value={stats?.assigned_students}     sub="View all students" subLink="/academic/students"    accent="indigo"  icon={Icon.students} />
         <StatCard label="Pending Reviews"       value={stats?.pending_reviews}       sub="Review now"        subLink="/academic/logs"         accent="amber"   icon={Icon.logbook}  />
@@ -266,10 +258,10 @@ export default function AcademicDashboard() {
         <StatCard label="Average Score"         value={stats ? `${Number(stats.average_score).toFixed(0)}%` : null} sub="Across all students" accent="rose" icon={Icon.report} />
       </div>
 
-      {/* ── Main content ── */}
+      {/*  Main content  */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
 
-        {/* Left col — 3/5 */}
+        {/* Left col N/A 3/5 */}
         <div className="lg:col-span-3 space-y-5">
 
           <Card
@@ -299,7 +291,7 @@ export default function AcademicDashboard() {
                     <AvatarCircle name={p.student_name} index={i} />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-white truncate">{p.student_name}</p>
-                      <p className="text-xs text-slate-400">{p.student_id} · {p.company}</p>
+                      <p className="text-xs text-slate-400">{p.student_id} x {p.company}</p>
                     </div>
                     <Badge status={p.status} />
                   </div>
@@ -350,7 +342,7 @@ export default function AcademicDashboard() {
           </Card>
         </div>
 
-        {/* Right col — 2/5 */}
+        {/* Right col N/A 2/5 */}
         <div className="lg:col-span-2 space-y-5">
 
           <Card title="Pending Reviews" actionLabel="Review All" actionLink="/academic/logs">
@@ -360,25 +352,36 @@ export default function AcademicDashboard() {
                 {logbooks.slice(0, 4).map((l, i) => (
                   <div
                     key={l.id}
-                    className={`flex items-start gap-3 p-2.5 rounded-xl border transition
+                    className={`p-2.5 rounded-xl border transition
                       ${isOverdue(l.deadline)
                         ? 'border-red-500/30 bg-red-500/10'
                         : 'border-slate-700/50 hover:bg-slate-700/30'}`}
                   >
-                    <AvatarCircle name={l.student_name} index={i} size="sm" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-white">Week {l.week_number} — {l.student_name}</p>
-                      <p className="text-xs text-slate-400 mt-0.5">Submitted {formatDate(l.submitted_at)}</p>
-                      {isOverdue(l.deadline) && (
-                        <p className="text-xs text-red-400 font-medium mt-0.5">Past deadline</p>
-                      )}
+                    <div className="flex items-start gap-3">
+                      <AvatarCircle name={l.student_name} index={i} size="sm" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-white">Week {l.week_number} N/A {l.student_name}</p>
+                        <p className="text-xs text-slate-400 mt-0.5">Submitted {formatDate(l.submitted_at)}</p>
+                        {isOverdue(l.deadline) && (
+                          <p className="text-xs text-red-400 font-medium mt-0.5">Past deadline</p>
+                        )}
+                      </div>
+                      <Badge status={l.status} overdue={isOverdue(l.deadline)} />
                     </div>
-                    <Badge status={l.status} overdue={isOverdue(l.deadline)} />
+                    {l.status === 'reviewed' && (
+                      <button
+                        onClick={() => handleApprove(l.id)}
+                        disabled={approvingId === l.id}
+                        className="mt-2 w-full py-1.5 rounded-lg text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 transition disabled:opacity-50"
+                      >
+                        {approvingId === l.id ? 'Approving...' : 'Approve Log'}
+                      </button>
+                    )}
                   </div>
                 ))}
                 {stats?.pending_reviews > 4 && (
                   <Link to="/academic/logs" className="text-xs text-amber-400 font-semibold hover:underline block pt-1">
-                    View all pending ({stats.pending_reviews}) →
+                    View all pending ({stats.pending_reviews}) 
                   </Link>
                 )}
               </div>
@@ -396,13 +399,13 @@ export default function AcademicDashboard() {
                   <div className="bg-indigo-600/10 border border-indigo-500/20 rounded-xl p-3 text-center">
                     <p className="text-xs text-indigo-400">Avg. Score</p>
                     <p className="text-xl font-bold text-indigo-300 mt-0.5">
-                      {stats ? `${Number(stats.average_score).toFixed(0)}%` : '—'}
+                      {stats ? `${Number(stats.average_score).toFixed(0)}%` : 'N/A'}
                     </p>
                   </div>
                   <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 text-center">
                     <p className="text-xs text-emerald-400">Evaluated</p>
                     <p className="text-xl font-bold text-emerald-300 mt-0.5">
-                      {stats?.completed_evaluations ?? '—'}
+                      {stats?.completed_evaluations ?? 'N/A'}
                     </p>
                   </div>
                 </div>

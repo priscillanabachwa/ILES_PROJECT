@@ -16,7 +16,14 @@ import MyLogsPage from './pages/MyLogsPage'
 import AdminLogsPage from './pages/AdminLogsPage.jsx'
 import AdminEvaluationsPage from './pages/AdminEvaluationsPage.jsx'
 import AdminUsersPage from './pages/AdminUsersPage.jsx'
-import { AuthProvider, useAuth } from './Context/AuthContext.jsx'
+import AcademicLogsPage from './pages/AcademicLogsPage.jsx'
+import AcademicEvaluationsPage from './pages/AcademicEvaluationsPage.jsx'
+import WorkplaceReviewsPage from './pages/WorkplaceReviewsPage.jsx'
+import WorkplaceScoresPage from './pages/WorkplaceScoresPage.jsx'
+import StudentEvaluationPage from './pages/StudentEvaluationPage.jsx'
+import StudentFeedbackPage from './pages/StudentFeedbackPage.jsx'
+import NotificationsPage from './pages/NotificationsPage.jsx'
+import { AuthProvider, useAuth } from './context/AuthContext.jsx'
 
 const ProtectedRoute = ({children, allowedRoles}) => {
   const {user, loading} = useAuth();
@@ -108,9 +115,12 @@ function App() {
               </ProtectedRoute> 
             }>
               <Route path="/academic/dashboard" element={<AcademicSupervisorDashboard />} />
-              <Route path="/academic/logs" element={<div className="p-6 text-white">Logs</div>} />
-              <Route path="/academic/evaluations" element={<div className="p-6 text-white">Evaluations</div>} />
+              <Route path="/academic/logs" element={<AcademicLogsPage />} />
+              <Route path="/academic/evaluations" element={<AcademicEvaluationsPage />} />
+              <Route path="/academic/notifications" element={<NotificationsPage />} />
               <Route path="/academic/profile" element={<ProfilePage />} />
+              <Route path="/academic/students" element={<Navigate to="/academic/logs" replace />} />
+              <Route path="/academic/activity" element={<Navigate to="/academic/logs" replace />} />
             </Route>
 
             {/* Student Routes */}
@@ -121,7 +131,10 @@ function App() {
             }>
               <Route path="/student/dashboard" element={<StudentDashboard />} />
               <Route path="/student/logs" element={<MyLogsPage />} />
+              <Route path="/student/notifications" element={<NotificationsPage />} />
               <Route path="/student/profile" element={<ProfilePage />} />
+              <Route path="/student/evaluation" element={<StudentEvaluationPage />} />
+              <Route path="/student/feedback" element={<StudentFeedbackPage />} />
 
             </Route>
 
@@ -132,8 +145,13 @@ function App() {
               </ProtectedRoute>
             }>
               <Route path="/supervisor/dashboard" element={<WorkplaceSupervisorDashboard />} />
-              <Route path="/supervisor/reviews" element={<div className="p-6 text-white">Reviews</div>} />
+              <Route path="/supervisor/reviews" element={<WorkplaceReviewsPage />} />
+              <Route path="/supervisor/scores" element={<WorkplaceScoresPage />} />
+              <Route path="/supervisor/notifications" element={<NotificationsPage />} />
               <Route path="/supervisor/profile" element={<ProfilePage />} />
+              <Route path="/supervisor/students" element={<Navigate to="/supervisor/reviews" replace />} />
+              <Route path="/supervisor/activity" element={<Navigate to="/supervisor/reviews" replace />} />
+              <Route path="/supervisor/reports" element={<Navigate to="/supervisor/scores" replace />} />
             </Route>
 
             {/* Admin Routes */}
@@ -145,8 +163,9 @@ function App() {
               <Route path="/admin/dashboard" element={<InternshipAdministratorDashboard />} />
               <Route path="/admin/logs" element={<AdminLogsPage />} />
               <Route path="/admin/evaluations" element={<AdminEvaluationsPage />} />
-              <Route path="/admin/profile" element={<ProfilePage />} />
               <Route path="/admin/users" element={<AdminUsersPage />} />
+              <Route path="/admin/notifications" element={<NotificationsPage />} />
+              <Route path="/admin/profile" element={<ProfilePage />} />
             </Route>
 
             {/* 404 - Not Found Route (must be last) */}

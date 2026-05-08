@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react'
-import { useAuth } from '../../Context/AuthContext'
+﻿import { useState, useEffect } from 'react'
+import { useAuth } from '../../context/AuthContext'
 import { Link } from 'react-router-dom'
 import { toast, ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import dashboardService from "../../services/dashboardService"
 
 const formatDate = (iso) =>
-  iso ? new Date(iso).toLocaleDateString('en-UG', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
+  iso ? new Date(iso).toLocaleDateString('en-UG', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A'
 
 const getInitials = (name) =>
   name?.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() || '?'
@@ -109,26 +109,36 @@ const selectCls = "w-full rounded-lg px-3 py-2 text-sm text-white bg-slate-700/5
 
 const sendNotification = (recipient, message) => {
   console.log(`Notification sent to ${recipient}: ${message}`)
-  toast.info(`📧 Notification sent to ${recipient}`, { position: 'top-right', autoClose: 3000 })
+  toast.info(` Notification sent to ${recipient}`, { position: 'top-right', autoClose: 3000 })
 }
 
-function RegisterStudentModal({ onClose }) {
-  const [form, setForm] = useState({ first_name:'', last_name:'', email:'', student_id:'', department:'', institution:'' })
+function RegisterStudentModal({ onClose, onSuccess }) {
+  const [form, setForm] = useState({ first_name: '', last_name: '', email: '', password: '' })
   const [saving, setSaving] = useState(false)
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }))
 
   const handleSubmit = async () => {
-    if (!form.first_name || !form.last_name || !form.email) {
-      toast.error('First name, last name and email are required.')
+    if (!form.first_name || !form.last_name || !form.email || !form.password) {
+      toast.error('All fields are required.')
+      return
+    }
+    if (form.password.length < 8) {
+      toast.error('Password must be at least 8 characters.')
       return
     }
     setSaving(true)
     try {
-      toast.success(`✓ Student ${form.first_name} ${form.last_name} registered successfully!`)
-      sendNotification(form.email, `Welcome to ILES! Your student account has been created.`)
+      await dashboardService.registerStudent({
+        first_name: form.first_name,
+        last_name: form.last_name,
+        email: form.email,
+        password: form.password,
+      })
+      toast.success(` Student ${form.first_name} ${form.last_name} registered successfully!`)
+      onSuccess?.()
       onClose()
-    } catch {
-      toast.error('Failed to register student. Please try again.')
+    } catch (err) {
+      toast.error(err.message || 'Failed to register student. Please try again.')
     } finally { setSaving(false) }
   }
 
@@ -145,137 +155,220 @@ function RegisterStudentModal({ onClose }) {
       <FormField label="Email Address" required>
         <input className={inputCls} type="email" placeholder="student@university.ac.ug" value={form.email} onChange={set('email')} />
       </FormField>
-      <FormField label="Student ID">
-        <input className={inputCls} placeholder="e.g. 2500703348" value={form.student_id} onChange={set('student_id')} />
-      </FormField>
-      <FormField label="Institution">
-        <input className={inputCls} placeholder="e.g. Makerere University" value={form.institution} onChange={set('institution')} />
-      </FormField>
-      <FormField label="Department">
-        <input className={inputCls} placeholder="e.g. Computer Science" value={form.department} onChange={set('department')} />
+      <FormField label="Temporary Password" required>
+        <input className={inputCls} type="password" placeholder="Min. 8 characters" value={form.password} onChange={set('password')} />
       </FormField>
       <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-xl p-3">
-        <p className="text-xs text-indigo-300 flex items-center gap-2">{Icon.bell} A welcome notification will be sent to the student's email.</p>
+        <p className="text-xs text-indigo-300 flex items-center gap-2">{Icon.bell} A welcome email will be sent to the student automatically.</p>
       </div>
       <div className="flex gap-3 pt-2">
         <button onClick={onClose} className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-slate-600 text-slate-400 hover:bg-slate-700/50 transition">Cancel</button>
         <button onClick={handleSubmit} disabled={saving}
-          className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition">
-          {saving ? 'Registering…' : 'Register Student'}
+          className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition disabled:opacity-50">
+          {saving ? 'Registering...' : 'Register Student'}
         </button>
       </div>
     </Modal>
   )
 }
 
-function AssignPlacementModal({ onClose }) {
-  const [form, setForm] = useState({ student:'', student_id:'', company:'', department:'', start_date:'', end_date:'' })
+function AssignPlacementModal({ onClose, onSuccess }) {
+  const [students, setStudents] = useState([])
+  const [companies, setCompanies] = useState([])
+  const [loadingOpts, setLoadingOpts] = useState(true)
+  const [form, setForm] = useState({ student: '', company: '', company_name: '', start_date: '', end_date: '' })
   const [saving, setSaving] = useState(false)
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }))
 
+  useEffect(() => {
+    const load = async () => {
+      setLoadingOpts(true)
+      try {
+        const [studs, comps] = await Promise.all([
+          dashboardService.getStudentsList(),
+          dashboardService.getCompaniesList(),
+        ])
+        setStudents(Array.isArray(studs) ? studs : [])
+        setCompanies(Array.isArray(comps) ? comps : [])
+      } catch { /* ignore */ } finally { setLoadingOpts(false) }
+    }
+    load()
+  }, [])
+
   const handleSubmit = async () => {
-    if (!form.student || !form.company || !form.start_date || !form.end_date) {
+    if (!form.student || (!form.company && !form.company_name) || !form.start_date || !form.end_date) {
       toast.error('Please fill in all required fields.')
       return
     }
     setSaving(true)
     try {
-      toast.success(`✓ Placement assigned to ${form.student} at ${form.company}!`)
-      sendNotification(form.student, `Your internship placement at ${form.company} has been set up.`)
+      const payload = { student: form.student, start_date: form.start_date, end_date: form.end_date }
+      if (form.company) { payload.company = form.company } else { payload.company_name_input = form.company_name }
+      await dashboardService.createPlacement(payload)
+      toast.success('Placement created successfully!')
+      onSuccess?.()
       onClose()
-    } catch {
-      toast.error('Failed to assign placement. Please try again.')
+    } catch (err) {
+      toast.error(err.message || 'Failed to create placement. Please try again.')
     } finally { setSaving(false) }
   }
 
   return (
     <Modal title="Assign Placement" onClose={onClose}>
-      <FormField label="Student Name" required>
-        <input className={inputCls} placeholder="e.g. Amara Nkosi" value={form.student} onChange={set('student')} />
-      </FormField>
-      <FormField label="Student ID">
-        <input className={inputCls} placeholder="e.g. 2500703348" value={form.student_id} onChange={set('student_id')} />
-      </FormField>
-      <FormField label="Company / Organisation" required>
-        <input className={inputCls} placeholder="e.g. TechCorp Uganda" value={form.company} onChange={set('company')} />
-      </FormField>
-      <FormField label="Department at Company">
-        <input className={inputCls} placeholder="e.g. Software Engineering" value={form.department} onChange={set('department')} />
-      </FormField>
-      <div className="grid grid-cols-2 gap-4">
-        <FormField label="Start Date" required>
-          <input className={inputCls} type="date" value={form.start_date} onChange={set('start_date')} />
-        </FormField>
-        <FormField label="End Date" required>
-          <input className={inputCls} type="date" value={form.end_date} onChange={set('end_date')} />
-        </FormField>
-      </div>
-      <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3">
-        <p className="text-xs text-emerald-300 flex items-center gap-2">{Icon.bell} Student will be notified of their placement details.</p>
-      </div>
-      <div className="flex gap-3 pt-2">
-        <button onClick={onClose} className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-slate-600 text-slate-400 hover:bg-slate-700/50 transition">Cancel</button>
-        <button onClick={handleSubmit} disabled={saving}
-          className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition">
-          {saving ? 'Assigning…' : 'Assign Placement'}
-        </button>
-      </div>
+      {loadingOpts ? (
+        <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-10" />)}</div>
+      ) : (
+        <>
+          <FormField label="Student" required>
+            <select className={selectCls} value={form.student} onChange={set('student')}>
+              <option value="">N/A Select student N/A</option>
+              {students.map(s => (
+                <option key={s.id} value={s.id}>
+                  {`${s.first_name || ''} ${s.last_name || ''}`.trim() || s.email}
+                </option>
+              ))}
+            </select>
+          </FormField>
+          <FormField label="Company / Organisation" required>
+            <select className={selectCls} value={form.company} onChange={set('company')}>
+              <option value="">N/A Select existing company or add new below N/A</option>
+              {companies.map(c => (
+                <option key={c.id} value={c.id}>{c.company_name}</option>
+              ))}
+            </select>
+          </FormField>
+          {!form.company && (
+            <FormField label="New Company Name" required>
+              <input className={inputCls} placeholder="e.g. TechCorp Uganda" value={form.company_name} onChange={set('company_name')} />
+            </FormField>
+          )}
+          <div className="grid grid-cols-2 gap-4">
+            <FormField label="Start Date" required>
+              <input className={inputCls} type="date" value={form.start_date} onChange={set('start_date')} />
+            </FormField>
+            <FormField label="End Date" required>
+              <input className={inputCls} type="date" value={form.end_date} onChange={set('end_date')} />
+            </FormField>
+          </div>
+          <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3">
+            <p className="text-xs text-emerald-300 flex items-center gap-2">{Icon.bell} Student will be notified of their placement details.</p>
+          </div>
+          <div className="flex gap-3 pt-2">
+            <button onClick={onClose} className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-slate-600 text-slate-400 hover:bg-slate-700/50 transition">Cancel</button>
+            <button onClick={handleSubmit} disabled={saving}
+              className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition disabled:opacity-50">
+              {saving ? 'Assigning...' : 'Assign Placement'}
+            </button>
+          </div>
+        </>
+      )}
     </Modal>
   )
 }
 
-function AssignSupervisorModal({ onClose, placement = null }) {
+function AssignSupervisorModal({ onClose, placement = null, allPlacements = [], onSuccess }) {
+  const [academicSups, setAcademicSups] = useState([])
+  const [workplaceSups, setWorkplaceSups] = useState([])
+  const [loadingOpts, setLoadingOpts] = useState(true)
   const [form, setForm] = useState({
-    student:              placement?.student_name || '',
-    academic_supervisor:  placement?.academic_supervisor || '',
-    workplace_supervisor: placement?.workplace_supervisor || '',
+    placement_id:         placement?.id ? String(placement.id) : '',
+    academic_supervisor:  placement?._academic_supervisor_id ? String(placement._academic_supervisor_id) : '',
+    workplace_supervisor: placement?._workplace_supervisor_id ? String(placement._workplace_supervisor_id) : '',
   })
   const [saving, setSaving] = useState(false)
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }))
 
+  useEffect(() => {
+    const load = async () => {
+      setLoadingOpts(true)
+      try {
+        const [acad, work] = await Promise.all([
+          dashboardService.getSupervisorsList('academic_supervisor'),
+          dashboardService.getSupervisorsList('workplace_supervisor'),
+        ])
+        setAcademicSups(Array.isArray(acad) ? acad : [])
+        setWorkplaceSups(Array.isArray(work) ? work : [])
+      } catch { /* ignore */ } finally { setLoadingOpts(false) }
+    }
+    load()
+  }, [])
+
+  const activePlacement = placement || allPlacements.find(p => String(p.id) === form.placement_id)
+  const studentLabel = activePlacement?.student_name || ''
+
   const handleSubmit = async () => {
-    if (!form.student) { toast.error('Please enter a student name.'); return }
+    const pid = placement?.id || form.placement_id
+    if (!pid) { toast.error('Please select a placement.'); return }
     if (!form.academic_supervisor && !form.workplace_supervisor) {
       toast.error('Please assign at least one supervisor.')
       return
     }
     setSaving(true)
     try {
-      toast.success(`✓ Supervisor assigned to ${form.student}!`)
-      if (form.academic_supervisor) sendNotification(form.academic_supervisor, `You have been assigned as academic supervisor for ${form.student}.`)
-      if (form.workplace_supervisor) sendNotification(form.workplace_supervisor, `You have been assigned as workplace supervisor for ${form.student}.`)
-      sendNotification(form.student, `Your supervisors have been assigned. Academic: ${form.academic_supervisor || 'TBD'}, Workplace: ${form.workplace_supervisor || 'TBD'}.`)
+      const data = {}
+      if (form.academic_supervisor) data.academic_supervisor = form.academic_supervisor
+      if (form.workplace_supervisor) data.workplace_supervisor = form.workplace_supervisor
+      await dashboardService.updatePlacementSupervisors(pid, data)
+      toast.success(`Supervisors assigned to ${studentLabel || 'student'} successfully!`)
+      onSuccess?.()
       onClose()
-    } catch {
-      toast.error('Failed to assign supervisor. Please try again.')
+    } catch (err) {
+      toast.error(err.message || 'Failed to assign supervisors. Please try again.')
     } finally { setSaving(false) }
   }
 
   return (
     <Modal title="Assign Supervisor to Student" onClose={onClose}>
-      <FormField label="Student Name" required>
-        <input className={inputCls} placeholder="e.g. Amara Nkosi"
-          value={form.student} onChange={set('student')} readOnly={!!placement} />
-      </FormField>
-      <FormField label="Academic Supervisor">
-        <input className={inputCls} placeholder="e.g. Prof. Grace Atim" value={form.academic_supervisor} onChange={set('academic_supervisor')} />
-      </FormField>
-      <FormField label="Workplace Supervisor">
-        <input className={inputCls} placeholder="e.g. David Ochieng" value={form.workplace_supervisor} onChange={set('workplace_supervisor')} />
-      </FormField>
-      <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 space-y-1">
-        <p className="text-xs text-amber-300 font-medium flex items-center gap-2">{Icon.bell} Notifications will be sent to:</p>
-        <p className="text-xs text-slate-400 ml-6">• The assigned academic supervisor</p>
-        <p className="text-xs text-slate-400 ml-6">• The assigned workplace supervisor</p>
-        <p className="text-xs text-slate-400 ml-6">• The student</p>
-      </div>
-      <div className="flex gap-3 pt-2">
-        <button onClick={onClose} className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-slate-600 text-slate-400 hover:bg-slate-700/50 transition">Cancel</button>
-        <button onClick={handleSubmit} disabled={saving}
-          className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-amber-500 hover:bg-amber-600 text-white transition">
-          {saving ? 'Assigning…' : 'Assign & Notify'}
-        </button>
-      </div>
+      {loadingOpts ? (
+        <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-10" />)}</div>
+      ) : (
+        <>
+          {!placement ? (
+            <FormField label="Placement / Student" required>
+              <select className={selectCls} value={form.placement_id} onChange={set('placement_id')}>
+                <option value="">N/A Select placement N/A</option>
+                {allPlacements.map(p => (
+                  <option key={p.id} value={p.id}>{p.student_name} N/A {p.company}</option>
+                ))}
+              </select>
+            </FormField>
+          ) : (
+            <FormField label="Student">
+              <div className={`${inputCls} opacity-60 cursor-not-allowed`}>{studentLabel}</div>
+            </FormField>
+          )}
+          <FormField label="Academic Supervisor">
+            <select className={selectCls} value={form.academic_supervisor} onChange={set('academic_supervisor')}>
+              <option value="">N/A None / Keep existing N/A</option>
+              {academicSups.map(s => (
+                <option key={s.id} value={s.id}>
+                  {`${s.first_name || ''} ${s.last_name || ''}`.trim() || s.email}
+                </option>
+              ))}
+            </select>
+          </FormField>
+          <FormField label="Workplace Supervisor">
+            <select className={selectCls} value={form.workplace_supervisor} onChange={set('workplace_supervisor')}>
+              <option value="">N/A None / Keep existing N/A</option>
+              {workplaceSups.map(s => (
+                <option key={s.id} value={s.id}>
+                  {`${s.first_name || ''} ${s.last_name || ''}`.trim() || s.email}
+                </option>
+              ))}
+            </select>
+          </FormField>
+          <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 space-y-1">
+            <p className="text-xs text-amber-300 font-medium flex items-center gap-2">{Icon.bell} Notifications will be sent to assigned supervisors.</p>
+          </div>
+          <div className="flex gap-3 pt-2">
+            <button onClick={onClose} className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-slate-600 text-slate-400 hover:bg-slate-700/50 transition">Cancel</button>
+            <button onClick={handleSubmit} disabled={saving}
+              className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-amber-500 hover:bg-amber-600 text-white transition disabled:opacity-50">
+              {saving ? 'Assigning...' : 'Assign & Notify'}
+            </button>
+          </div>
+        </>
+      )}
     </Modal>
   )
 }
@@ -289,7 +382,7 @@ function ReportModal({ onClose }) {
     setGenerating(true)
     try {
       setTimeout(() => {
-        toast.success(`✓ ${reportType.charAt(0).toUpperCase() + reportType.slice(1)} report generated as ${format.toUpperCase()}!`)
+        toast.success(` ${reportType.charAt(0).toUpperCase() + reportType.slice(1)} report generated as ${format.toUpperCase()}!`)
         setGenerating(false)
         onClose()
       }, 1500)
@@ -328,7 +421,7 @@ function ReportModal({ onClose }) {
         <button onClick={onClose} className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-slate-600 text-slate-400 hover:bg-slate-700/50 transition">Cancel</button>
         <button onClick={handleGenerate} disabled={generating}
           className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-rose-600 hover:bg-rose-700 text-white transition">
-          {generating ? 'Generating…' : 'Generate Report'}
+          {generating ? 'Generating...' : 'Generate Report'}
         </button>
       </div>
     </Modal>
@@ -348,9 +441,9 @@ function StatCard({ label, value, sub, subLink, icon, accent }) {
       <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${A.icon}`}>{icon}</div>
       <div>
         <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">{label}</p>
-        <p className={`text-3xl font-bold mt-0.5 ${A.val}`}>{value ?? '—'}</p>
+        <p className={`text-3xl font-bold mt-0.5 ${A.val}`}>{value ?? 'N/A'}</p>
         {sub && subLink
-          ? <Link to={subLink} className={`text-xs font-medium mt-1 block hover:underline ${A.sub}`}>{sub} →</Link>
+          ? <Link to={subLink} className={`text-xs font-medium mt-1 block hover:underline ${A.sub}`}>{sub} </Link>
           : sub && <p className={`text-xs font-medium mt-1 ${A.sub}`}>{sub}</p>}
       </div>
     </div>
@@ -363,8 +456,8 @@ function Card({ title, actionLabel, actionLink, onAction, children }) {
       <div className="flex items-center justify-between px-5 py-4 border-b border-slate-700/50">
         <p className="text-sm font-bold text-white">{title}</p>
         {actionLabel && (actionLink
-          ? <Link to={actionLink} className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 hover:underline">{actionLabel} →</Link>
-          : onAction && <button onClick={onAction} className="text-xs font-semibold text-indigo-400 hover:text-indigo-300">{actionLabel} →</button>
+          ? <Link to={actionLink} className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 hover:underline">{actionLabel} </Link>
+          : onAction && <button onClick={onAction} className="text-xs font-semibold text-indigo-400 hover:text-indigo-300">{actionLabel} </button>
         )}
       </div>
       <div className="p-5">{children}</div>
@@ -403,44 +496,15 @@ export default function InternshipAdministratorDashboard() {
         setPlacements(placementsRes.data)
         setUsers(usersRes.data)
         setEvaluations(evaluationsRes.data)
-      } catch {
-        // Mock data — remove when backend is connected
-        setStats({
-          total_students:    42,
-          total_supervisors: 12,
-          average_score:     74.8,
-          active_placements: 30,
-          pending_placements: 4,
-          unassigned_students: 4,
-          evaluations_complete: 28,
-          logs_overdue: 6,
-        })
-        setPlacements([
-          { id:1, student_name:'Amara Nkosi',    student_id:'2500703348', company:'TechCorp Uganda',          academic_supervisor:'Prof. Grace Atim',  workplace_supervisor:'David Ochieng', status:'ACTIVE',    start_date:'2025-09-01', end_date:'2025-11-30' },
-          { id:2, student_name:'Brian Otim',     student_id:'2500703349', company:'MTN Uganda',               academic_supervisor:'Dr. James Okello',  workplace_supervisor:'Sarah Nambi',   status:'ACTIVE',    start_date:'2025-09-01', end_date:'2025-11-30' },
-          { id:3, student_name:'Cynthia Akello', student_id:'2500703350', company:'Stanbic Bank',             academic_supervisor:'Prof. Grace Atim',  workplace_supervisor:'Peter Mugisha', status:'ACTIVE',    start_date:'2025-09-01', end_date:'2025-11-30' },
-          { id:4, student_name:'Denis Okello',   student_id:'2500703351', company:'Uganda Revenue Authority', academic_supervisor:'Dr. James Okello',  workplace_supervisor:'Alice Tendo',   status:'COMPLETED', start_date:'2025-06-01', end_date:'2025-08-30' },
-          { id:5, student_name:'Eva Namutebi',   student_id:'2500703352', company:'Airtel Uganda',            academic_supervisor:'',                  workplace_supervisor:'',              status:'PENDING',   start_date:'2026-01-01', end_date:'2026-03-30' },
-        ])
-        setUsers([
-          { id:1, name:'Amara Nkosi',      email:'a.nkosi@uni.ac.ug',        role:'student',             joined:'2025-08-15' },
-          { id:2, name:'Brian Otim',       email:'b.otim@uni.ac.ug',         role:'student',             joined:'2025-08-15' },
-          { id:3, name:'Prof. Grace Atim', email:'g.atim@mak.ac.ug',         role:'academic_supervisor', joined:'2025-07-01' },
-          { id:4, name:'David Ochieng',    email:'d.ochieng@techcorp.co.ug', role:'workplace_supervisor',joined:'2025-08-10' },
-          { id:5, name:'Dr. James Okello', email:'j.okello@mak.ac.ug',       role:'academic_supervisor', joined:'2025-07-01' },
-        ])
-        setEvaluations([
-          { id:1, student_name:'Amara Nkosi',    workplace_score:80, academic_score:74, logbook_score:74, final_score:76.4, grade:'B+' },
-          { id:2, student_name:'Brian Otim',     workplace_score:75, academic_score:70, logbook_score:72, final_score:72.4, grade:'B'  },
-          { id:3, student_name:'Cynthia Akello', workplace_score:88, academic_score:82, logbook_score:80, final_score:83.8, grade:'A'  },
-          { id:4, student_name:'Denis Okello',   workplace_score:65, academic_score:60, logbook_score:68, final_score:64.4, grade:'C+' },
-        ])
+      } catch (err) {
+        setError(err.message || 'Failed to load dashboard data. Please refresh.')
       } finally { setLoading(false) }
     }
     fetchAll()
   }, [])
 
-  const fullName = [user?.first_name, user?.last_name].filter(Boolean).join(' ') || 'Administrator'
+  const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '')
+  const fullName = [user?.first_name, user?.last_name].filter(Boolean).map(cap).join(' ') || 'Administrator'
 
   const filteredPlacements = placements.filter((p) => {
     const matchStatus    = statusFilter === 'all' || p.status === statusFilter
@@ -452,10 +516,14 @@ export default function InternshipAdministratorDashboard() {
     return matchStatus && matchSearch && matchStudentId
   })
 
-  const handleMarkCompleted = (p) => {
-    setPlacements((prev) => prev.map((pl) => pl.id === p.id ? { ...pl, status:'COMPLETED' } : pl))
-    toast.success(`✓ ${p.student_name}'s placement marked as completed!`)
-    sendNotification(p.student_name, `Your internship at ${p.company} has been marked as completed.`)
+  const handleMarkCompleted = async (p) => {
+    try {
+      await dashboardService.markPlacementCompleted(p.id)
+      setPlacements((prev) => prev.map((pl) => pl.id === p.id ? { ...pl, status: 'COMPLETED' } : pl))
+      toast.success(` ${p.student_name}'s placement marked as completed!`)
+    } catch (err) {
+      toast.error(err.message || 'Failed to update placement status.')
+    }
   }
 
   const handleInlineAssign = (p) => {
@@ -474,12 +542,24 @@ export default function InternshipAdministratorDashboard() {
 
       <ToastContainer position="top-right" autoClose={4000} hideProgressBar={false} newestOnTop closeOnClick theme="dark" />
 
-      {modal === 'register'   && <RegisterStudentModal onClose={() => setModal(null)} />}
-      {modal === 'placement'  && <AssignPlacementModal onClose={() => setModal(null)} />}
+      {modal === 'register'   && (
+        <RegisterStudentModal
+          onClose={() => setModal(null)}
+          onSuccess={() => dashboardService.getAdminUsers().then(r => setUsers(r.data)).catch(() => {})}
+        />
+      )}
+      {modal === 'placement'  && (
+        <AssignPlacementModal
+          onClose={() => setModal(null)}
+          onSuccess={() => dashboardService.getAdminPlacements().then(r => setPlacements(r.data)).catch(() => {})}
+        />
+      )}
       {modal === 'supervisor' && (
         <AssignSupervisorModal
           onClose={() => { setModal(null); setSelectedPlacement(null) }}
           placement={selectedPlacement}
+          allPlacements={placements}
+          onSuccess={() => dashboardService.getAdminPlacements().then(r => setPlacements(r.data)).catch(() => {})}
         />
       )}
       {modal === 'report' && <ReportModal onClose={() => setModal(null)} />}
@@ -487,14 +567,14 @@ export default function InternshipAdministratorDashboard() {
       {/* Header */}
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-white">Welcome, {fullName} 👋</h1>
+          <h1 className="text-2xl font-bold text-white">Welcome, {fullName} </h1>
           <p className="text-sm text-slate-400 mt-1">Manage students, placements, supervisors, and system-wide reports.</p>
         </div>
         <div className="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-xs text-slate-400 font-medium flex items-center gap-2">
           <svg className="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
           </svg>
-          Semester 2024 — Semester II
+          Semester 2024 N/A Semester II
         </div>
       </div>
 
@@ -518,8 +598,8 @@ export default function InternshipAdministratorDashboard() {
         ].map(({ label, value, color, link, linkText }) => (
           <div key={label} className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-4 text-center">
             <p className="text-xs text-slate-400 uppercase tracking-wide mb-1">{label}</p>
-            <p className={`text-2xl font-bold ${color}`}>{value ?? '—'}</p>
-            <Link to={link} className={`text-xs hover:underline mt-1 block ${color}`}>{linkText} →</Link>
+            <p className={`text-2xl font-bold ${color}`}>{value ?? 'N/A'}</p>
+            <Link to={link} className={`text-xs hover:underline mt-1 block ${color}`}>{linkText} </Link>
           </div>
         ))}
       </div>
@@ -527,7 +607,7 @@ export default function InternshipAdministratorDashboard() {
       {/* Main content */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
 
-        {/* Left col — 3/5 */}
+        {/* Left col N/A 3/5 */}
         <div className="lg:col-span-3 space-y-5">
 
           {/* Recent Placements */}
@@ -547,12 +627,12 @@ export default function InternshipAdministratorDashboard() {
               <div className="flex gap-2">
                 <div className="flex items-center gap-2 bg-slate-700/30 border border-slate-700/50 rounded-xl px-3 py-1.5 flex-1">
                   {Icon.search}
-                  <input type="text" placeholder="Search student or company…" value={search}
+                  <input type="text" placeholder="Search student or company..." value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="bg-transparent outline-none text-xs text-slate-300 placeholder-slate-600 w-full" />
                 </div>
                 <div className="flex items-center gap-2 bg-slate-700/30 border border-slate-700/50 rounded-xl px-3 py-1.5 w-36">
-                  <input type="text" placeholder="Student ID…" value={studentIdFilter}
+                  <input type="text" placeholder="Student ID..." value={studentIdFilter}
                     onChange={(e) => setStudentIdFilter(e.target.value)}
                     className="bg-transparent outline-none text-xs text-slate-300 placeholder-slate-600 w-full" />
                 </div>
@@ -610,14 +690,14 @@ export default function InternshipAdministratorDashboard() {
                         {/* Actions */}
                         <td className="py-3">
                           <div className="flex items-center gap-1">
-                            {/* Assign — only when supervisors missing and not completed */}
+                            {/* Assign N/A only when supervisors missing and not completed */}
                             {(!p.academic_supervisor || !p.workplace_supervisor) && p.status !== 'COMPLETED' && (
                               <button onClick={() => handleInlineAssign(p)}
                                 className="text-xs font-semibold text-amber-400 hover:text-amber-300 border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 px-2 py-1 rounded-lg transition whitespace-nowrap">
                                 Assign
                               </button>
                             )}
-                            {/* Done — only for ACTIVE placements */}
+                            {/* Done N/A only for ACTIVE placements */}
                             {p.status === 'ACTIVE' && (
                               <button onClick={() => handleMarkCompleted(p)}
                                 className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-1 rounded-lg transition whitespace-nowrap">
@@ -659,18 +739,18 @@ export default function InternshipAdministratorDashboard() {
                             <span className="font-semibold text-white">{e.student_name}</span>
                           </div>
                         </td>
-                        <td className="py-3 pr-3 text-center text-slate-400">{e.workplace_score ?? '—'}</td>
-                        <td className="py-3 pr-3 text-center text-slate-400">{e.academic_score ?? '—'}</td>
-                        <td className="py-3 pr-3 text-center text-slate-400">{e.logbook_score ?? '—'}</td>
+                        <td className="py-3 pr-3 text-center text-slate-400">{e.workplace_score ?? 'N/A'}</td>
+                        <td className="py-3 pr-3 text-center text-slate-400">{e.academic_score ?? 'N/A'}</td>
+                        <td className="py-3 pr-3 text-center text-slate-400">{e.logbook_score ?? 'N/A'}</td>
                         <td className="py-3 pr-3 text-center font-semibold text-white">
-                          {e.final_score != null ? `${Number(e.final_score).toFixed(1)}%` : '—'}
+                          {e.final_score != null ? `${Number(e.final_score).toFixed(1)}%` : 'N/A'}
                         </td>
                         <td className="py-3 text-center">
                           <span className={`font-bold text-sm
                             ${e.grade?.startsWith('A') ? 'text-emerald-400' :
                               e.grade?.startsWith('B') ? 'text-indigo-400' :
                               e.grade?.startsWith('C') ? 'text-amber-400' : 'text-red-400'}`}>
-                            {e.grade || '—'}
+                            {e.grade || 'N/A'}
                           </span>
                         </td>
                       </tr>
@@ -682,7 +762,7 @@ export default function InternshipAdministratorDashboard() {
           </Card>
         </div>
 
-        {/* Right col — 2/5 */}
+        {/* Right col N/A 2/5 */}
         <div className="lg:col-span-2 space-y-5">
 
           {/* User Overview */}
@@ -693,7 +773,7 @@ export default function InternshipAdministratorDashboard() {
                   <div key={role}>
                     <div className="flex justify-between text-xs mb-1">
                       <span className="text-slate-400">{role}</span>
-                      <span className="font-semibold text-white">{count ?? '—'}</span>
+                      <span className="font-semibold text-white">{count ?? 'N/A'}</span>
                     </div>
                     <div className="w-full bg-slate-700 rounded-full h-2">
                       <div className={`${color} h-2 rounded-full transition-all`}
