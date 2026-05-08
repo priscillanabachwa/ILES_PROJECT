@@ -1,9 +1,11 @@
-from django.shortcuts import render
-from rest_framework import permissions, viewsets, status
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.response import Response
+from django.contrib.auth import get_user_model
+from django.contrib.auth.hashers import make_password, check_password
 from rest_framework.authtoken.models import Token
-from django.contrib.auth import authenticate
+from django.shortcuts import render
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny 
+from rest_framework.response import Response
+from rest_framework import status, viewsets, permissions
 from django.core.cache import cache
 from django.core.mail import send_mail
 from django.conf import settings
@@ -23,28 +25,55 @@ class CustomUserViewSet(viewsets.ModelViewSet):
     serializer_class = CustomUserSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-
+User = get_user_model()
 @api_view(['POST'])
-@permission_classes([permissions.AllowAny])
+@permission_classes([AllowAny])
 def login_view(request):
-  
-    serializer = LoginSerializer(data=request.data)
-    
-    if serializer.is_valid():
-        user = serializer.validated_data['user']
-        
-        # Get or create authentication token for the user
-        token, created = Token.objects.get_or_create(user=user)
-        
-        # Serialize user data
-        user_serializer = CustomUserSerializer(user)
-        
-        return Response({
-            'token': token.key,
-            'user': user_serializer.data
-        }, status=status.HTTP_200_OK)
-    
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    email = request.data.get('email', '').strip().lower()
+    password = request.data.get('password', '')
+
+    if not email or not password:
+        return Response(
+            {'detail': 'Email and password are required.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        user = User.objects.get(email__iexact=email)
+    except User.DoesNotExist:
+        return Response(
+            {'detail': 'Invalid email or password.'},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+
+    # ✅ This correctly checks Django-hashed passwords
+    if not user.check_password(password):
+        return Response(
+            {'detail': 'Invalid email or password.'},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+
+    if not user.is_active:
+        return Response(
+            {'detail': 'Account is disabled.'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    token, _ = Token.objects.get_or_create(user=user)
+
+    return Response({
+        'token': token.key,
+        'user': {
+            'id': user.id,
+            'email': user.email,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            # ✅ Make sure this field exists on your User model
+            # Common values: 'student', 'admin', 'academic_supervisor', 'workplace_supervisor'
+            'role': user.role,
+        }
+    })
+
 
 
 @api_view(['POST'])
@@ -93,7 +122,7 @@ def password_reset_request(request):
         cache.set(cache_key, recovery_code, timeout=900)  # 15 minutes
 
         send_mail(
-            subject='Your recovery code for iles',
+            subject='Your recovery code for ILES',
             message=f'Hello {user.first_name},\n\nYour recovery code is: {recovery_code}',
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[email],
@@ -163,6 +192,7 @@ def password_reset_confirm(request):
     
     try:
         user = CustomUser.objects.get(email=email)
+        # Store password as plain text (no hashing)
         user.set_password(new_password)
         user.save() 
 
@@ -170,7 +200,7 @@ def password_reset_confirm(request):
         cache.delete(verify_key)
 
         send_mail(
-            subject='iles - Password Reset Confirmation',
+            subject='ILES - Password Reset Confirmation',
             message=f"""
 Hello {user.first_name },
 
@@ -179,7 +209,7 @@ Your password has been reset successfully.
 If you did not make this change, please contact support immediately.
 
 Best regards,
-iles System
+ILES System
             """,
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[email],

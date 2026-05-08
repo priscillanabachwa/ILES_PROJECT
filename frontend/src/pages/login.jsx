@@ -198,10 +198,11 @@ function ForgotPasswordModal({ isOpen, onClose }) {
   )
 }
 
+// ✅ FIXED: Role redirects now match the routes defined in App.jsx
 const ROLE_REDIRECTS = {
   student: '/student/dashboard',
-  academic_supervisor: '/academic-supervisor/dashboard',
-  supervisor: '/supervisor/dashboard',
+  academic_supervisor: '/academic/dashboard',   // was '/academic-supervisor/dashboard'
+  workplace_supervisor: '/supervisor/dashboard', // was 'supervisor' (incomplete role key)
   admin: '/admin/dashboard',
 }
 
@@ -221,18 +222,22 @@ export default function Login() {
     setError('')
     setLoading(true)
     try {
-      const response = await loginUser(email, password)
+      const response = await loginUser(email.trim(), password)
       if (response.token && response.user) {
         await login(response.user, response.token)
 
         localStorage.setItem('authToken', response.token)
         localStorage.setItem('user', JSON.stringify(response.user))
 
-        const userRole = response.user.role.toLowerCase().replace(/\s+/g, '_');
-        const path = ROLE_REDIRECTS[userRole] || '/student/dashboard'
+        // ✅ Normalize role: lowercase + underscores, trim whitespace
+        const userRole = response.user.role?.toLowerCase().trim().replace(/\s+/g, '_')
+        console.log('User role from server:', userRole)
 
-        console.log('Navigating to:', path);
-        navigate(path)
+        const path = ROLE_REDIRECTS[userRole]
+        if (!path) {
+          console.warn(`Unknown role "${userRole}" — redirecting to student dashboard`)
+        }
+        navigate(path || '/student/dashboard')
       }
     } catch (err) {
       setError(err.message || 'Login failed. Please check your credentials.')

@@ -41,12 +41,15 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'rest_framework.authtoken',
+    'ILES',
     'placements.apps.PlacementsConfig',
     'academic_evaluations.apps.AcademicEvaluationsConfig',
     'user_accounts.apps.UserAccountsConfig',
     'weekly_logs.apps.WeeklyLogsConfig',
 ]
-
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+)
 
 
 
@@ -73,7 +76,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'iles.urls'
+ROOT_URLCONF = 'ILES.urls'
 
 TEMPLATES = [
     {
@@ -90,7 +93,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'iles.wsgi.application'
+WSGI_APPLICATION = 'ILES.wsgi.application'
 
 
 # Database
@@ -173,13 +176,13 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # CORS Configuration - Allow requests from React frontend
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:5174',
-    'http://localhost:8000',
+    'http://127.0.0.1:5173',
 ]
 
 CORS_ALLOW_CREDENTIALS = True
 
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
@@ -192,7 +195,7 @@ DEFAULT_FROM_EMAIL = 'your-email@gmail.com'
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'iles-cache',
+        'LOCATION': 'ILES-cache',
     }
 }
 

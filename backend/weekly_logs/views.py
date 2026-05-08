@@ -6,20 +6,35 @@ from django.utils import timezone
 from django.core.mail import send_mail
 from .models import WeeklyLogbook
 from .serializers import WeeklyLogbookSerializer
+from .permissions import CanSubmitLog, CanApproveLog, CanReviewLog, CanRejectLog
+    
 
 
 class WeeklyLogbookViewSet(viewsets.ModelViewSet):
     serializer_class = WeeklyLogbookSerializer
-    permission_classes = [IsAuthenticated]
+
+    def get_permissions(self):
+        if self.action == 'create':
+            return[IsAuthenticated()]
+        elif self.action == 'submit':
+            return[CanSubmitLog()]
+        elif self.action == 'review':
+            return[CanReviewLog()]
+        elif self.action == 'approve':
+            return[CanApproveLog()]
+        elif self.action == 'reject':
+            return[CanRejectLog()]
+        
+        return[IsAuthenticated()]
 
     def get_queryset(self):
         user = self.request.user
         queryset = WeeklyLogbook.objects.all()
 
         role_filters = {   
-            'student': {'placement__student'},
-            'workplace_supervisor': {'placement__workplace_supervisor'},  
-            'academic_supervisor': {'placement__academic_supervisor'},
+            'student': 'placement__student',
+            'workplace_supervisor': 'placement__workplace_supervisor',  
+            'academic_supervisor': 'placement__academic_supervisor',
         }
         lookup_fields = role_filters.get(user.role)
         if lookup_fields:
@@ -56,16 +71,17 @@ class WeeklyLogbookViewSet(viewsets.ModelViewSet):
     def submit(self, request, pk=None):
         log = self.get_object()
 
+
         if log.status != 'draft':
             return Response(
                 {'detail': f'Cannot submit a log with status "{log.status}".'},
-                status=status.HTTP_400_BAD_REQUEST
+                status=400
             )
 
         if timezone.now().date() > log.deadline:
             return Response(
                 {'detail': 'Cannot submit a log after the deadline.'},
-                status=status.HTTP_400_BAD_REQUEST
+                status=400
             )
 
         log.status = 'submitted'
@@ -76,52 +92,66 @@ class WeeklyLogbookViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'], url_path='review')
     def review(self, request, pk=None):
         log = self.get_object()
+        comment_text = request.data.get('supervisor_comment', '').strip()
 
         if request.user.role not in ('workplace_supervisor', 'academic_supervisor', 'admin'):
             return Response(
                 {'detail': 'You do not have permission to review logs.'},
-                status=status.HTTP_403_FORBIDDEN
+                status=403
             )
 
         if log.status != 'submitted':
             return Response(
                 {'detail': 'Only submitted logs can be reviewed.'},
-                status=status.HTTP_400_BAD_REQUEST
+                status=400
             )
 
-        comment = request.data.get('supervisor_comment', '').strip()
-        if not comment:
+        if not comment_text:
             return Response(
                 {'detail': 'A supervisor comment is required to review a log.'},
-                status=status.HTTP_400_BAD_REQUEST
+                status=400
             )
 
+
+        
         log.status = 'reviewed'
-        log.supervisor_comment = comment
-        log.save()
+        log.save()  
+
+        LogBookReview.objects.create(
+            logbook=log,
+            supervisor=request.user,
+            comment=comment_text,
+            status_at_review='reviewed'
+        )
         return Response(WeeklyLogbookSerializer(log).data)
+       
+  
 
     @action(detail=True, methods=['post'], url_path='approve')
     def approve(self, request, pk=None):
         log = self.get_object()
 
+
         if request.user.role not in ('academic_supervisor', 'admin'):
             return Response(
                 {'detail': 'You do not have permission to approve logs.'},
-                status=status.HTTP_403_FORBIDDEN
+                status=403
             )
 
         if log.status != 'reviewed':
             return Response(
                 {'detail': 'Only reviewed logs can be approved.'},
-                status=status.HTTP_400_BAD_REQUEST        )
+                status=400       )
 
-        log.status = 'approved'
-        log.save()
-        return Response(WeeklyLogbookSerializer(log).data)
+    
+       
+            log.status = 'approved'
+            log.save()
+            return Response(WeeklyLogbookSerializer(log).data)
 
-        @action(detail=True, methods=['post'], url_path='reject')
-        def reject(self, request, pk=None):
+
+    @action(detail=True, methods=['post'], url_path='reject')
+    def reject(self, request, pk=None):
             log = self.get_object()
 
             if request.user.role not in ('workplace_supervisor', 'academic_supervisor', 'admin'):
@@ -143,7 +173,8 @@ class WeeklyLogbookViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            log.status = 'draft'
+            
             log.supervisor_comment = comment
             log.save()
-            return Response(WeeklyLogbookSerializer(log).data)  
+            return Response(WeeklyLogbookSerializer(log).data)
+            

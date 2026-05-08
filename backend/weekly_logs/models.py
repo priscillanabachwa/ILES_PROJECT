@@ -2,6 +2,7 @@
 from placements.models import InternshipPlacement
 from django.db import models
 from django.core.validators import MinValueValidator
+from django.conf import settings
 
 class WeeklyLogbook(models.Model):
     STATUS_CHOICE =[
@@ -25,7 +26,7 @@ class WeeklyLogbook(models.Model):
         choices=STATUS_CHOICE,
         default = 'draft'
         )
-    supervisor_comment = models.TextField(blank=True)
+    supervisor_comment = models.TextField(blank=True, null=True)
     deadline = models.DateField()
     submitted_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -38,7 +39,21 @@ class WeeklyLogbook(models.Model):
             ('can_submit_weekly_log', 'Can submit weekly log'),
             ('can_review_weekly_log', 'Can review weekly log'),
             ('can_approve_weekly_log', 'Can approve weekly log'),
+            ('can_reject_weekly_log', 'Can reject weekly log'),
         ]
         
     def __str__(self):
         return f'week{self.week_number} log for {self.placement}'
+
+class LogBookReview(models.Model):
+    logbook = models.ForeignKey(WeeklyLogbook, on_delete=models.CASCADE, related_name='reviews')
+    supervisor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+    comment = models.TextField()
+    status_at_review = models.CharField(max_length=20)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'Review by {self.supervisor} on {self.logbook}'

@@ -1,10 +1,17 @@
 
 from rest_framework import serializers
 from datetime import date
-from .models import WeeklyLogbook
+from .models import WeeklyLogbook, LogBookReview
 
+
+class LogbookReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LogBookReview
+        fields = [ 'supervisor', 'comment', 'status_at_review', 'created_at']
 
 class WeeklyLogbookSerializer(serializers.ModelSerializer):
+    reviews = LogbookReviewSerializer(many=True, read_only=True)
+    internship_id = serializers.IntegerField(source='placement.id', read_only=True)
     
     class Meta:
         model = WeeklyLogbook
@@ -14,7 +21,7 @@ class WeeklyLogbookSerializer(serializers.ModelSerializer):
             'challenges', 'lesson', 'status', 'supervisor_comment', 
             'deadline', 'submitted_at'
         ]
-        read_only_fields = ['id','submitted_at','supervisor_comment','deadline']
+        read_only_fields = ['id','submitted_at','deadline']
 
     def validate_week_number(self,value):
             if value <=0:
@@ -22,7 +29,7 @@ class WeeklyLogbookSerializer(serializers.ModelSerializer):
             return value
 
       
-    def validate(self, date):
+    def validate(self, data):
         if data.get('status') == 'submitted':
             current_deadline = getattr(self.instance, 'deadline', None)
 
@@ -36,5 +43,5 @@ class WeeklyLogbookSerializer(serializers.ModelSerializer):
                 'Approved logs cannot be modified.'
             )
     
-        return date 
+        return data 
 
