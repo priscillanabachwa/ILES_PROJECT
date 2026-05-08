@@ -18,7 +18,7 @@
 
 /* ==================== CARD ==================== */
 .login-card {
-  background: #ffffff;
+  background: #bce0f7;
   border-radius: 16px;
   width: 100%;
   max-width: 420px;
@@ -277,7 +277,7 @@
 
 /* ==================== MODAL CARD ==================== */
 .modal-card {
-  background: #ffffff;
+  background: #bce0f7;
   border-radius: 14px;
   max-width: 420px;
   width: 100%;
@@ -289,7 +289,7 @@
 
 .modal-header {
   padding: 1.75rem 2rem 1.25rem;
-  border-bottom: 1px solid #e0eaf3;
+  border-bottom: 1px solid #8ec8ea;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -342,7 +342,7 @@
   justify-content: center;
   gap: 12px;
   padding: 1.25rem 2rem 1.5rem;
-  border-top: 1px solid #e0eaf3;
+  border-top: 1px solid #8ec8ea;
 }
 
 .progress-step {
@@ -421,7 +421,7 @@
 
 /* ==================== CARD ==================== */
 .login-card {
-  background: #ffffff;
+  background: #bce0f7;
   border-radius: 16px;
   width: 100%;
   max-width: 420px;
@@ -680,7 +680,7 @@
 
 /* ==================== MODAL CARD ==================== */
 .modal-card {
-  background: #ffffff;
+  background: #bce0f7;
   border-radius: 14px;
   max-width: 420px;
   width: 100%;
@@ -692,7 +692,7 @@
 
 .modal-header {
   padding: 1.75rem 2rem 1.25rem;
-  border-bottom: 1px solid #e0eaf3;
+  border-bottom: 1px solid #8ec8ea;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -745,7 +745,7 @@
   justify-content: center;
   gap: 12px;
   padding: 1.25rem 2rem 1.5rem;
-  border-top: 1px solid #e0eaf3;
+  border-top: 1px solid #8ec8ea;
 }
 
 .progress-step {

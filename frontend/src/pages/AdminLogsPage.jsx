@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react'
-import { toast, ToastContainer } from 'react-toastify'
-import 'react-toastify/dist/ReactToastify.css'
-import axios from 'axios'
+﻿import { useState, useEffect } from 'react'
+import { toast } from 'react-toastify'
+import { fetchWithAuth } from '../services/authService'
+
+const API = '/api'
 
 const formatDate = (iso) =>
-  iso ? new Date(iso).toLocaleDateString('en-UG', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
+  iso ? new Date(iso).toLocaleDateString('en-UG', { day: 'numeric', month: 'short', year: 'numeric' }) : '"?'
 
 const getInitials = (name) =>
   name?.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() || '?'
@@ -63,31 +64,39 @@ function LogSkeleton() {
 }
 
 function LogDetailModal({ log, onClose, onStatusChange }) {
-  const [feedback, setFeedback] = useState('')
+  const [feedback, setFeedback] = useState(log.supervisor_comment || '')
   const [saving,   setSaving]   = useState(false)
 
   const handleAction = async (action) => {
+    if (action === 'reviewed' && !feedback.trim()) {
+      toast.error('A comment is required to mark a log as reviewed.')
+      return
+    }
     setSaving(true)
     try {
-      // TODO: PATCH /api/weeklylogs/<id>/ { status: action, feedback }
+      if (action === 'reviewed') {
+        await fetchWithAuth(`${API}/weeklylogs/logbooks/${log.id}/review/`, {
+          method: 'POST',
+          body: JSON.stringify({ supervisor_comment: feedback.trim() }),
+        })
+      } else if (action === 'approved') {
+        await fetchWithAuth(`${API}/weeklylogs/logbooks/${log.id}/approve/`, { method: 'POST' })
+      }
       onStatusChange(log.id, action, feedback)
-      toast.success(`✓ Log ${action} successfully! ${feedback ? 'Feedback sent.' : ''}`)
-      // Notify student
-      toast.info(`📧 Notification sent to ${log.student_name}`, { autoClose: 3000 })
+      toast.success(`Log ${action} successfully!`)
       onClose()
-    } catch {
-      toast.error('Failed to update log status. Please try again.')
+    } catch (err) {
+      toast.error(err.message || `Failed to ${action} log.`)
     } finally { setSaving(false) }
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div className="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto">
-        {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700 sticky top-0 bg-slate-800">
           <div>
-            <p className="text-sm font-bold text-white">Week {log.week_number} — {log.student_name}</p>
-            <p className="text-xs text-slate-400 mt-0.5">{log.student_id} · Submitted {formatDate(log.submitted_at)}</p>
+            <p className="text-sm font-bold text-white">Week {log.week_number} "? Log #{log.id}</p>
+            <p className="text-xs text-slate-400 mt-0.5">Submitted {formatDate(log.submitted_at)}</p>
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-white transition">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -97,7 +106,6 @@ function LogDetailModal({ log, onClose, onStatusChange }) {
         </div>
 
         <div className="p-6 space-y-5">
-          {/* Status */}
           <div className="flex items-center gap-3">
             <Badge status={log.status} overdue={isOverdue(log.deadline) && log.status === 'submitted'} />
             {log.deadline && (
@@ -107,7 +115,6 @@ function LogDetailModal({ log, onClose, onStatusChange }) {
             )}
           </div>
 
-          {/* Activities */}
           <div className="space-y-1.5">
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Activities This Week</p>
             <div className="bg-slate-700/30 border border-slate-700/50 rounded-xl p-4">
@@ -115,7 +122,6 @@ function LogDetailModal({ log, onClose, onStatusChange }) {
             </div>
           </div>
 
-          {/* Challenges */}
           {log.challenges && (
             <div className="space-y-1.5">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Challenges Faced</p>
@@ -125,23 +131,45 @@ function LogDetailModal({ log, onClose, onStatusChange }) {
             </div>
           )}
 
-          {/* Existing feedback */}
-          {log.feedback && (
+          {log.lesson && (
             <div className="space-y-1.5">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Previous Feedback</p>
-              <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
-                <p className="text-sm text-blue-300 leading-relaxed">{log.feedback}</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Lessons Learned</p>
+              <div className="bg-slate-700/30 border border-slate-700/50 rounded-xl p-4">
+                <p className="text-sm text-slate-300 leading-relaxed">{log.lesson}</p>
               </div>
             </div>
           )}
 
-          {/* Add feedback */}
+          {log.attachment_url && (
+            <div className="space-y-1.5">
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Attached Document</p>
+              <a
+                href={log.attachment_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 px-4 py-3 bg-indigo-600/10 border border-indigo-500/20 rounded-xl hover:bg-indigo-600/20 transition group"
+              >
+                <svg className="w-5 h-5 text-indigo-400 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
+                </svg>
+                <span className="text-sm text-indigo-300 group-hover:text-indigo-200 truncate">
+                  {log.attachment_url.split('/').pop()}
+                </span>
+                <svg className="w-4 h-4 text-indigo-500 ml-auto flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                </svg>
+              </a>
+            </div>
+          )}
+
           {log.status !== 'approved' && (
             <div className="space-y-1.5">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Add Feedback (optional)</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
+                {log.status === 'reviewed' ? 'Supervisor Comment' : 'Add Comment (required to review)'}
+              </p>
               <textarea
                 rows={3}
-                placeholder="Write feedback for the student..."
+                placeholder="Write a comment for the student..."
                 value={feedback}
                 onChange={(e) => setFeedback(e.target.value)}
                 className="w-full rounded-xl px-4 py-3 text-sm text-white bg-slate-700/50 border border-slate-600 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition placeholder-slate-500 resize-none"
@@ -149,7 +177,6 @@ function LogDetailModal({ log, onClose, onStatusChange }) {
             </div>
           )}
 
-          {/* Action buttons */}
           {log.status !== 'approved' && (
             <div className="flex gap-3 pt-2">
               <button onClick={onClose}
@@ -158,14 +185,14 @@ function LogDetailModal({ log, onClose, onStatusChange }) {
               </button>
               {log.status === 'submitted' && (
                 <button onClick={() => handleAction('reviewed')} disabled={saving}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white transition">
-                  {saving ? 'Saving…' : 'Mark Reviewed'}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white transition disabled:opacity-50">
+                  {saving ? 'Saving...' : 'Mark Reviewed'}
                 </button>
               )}
-              {(log.status === 'submitted' || log.status === 'reviewed') && (
+              {log.status === 'reviewed' && (
                 <button onClick={() => handleAction('approved')} disabled={saving}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition">
-                  {saving ? 'Saving…' : 'Approve'}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition disabled:opacity-50">
+                  {saving ? 'Saving...' : 'Approve'}
                 </button>
               )}
             </div>
@@ -173,7 +200,7 @@ function LogDetailModal({ log, onClose, onStatusChange }) {
 
           {log.status === 'approved' && (
             <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 text-center">
-              <p className="text-xs text-emerald-300 font-medium">✓ This log has been approved</p>
+              <p className="text-xs text-emerald-300 font-medium">??? This log has been approved</p>
             </div>
           )}
         </div>
@@ -187,62 +214,71 @@ export default function AdminLogsPage() {
   const [loading, setLoading] = useState(true)
   const [error,   setError]   = useState('')
 
-  // Filters
-  const [search,        setSearch]        = useState('')
-  const [statusFilter,  setStatusFilter]  = useState('all')
-  const [studentIdFilter, setStudentIdFilter] = useState('')
-
-  // Selected log for detail modal
-  const [selectedLog, setSelectedLog] = useState(null)
-
-  const token = localStorage.getItem('access_token')
+  const [search,          setSearch]          = useState('')
+  const [statusFilter,    setStatusFilter]    = useState('all')
+  const [selectedLog,     setSelectedLog]     = useState(null)
+  const [actioningId,     setActioningId]     = useState(null)
 
   useEffect(() => {
     const fetchLogs = async () => {
-      setLoading(true); setError('')
+      setLoading(true)
+      setError('')
       try {
-        // TODO: GET /api/weeklylogs/?all=true — needs Django to support returning all students' logs for admin
-        const response = await axios.get('http://127.0.0.1:8000/api/weeklylogs/', {
-          headers: { Authorization: 'Bearer ' + token }
-        })
-        setLogs(Array.isArray(response.data) ? response.data : response.data.results || [])
-      } catch {
-        // Mock data — remove when backend is connected
-        setLogs([
-          { id:1,  student_name:'Amara Nkosi',    student_id:'2500703348', week_number:6, activities:'Developed REST API endpoints for user authentication and worked on database schema design.', challenges:'Had difficulty with JWT token expiry handling.', status:'submitted', submitted_at:'2026-04-05', deadline:'2026-04-07', feedback:'' },
-          { id:2,  student_name:'Brian Otim',     student_id:'2500703349', week_number:7, activities:'Attended team standup, worked on frontend components and fixed bugs in the payment module.', challenges:'Merge conflicts in git repository.', status:'submitted', submitted_at:'2026-04-04', deadline:'2026-03-01', feedback:'' },
-          { id:3,  student_name:'Cynthia Akello', student_id:'2500703350', week_number:5, activities:'Completed UI mockups, reviewed designs with senior engineer, and wrote unit tests.', challenges:'Testing environment setup took longer than expected.', status:'reviewed',  submitted_at:'2026-04-03', deadline:'2026-04-10', feedback:'Good progress this week. Focus on improving test coverage.' },
-          { id:4,  student_name:'Denis Okello',   student_id:'2500703351', week_number:4, activities:'Worked on database migrations and wrote API documentation for all endpoints.', challenges:'None this week.', status:'approved',  submitted_at:'2026-03-28', deadline:'2026-03-30', feedback:'Excellent work! Keep it up.' },
-          { id:5,  student_name:'Eva Namutebi',   student_id:'2500703352', week_number:3, activities:'Set up development environment and completed onboarding tasks.', challenges:'Network issues at the office.', status:'draft',     submitted_at:null,          deadline:'2026-04-14', feedback:'' },
-          { id:6,  student_name:'Amara Nkosi',    student_id:'2500703348', week_number:5, activities:'Implemented password reset flow and email notifications.', challenges:'SMTP configuration was tricky.', status:'approved',  submitted_at:'2026-03-29', deadline:'2026-03-31', feedback:'Well done.' },
-          { id:7,  student_name:'Brian Otim',     student_id:'2500703349', week_number:6, activities:'Worked on data visualization dashboard and integrated chart library.', challenges:'Performance issues with large datasets.', status:'reviewed',  submitted_at:'2026-03-27', deadline:'2026-03-28', feedback:'Please add more detail about the specific charts you built.' },
-          { id:8,  student_name:'Frank Ssali',    student_id:'2500703353', week_number:2, activities:'Shadowed senior developers and attended sprint planning meeting.', challenges:'Understanding the existing codebase.', status:'submitted', submitted_at:'2026-04-06', deadline:'2026-04-08', feedback:'' },
-        ])
+        const data = await fetchWithAuth(`${API}/weeklylogs/logbooks/`)
+        setLogs(Array.isArray(data) ? data : [])
+      } catch (err) {
+        setError(err.message || 'Failed to load logs.')
       } finally { setLoading(false) }
     }
     fetchLogs()
   }, [])
 
-  // Handle status change from modal
   const handleStatusChange = (id, newStatus, feedback) => {
     setLogs((prev) => prev.map((l) =>
-      l.id === id ? { ...l, status: newStatus, feedback: feedback || l.feedback } : l
+      l.id === id ? { ...l, status: newStatus, supervisor_comment: feedback || l.supervisor_comment } : l
     ))
+    // Update modal log if open
+    if (selectedLog?.id === id) {
+      setSelectedLog(prev => ({ ...prev, status: newStatus, supervisor_comment: feedback || prev.supervisor_comment }))
+    }
   }
 
-  // Filter logs
+  const handleQuickApprove = async (log) => {
+    if (actioningId) return
+    setActioningId(log.id)
+    try {
+      await fetchWithAuth(`${API}/weeklylogs/logbooks/${log.id}/approve/`, { method: 'POST' })
+      handleStatusChange(log.id, 'approved', '')
+      toast.success(`Log approved for ${log.placement_label || `Log #${log.id}`}!`)
+    } catch (err) {
+      toast.error(err.message || 'Failed to approve log.')
+    } finally { setActioningId(null) }
+  }
+
+  const handleQuickReview = async (log) => {
+    if (actioningId) return
+    setActioningId(log.id)
+    try {
+      await fetchWithAuth(`${API}/weeklylogs/logbooks/${log.id}/review/`, {
+        method: 'POST',
+        body: JSON.stringify({ supervisor_comment: 'Reviewed by administrator' }),
+      })
+      handleStatusChange(log.id, 'reviewed', 'Reviewed by administrator')
+      toast.success(`Log marked as reviewed!`)
+    } catch (err) {
+      toast.error(err.message || 'Failed to review log.')
+    } finally { setActioningId(null) }
+  }
+
   const filtered = logs.filter((l) => {
-    const matchStatus    = statusFilter === 'all' || l.status === statusFilter
-    const matchSearch    = search === '' ||
-      l.student_name?.toLowerCase().includes(search.toLowerCase()) ||
+    const matchStatus = statusFilter === 'all' || l.status === statusFilter
+    const matchSearch = search === '' ||
       `week ${l.week_number}`.includes(search.toLowerCase()) ||
-      l.activities?.toLowerCase().includes(search.toLowerCase())
-    const matchStudentId = studentIdFilter === '' ||
-      l.student_id?.toLowerCase().includes(studentIdFilter.toLowerCase())
-    return matchStatus && matchSearch && matchStudentId
+      l.activities?.toLowerCase().includes(search.toLowerCase()) ||
+      String(l.placement).includes(search)
+    return matchStatus && matchSearch
   })
 
-  // Stats
   const counts = {
     all:       logs.length,
     draft:     logs.filter((l) => l.status === 'draft').length,
@@ -263,9 +299,6 @@ export default function AdminLogsPage() {
   return (
     <div className="space-y-6">
 
-      <ToastContainer position="top-right" autoClose={4000} theme="dark" />
-
-      {/* Log detail modal */}
       {selectedLog && (
         <LogDetailModal
           log={selectedLog}
@@ -274,12 +307,11 @@ export default function AdminLogsPage() {
         />
       )}
 
-      {/* Header */}
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-white">Internship Logs</h1>
           <p className="text-sm text-slate-400 mt-1">
-            View, review and approve all student logbook submissions across the system.
+            View, review and approve all student logbook submissions.
           </p>
         </div>
         {counts.overdue > 0 && (
@@ -311,7 +343,6 @@ export default function AdminLogsPage() {
 
       {/* Filters */}
       <div className="space-y-3">
-        {/* Status filter tabs */}
         <div className="flex items-center gap-1 bg-slate-800/50 border border-slate-700/50 rounded-xl p-1 flex-wrap">
           {FILTERS.map(({ key, label }) => (
             <button key={key} onClick={() => setStatusFilter(key)}
@@ -329,33 +360,20 @@ export default function AdminLogsPage() {
           ))}
         </div>
 
-        {/* Search + Student ID */}
-        <div className="flex gap-3 flex-wrap">
-          <div className="flex items-center gap-2 bg-slate-800/50 border border-slate-700/50 rounded-xl px-3 py-2 flex-1 min-w-[200px]">
-            <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-            </svg>
-            <input type="text" placeholder="Search student name or activity…"
-              value={search} onChange={(e) => setSearch(e.target.value)}
-              className="bg-transparent outline-none text-sm text-slate-300 placeholder-slate-600 w-full" />
-          </div>
-          <div className="flex items-center gap-2 bg-slate-800/50 border border-slate-700/50 rounded-xl px-3 py-2 w-44">
-            <svg className="w-4 h-4 text-slate-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"/>
-            </svg>
-            <input type="text" placeholder="Student ID…"
-              value={studentIdFilter} onChange={(e) => setStudentIdFilter(e.target.value)}
-              className="bg-transparent outline-none text-sm text-slate-300 placeholder-slate-600 w-full" />
-          </div>
+        <div className="flex items-center gap-2 bg-slate-800/50 border border-slate-700/50 rounded-xl px-3 py-2">
+          <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          <input type="text" placeholder="Search activities or week number..."
+            value={search} onChange={(e) => setSearch(e.target.value)}
+            className="bg-transparent outline-none text-sm text-slate-300 placeholder-slate-600 w-full" />
         </div>
       </div>
 
-      {/* Error */}
       {error && (
         <div className="bg-red-500/10 border border-red-500/30 text-red-300 text-sm px-4 py-3 rounded-xl">{error}</div>
       )}
 
-      {/* Logs list */}
       {loading ? <LogSkeleton /> : (
         <div className="space-y-3">
           {filtered.length === 0 && (
@@ -376,21 +394,15 @@ export default function AdminLogsPage() {
                   : 'border-slate-700/50 hover:border-indigo-500/30'}`}
             >
               <div className="flex items-start gap-4">
-
-                {/* Week badge */}
                 <div className="w-10 h-10 rounded-xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center text-xs font-bold flex-shrink-0">
                   W{log.week_number}
                 </div>
 
-                {/* Content */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between flex-wrap gap-2 mb-1">
-                    <div className="flex items-center gap-2">
-                      <AvatarCircle name={log.student_name} index={i} />
-                      <div>
-                        <p className="text-sm font-bold text-white">{log.student_name}</p>
-                        <p className="text-xs text-slate-500">{log.student_id} · Week {log.week_number}</p>
-                      </div>
+                    <div>
+                      <p className="text-sm font-bold text-white">Week {log.week_number} "? Placement #{log.placement}</p>
+                      <p className="text-xs text-slate-500">Log #{log.id}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       {isOverdue(log.deadline) && log.status === 'submitted' && (
@@ -400,10 +412,8 @@ export default function AdminLogsPage() {
                     </div>
                   </div>
 
-                  {/* Activities preview */}
                   <p className="text-xs text-slate-400 line-clamp-2 mb-2 mt-1">{log.activities}</p>
 
-                  {/* Dates */}
                   <div className="flex items-center gap-4 text-xs text-slate-500 flex-wrap">
                     {log.submitted_at && <span>Submitted: {formatDate(log.submitted_at)}</span>}
                     {log.deadline && (
@@ -411,14 +421,13 @@ export default function AdminLogsPage() {
                         Due: {formatDate(log.deadline)}
                       </span>
                     )}
-                    {log.feedback && <span className="text-blue-400">💬 Feedback given</span>}
+                    {log.attachment_url && <span className="text-indigo-400 text-xs">Attachment</span>}
+                    {log.supervisor_comment && <span className="text-blue-400">Comment added</span>}
                   </div>
                 </div>
               </div>
 
-              {/* Action bar */}
               <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-700/50">
-                {/* View details button — always shown */}
                 <button
                   onClick={() => setSelectedLog(log)}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-indigo-400 border border-indigo-500/30 bg-indigo-600/10 hover:bg-indigo-600/20 transition"
@@ -426,41 +435,31 @@ export default function AdminLogsPage() {
                   View Details
                 </button>
 
-                {/* Quick approve — only for submitted or reviewed */}
-                {(log.status === 'submitted' || log.status === 'reviewed') && (
+                {log.status === 'reviewed' && (
                   <button
-                    onClick={() => {
-                      handleStatusChange(log.id, 'approved', '')
-                      toast.success(`✓ Log approved for ${log.student_name}!`)
-                      toast.info(`📧 Notification sent to ${log.student_name}`, { autoClose: 3000 })
-                      // TODO: PATCH /api/weeklylogs/<id>/ { status: 'approved' }
-                    }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-emerald-400 border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 transition"
+                    onClick={() => handleQuickApprove(log)}
+                    disabled={actioningId === log.id}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-emerald-400 border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 transition disabled:opacity-50"
                   >
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
                     </svg>
-                    Approve
+                    {actioningId === log.id ? 'Approving...' : 'Approve'}
                   </button>
                 )}
 
-                {/* Quick mark reviewed — only for submitted */}
                 {log.status === 'submitted' && (
                   <button
-                    onClick={() => {
-                      handleStatusChange(log.id, 'reviewed', '')
-                      toast.success(`✓ Log marked as reviewed for ${log.student_name}!`)
-                      toast.info(`📧 Notification sent to ${log.student_name}`, { autoClose: 3000 })
-                      // TODO: PATCH /api/weeklylogs/<id>/ { status: 'reviewed' }
-                    }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-blue-400 border border-blue-500/30 bg-blue-500/10 hover:bg-blue-500/20 transition"
+                    onClick={() => handleQuickReview(log)}
+                    disabled={actioningId === log.id}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-blue-400 border border-blue-500/30 bg-blue-500/10 hover:bg-blue-500/20 transition disabled:opacity-50"
                   >
-                    Mark Reviewed
+                    {actioningId === log.id ? 'Reviewing...' : 'Mark Reviewed'}
                   </button>
                 )}
 
                 {log.status === 'approved' && (
-                  <span className="text-xs text-emerald-400 font-medium ml-1">✓ Approved</span>
+                  <span className="text-xs text-emerald-400 font-medium ml-1">??? Approved</span>
                 )}
 
                 <span className="ml-auto text-xs text-slate-600">Log #{log.id}</span>
@@ -472,3 +471,4 @@ export default function AdminLogsPage() {
     </div>
   )
 }
+
