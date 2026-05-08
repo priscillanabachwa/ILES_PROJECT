@@ -95,5 +95,10 @@ class InternshipPlacement(models.Model):
                 fields=['student', 'status'],
                 condition=models.Q(status='ACTIVE'),
                 name='unique_active_placement_per_student'
-        )
-    ]
+            )
+        ]
+        permissions = [
+            ("can_request_placements", "Can request placements"),
+            ("can_approve_placements", "Can approve placements"),
+            ("can_manage_placements", "Can manage placements"),
+        ]

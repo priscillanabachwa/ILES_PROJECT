@@ -7,11 +7,14 @@ from django.contrib.auth import authenticate
 from django.core.cache import cache
 from django.core.mail import send_mail
 from django.conf import settings
-import random
-import string
+
 
 from .models import CustomUser
-from .serializers import CustomUserSerializer, LoginSerializer
+from .serializers import (CustomUserSerializer, 
+                          LoginSerializer,
+                          PasswordResetRequestSerializer,
+                          PasswordResetVerifyOTPSerializer,
+                          PasswordResetConfirmSerializer)
 
 
 class CustomUserViewSet(viewsets.ModelViewSet):
@@ -67,17 +70,15 @@ def register_view(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# ==================== PASSWORD RECOVERY ENDPOINTS ====================
-
-def generate_reset_code(length=6):
-    """Generate a random 6-digit recovery code"""
-    return ''.join(random.choices(string.digits, k=length))
+# ==================== PASSWORD RECOVERY ENDPOINTS =====================
 
 
 @api_view(['POST'])
 @permission_classes([permissions.AllowAny])
 def password_reset_request(request):
     email = request.data.get('email')
+    
+    
     
     if not email:
         return Response(
@@ -92,7 +93,7 @@ def password_reset_request(request):
         cache.set(cache_key, recovery_code, timeout=900)  # 15 minutes
 
         send_mail(
-            subject='Your recovery code for ILES',
+            subject='Your recovery code for iles',
             message=f'Hello {user.first_name},\n\nYour recovery code is: {recovery_code}',
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[email],
@@ -169,7 +170,7 @@ def password_reset_confirm(request):
         cache.delete(verify_key)
 
         send_mail(
-            subject='ILES - Password Reset Confirmation',
+            subject='iles - Password Reset Confirmation',
             message=f"""
 Hello {user.first_name },
 
@@ -178,7 +179,7 @@ Your password has been reset successfully.
 If you did not make this change, please contact support immediately.
 
 Best regards,
-ILES System
+iles System
             """,
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[email],

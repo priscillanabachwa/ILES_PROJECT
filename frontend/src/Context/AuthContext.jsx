@@ -1,23 +1,29 @@
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useState, useEffect } from 'react'
+import { loginUser } from '../services/authService';
 
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
-const [user, setUser] = useState(() => {
-  const stored = localStorage.getItem('user')
-  return stored ? JSON.parse(stored) : {
-    first_name: 'Amara',
-    last_name: 'Nkosi',
-    role: 'supervisor',
-    email: 'amara.nkosi@university.ac.ug',
-  }
-})
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const login = (userData, token) => {
-    localStorage.setItem('authToken', token)
-    localStorage.setItem('user', JSON.stringify(userData))
-    setUser(userData)
-  }
+  useEffect(() => {
+    const stored = localStorage.getItem('user');
+    if (stored) {
+      setUser(JSON.parse(stored));
+    }
+    setLoading(false);
+  }, []);
+
+  const login = async (email, password) => {
+    // Simulate an API call
+    const response = await loginUser(email, password );
+    if (response.status === 200) { 
+      localStorage.setItem('authToken', response.data.token);
+      setUser(response.data.user);
+      Navigate('/admin/dashboard');
+    }
+  };
 
   const logout = () => {
     localStorage.removeItem('authToken')
@@ -26,8 +32,8 @@ const [user, setUser] = useState(() => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
-      {children}
+    <AuthContext.Provider value={{ user, login, logout, loading }}>
+      {!loading ? children : <div className='spinner'>Loading ILES...</div>}
     </AuthContext.Provider>
   )
 }
