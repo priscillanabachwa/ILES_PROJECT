@@ -19,7 +19,7 @@ def send_evaluation_notification(sender, instance, created, **kwargs):
             message=message,
             from_email=settings.DEFAULT_FROM_EMAIL, 
             recipient_list=[instance.student.email],
-            fail_silently=False,
+            fail_silently=True,
         )
          # SMS notification
         if student.phone_number:

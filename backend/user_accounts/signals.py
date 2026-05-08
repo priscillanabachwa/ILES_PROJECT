@@ -28,7 +28,7 @@ def send_password_reset_confirmation(sender, instance, **kwargs):
             message=f'Hello {instance.user.first_name} {instance.user.last_name},\n\nYour ILES account password has been reset successfully.\n\nIf this was not you, contact your administrator immediately.',
             from_email=settings.EMAIL_HOST_USER,
             recipient_list=[instance.user.email],
-            fail_silently=False,
+            fail_silently=True,
         )
 
 @receiver(post_save, sender=CustomUser)

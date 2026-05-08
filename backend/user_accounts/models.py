@@ -68,7 +68,7 @@ class PasswordResetOTP(models.Model):
     is_used = models.BooleanField(default=False)
 
     def is_expired(self):
-        return timezone.now() > self.created_at + timedelta(minutes=15)
+        return timezone.now() > self.created_at + timedelta(minutes=10)
 
     def __str__(self):
         return f"OTP for {self.user.email}"
