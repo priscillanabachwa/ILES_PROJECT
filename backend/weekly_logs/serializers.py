@@ -4,7 +4,14 @@ from datetime import date
 from .models import WeeklyLogbook
 
 
+class LogbookReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LogBookReview
+        fields = [ 'supervisor', 'comment', 'status_at_review', 'created_at']
+
 class WeeklyLogbookSerializer(serializers.ModelSerializer):
+    reviews = LogbookReviewSerializer(many=True, read_only=True)
+    internship_id = serializers.IntegerField(source='placement.id', read_only=True)
     
     class Meta:
         model = WeeklyLogbook

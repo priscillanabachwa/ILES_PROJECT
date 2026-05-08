@@ -92,31 +92,37 @@ class WeeklyLogbookViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'], url_path='review')
     def review(self, request, pk=None):
         log = self.get_object()
+        comment_text = request.data.get('supervisor_comment', '').strip()
 
         if request.user.role not in ('workplace_supervisor', 'academic_supervisor', 'admin'):
             return Response(
                 {'detail': 'You do not have permission to review logs.'},
-                status=status.HTTP_403_FORBIDDEN
+                status=403
             )
 
         if log.status != 'submitted':
             return Response(
                 {'detail': 'Only submitted logs can be reviewed.'},
-                status=status.HTTP_400_BAD_REQUEST
+                status=400
             )
 
-        comment = request.data.get('supervisor_comment', '').strip()
-        if not comment:
+        if not comment_text:
             return Response(
                 {'detail': 'A supervisor comment is required to review a log.'},
-                status=status.HTTP_400_BAD_REQUEST
+                status=400
             )
 
 
         
         log.status = 'reviewed'
-        log.supervisor_comment = request.data.get('supervisor_comment', '').strip()
         log.save()  
+
+        LogBookReview.objects.create(
+            logbook=log,
+            supervisor=request.user,
+            comment=comment_text,
+            status_at_review='reviewed'
+        )
         return Response(WeeklyLogbookSerializer(log).data)
        
   
@@ -129,7 +135,7 @@ class WeeklyLogbookViewSet(viewsets.ModelViewSet):
         if request.user.role not in ('academic_supervisor', 'admin'):
             return Response(
                 {'detail': 'You do not have permission to approve logs.'},
-                status=status.HTTP_403_FORBIDDEN
+                status=403
             )
 
         if log.status != 'reviewed':

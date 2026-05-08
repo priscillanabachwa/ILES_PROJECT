@@ -43,3 +43,16 @@ class WeeklyLogbook(models.Model):
         
     def __str__(self):
         return f'week{self.week_number} log for {self.placement}'
+
+class LogBookReview(models.Model):
+    logbook = models.ForeignKey(WeeklyLogbook, on_delete=models.CASCADE, related_name='reviews')
+    supervisor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    comment = models.TextField()
+    status_at_review = models.CharField(max_length=20)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'Review by {self.supervisor} on {self.logbook}'
