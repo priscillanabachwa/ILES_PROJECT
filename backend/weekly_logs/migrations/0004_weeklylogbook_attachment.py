@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('weekly_logs', '0002_alter_weeklylogbook_options_and_more'),
+        ('weekly_logs', '0003_logbookreview'),
     ]
 
     operations = [
