@@ -213,7 +213,7 @@ function AssignPlacementModal({ onClose, onSuccess }) {
         <>
           <FormField label="Student" required>
             <select className={selectCls} value={form.student} onChange={set('student')}>
-              <option value="">N/A Select student N/A</option>
+              <option value="">Select student</option>
               {students.map(s => (
                 <option key={s.id} value={s.id}>
                   {`${s.first_name || ''} ${s.last_name || ''}`.trim() || s.email}
@@ -223,7 +223,7 @@ function AssignPlacementModal({ onClose, onSuccess }) {
           </FormField>
           <FormField label="Company / Organisation" required>
             <select className={selectCls} value={form.company} onChange={set('company')}>
-              <option value="">N/A Select existing company or add new below N/A</option>
+              <option value="">Select existing company or add new below</option>
               {companies.map(c => (
                 <option key={c.id} value={c.id}>{c.company_name}</option>
               ))}
@@ -318,9 +318,9 @@ function AssignSupervisorModal({ onClose, placement = null, allPlacements = [], 
           {!placement ? (
             <FormField label="Placement / Student" required>
               <select className={selectCls} value={form.placement_id} onChange={set('placement_id')}>
-                <option value="">N/A Select placement N/A</option>
+                <option value="">Select placement</option>
                 {allPlacements.map(p => (
-                  <option key={p.id} value={p.id}>{p.student_name} N/A {p.company}</option>
+                  <option key={p.id} value={p.id}>{p.student_name} — {p.company}</option>
                 ))}
               </select>
             </FormField>
@@ -331,7 +331,7 @@ function AssignSupervisorModal({ onClose, placement = null, allPlacements = [], 
           )}
           <FormField label="Academic Supervisor">
             <select className={selectCls} value={form.academic_supervisor} onChange={set('academic_supervisor')}>
-              <option value="">N/A None / Keep existing N/A</option>
+              <option value="">None / Keep existing</option>
               {academicSups.map(s => (
                 <option key={s.id} value={s.id}>
                   {`${s.first_name || ''} ${s.last_name || ''}`.trim() || s.email}
@@ -341,7 +341,7 @@ function AssignSupervisorModal({ onClose, placement = null, allPlacements = [], 
           </FormField>
           <FormField label="Workplace Supervisor">
             <select className={selectCls} value={form.workplace_supervisor} onChange={set('workplace_supervisor')}>
-              <option value="">N/A None / Keep existing N/A</option>
+              <option value="">None / Keep existing</option>
               {workplaceSups.map(s => (
                 <option key={s.id} value={s.id}>
                   {`${s.first_name || ''} ${s.last_name || ''}`.trim() || s.email}
@@ -566,7 +566,7 @@ export default function InternshipAdministratorDashboard() {
           <svg className="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
           </svg>
-          Semester 2024 N/A Semester II
+          Semester 2024 — Semester II
         </div>
       </div>
 
