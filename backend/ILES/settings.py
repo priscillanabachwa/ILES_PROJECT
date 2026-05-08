@@ -39,15 +39,18 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'rest_framework.authtoken',
+    'ILES',
     'placements.apps.PlacementsConfig',
     'academic_evaluations.apps.AcademicEvaluationsConfig',
     'user_accounts.apps.UserAccountsConfig',
     'weekly_logs.apps.WeeklyLogsConfig',
 ]
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+)
 
 
 
-AUTH_USER_MODEL = 'user_accounts.CustomUser'
 
 # REST Framework Configuration
 REST_FRAMEWORK = {
@@ -191,6 +194,11 @@ TWILIO_PHONE_NUMBER = config('TWILIO_PHONE_NUMBER', default='')
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'iles-cache',
+        'LOCATION': 'ILES-cache',
     }
 }
+
+# ==================== Twilio SMS Configuration ====================
+TWILIO_ACCOUNT_SID = config('TWILIO_ACCOUNT_SID')
+TWILIO_AUTH_TOKEN = config('TWILIO_AUTH_TOKEN')
+TWILIO_PHONE_NUMBER = config('TWILIO_PHONE_NUMBER')

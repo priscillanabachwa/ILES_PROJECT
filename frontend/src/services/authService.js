@@ -1,5 +1,6 @@
 ﻿const API_BASE_URL = '/api';
 
+
 // ==================== AUTHENTICATION ====================
 export const loginUser = async (email, password) => {
   let response;
@@ -26,6 +27,11 @@ export const loginUser = async (email, password) => {
   const data = await response.json();
   return { token: data.token, user: data.user };
 };
+
+export const loginAdmin = async (email, password) => {
+  return loginUser(email, password);
+};
+
 
 export const registerUser = async (userData) => {
   let response;
@@ -231,5 +237,3 @@ export const resetPassword = async (email, code, newPassword) => {
 
   return response.json();
 };
-
-

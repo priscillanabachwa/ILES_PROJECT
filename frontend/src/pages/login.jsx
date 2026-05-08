@@ -199,6 +199,7 @@ function ForgotPasswordModal({ isOpen, onClose }) {
   )
 }
 
+// ✅ FIXED: Role redirects now match the routes defined in App.jsx
 const ROLE_REDIRECTS = {
   student: '/student/dashboard',
   academic_supervisor: '/academic/dashboard',
@@ -222,7 +223,7 @@ export default function Login() {
     setError('')
     setLoading(true)
     try {
-      const response = await loginUser(email, password)
+      const response = await loginUser(email.trim(), password)
       if (response.token && response.user) {
         login(response.user, response.token)
         const firstName = response.user.first_name

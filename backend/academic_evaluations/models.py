@@ -38,7 +38,7 @@ class AcademicEvaluation(models.Model):
         blank=True, null=True
     )
     grade=models.CharField(
-        max_length=2,
+        max_length=10,
         blank=True,null=True
     )
     status=models.CharField(

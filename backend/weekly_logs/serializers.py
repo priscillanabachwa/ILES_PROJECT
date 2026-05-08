@@ -1,7 +1,12 @@
 from rest_framework import serializers
 from datetime import date
-from .models import WeeklyLogbook
+from .models import WeeklyLogbook, LogBookReview
 
+
+class LogbookReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LogBookReview
+        fields = [ 'supervisor', 'comment', 'status_at_review', 'created_at']
 
 class WeeklyLogbookSerializer(serializers.ModelSerializer):
     attachment_url = serializers.SerializerMethodField(read_only=True)

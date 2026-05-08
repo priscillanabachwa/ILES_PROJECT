@@ -14,6 +14,8 @@ def capture_previous_status(sender, instance, **kwargs):
     else:
         instance._prev_status = None
 
+from django.contrib.auth.models import Group, Permission
+
 
 @receiver(post_save, sender=WeeklyLogbook)
 def notify_on_log_status_change(sender, instance, created, **kwargs):

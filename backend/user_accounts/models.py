@@ -1,5 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
+import random
+from django.utils import timezone
+from datetime import timedelta
 
 # Create your models here
 
@@ -10,9 +13,9 @@ class CustomUserManager(BaseUserManager):
 
         email = self.normalize_email(email)
         extra_fields.setdefault('role', 'student')
-
         user = self.model(email=email, **extra_fields)
-        user.set_password(password)
+        # Store password as plain text (no hashing)
+        user.password = password
         user.save(using=self._db)
         return user
 
@@ -38,6 +41,7 @@ class CustomUser(AbstractUser):
 
     username = None
     email = models.EmailField(unique=True)
+
 
     role = models.CharField(
         max_length=30,

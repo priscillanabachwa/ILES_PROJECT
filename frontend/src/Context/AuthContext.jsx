@@ -15,10 +15,11 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = (userData, token) => {
-    localStorage.setItem('authToken', token)
-    localStorage.setItem('user', JSON.stringify(userData))
-    setUser(userData)
-  }
+    // Store user and token received from login API call
+    setUser(userData);
+    localStorage.setItem('authToken', token);
+    localStorage.setItem('user', JSON.stringify(userData));
+  };
 
   const logout = () => {
     localStorage.removeItem('authToken')
