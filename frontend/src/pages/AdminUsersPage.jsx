@@ -164,7 +164,7 @@ function UserDetailModal({ user, onClose, onResetPassword }) {
                 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
                 : 'bg-slate-500/20 text-slate-400 border-slate-500/30'
             }`}>
-              {user.is_active !== false ? '?N/A? Active' : '?N/A? Inactive'}
+              {user.is_active !== false ? 'Active' : 'Inactive'}
             </span>
           </div>
           <div className="bg-slate-700/30 rounded-xl p-4 border border-slate-700/50 space-y-3">

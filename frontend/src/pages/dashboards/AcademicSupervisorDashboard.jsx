@@ -5,7 +5,7 @@ import { toast } from 'react-toastify'
 import dashboardService from "../../services/dashboardService"
 
 const formatDate = (iso) =>
-  iso ? new Date(iso).toLocaleDateString('en-UG', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A'
+  iso ? new Date(iso).toLocaleDateString('en-UG', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
 
 const getInitials = (name) =>
   name?.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() || '?'
@@ -128,7 +128,7 @@ function StatCard({ label, value, sub, subLink, icon, accent }) {
       <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${A.icon}`}>{icon}</div>
       <div>
         <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">{label}</p>
-        <p className={`text-3xl font-bold mt-0.5 ${A.val}`}>{value ?? 'N/A'}</p>
+        <p className={`text-3xl font-bold mt-0.5 ${A.val}`}>{value ?? '—'}</p>
         {sub && subLink
           ? <Link to={subLink} className={`text-xs font-medium mt-1 block hover:underline ${A.sub}`}>{sub} </Link>
           : sub && <p className={`text-xs font-medium mt-1 ${A.sub}`}>{sub}</p>
@@ -360,7 +360,7 @@ export default function AcademicDashboard() {
                     <div className="flex items-start gap-3">
                       <AvatarCircle name={l.student_name} index={i} size="sm" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-white">Week {l.week_number} N/A {l.student_name}</p>
+                        <p className="text-xs font-semibold text-white">Week {l.week_number} — {l.student_name}</p>
                         <p className="text-xs text-slate-400 mt-0.5">Submitted {formatDate(l.submitted_at)}</p>
                         {isOverdue(l.deadline) && (
                           <p className="text-xs text-red-400 font-medium mt-0.5">Past deadline</p>
@@ -399,13 +399,13 @@ export default function AcademicDashboard() {
                   <div className="bg-indigo-600/10 border border-indigo-500/20 rounded-xl p-3 text-center">
                     <p className="text-xs text-indigo-400">Avg. Score</p>
                     <p className="text-xl font-bold text-indigo-300 mt-0.5">
-                      {stats ? `${Number(stats.average_score).toFixed(0)}%` : 'N/A'}
+                      {stats ? `${Number(stats.average_score).toFixed(0)}%` : '—'}
                     </p>
                   </div>
                   <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 text-center">
                     <p className="text-xs text-emerald-400">Evaluated</p>
                     <p className="text-xl font-bold text-emerald-300 mt-0.5">
-                      {stats?.completed_evaluations ?? 'N/A'}
+                      {stats?.completed_evaluations ?? '—'}
                     </p>
                   </div>
                 </div>
