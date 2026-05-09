@@ -146,7 +146,8 @@ function NotificationBell() {
         <div className="absolute right-0 top-11 w-80 bg-slate-800 border border-slate-700/60 rounded-2xl shadow-2xl z-50 overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700/50">
             <div className="flex items-center gap-2">
-              <span className="text-white font-semibold text-sm">Notifications</span>
+              <span style = {{ fontFamily: "Times New Roman"}}
+               className="text-white font-semibold text-sm">Notifications</span>
               {unreadCount > 0 && (
                 <span className="bg-indigo-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{unreadCount}</span>
               )}
@@ -230,9 +231,10 @@ export default function AppLayout() {
 
         {/* Logo */}
         <div className="px-4 mb-6 flex flex-col items-center gap-3 text-center">
-          <img src={ILESLogo} alt="ILES Logo" className="w-20 h-20 object-contain rounded-xl" />
-          <p className="text-white font-extrabold text-[10px] tracking-widest leading-snug uppercase px-2">
-            Internship Logging<br />and Evaluation System
+          <img src={ILESLogo} alt="ILES Logo" className="w-25 h-200 object-contain rounded-xl" />
+          <p style={{fontFamily:"Bookman Old Style "}}
+          className="text-white font-extrabold text-[12px] tracking-widest leading-snug uppercase px-2  ">
+            Internship Logging <br />and Evaluation System
           </p>
         </div>
 

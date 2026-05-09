@@ -559,14 +559,14 @@ export default function InternshipAdministratorDashboard() {
       {/* Header */}
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-white">Welcome, {fullName} </h1>
-          <p className="text-sm text-slate-400 mt-1">Manage students, placements, supervisors, and system-wide reports.</p>
+          <h1 className="text-2xl font-bold text-white">Welcome , {fullName} </h1>
+          <p className="text-sm text-slate-400 mt-1">Manage students, placements, supervisors, and access system-wide reports.</p>
         </div>
         <div className="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-xs text-slate-400 font-medium flex items-center gap-2">
           <svg className="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
           </svg>
-          Semester 2024 — Semester II
+          Year 2026 — Semester II
         </div>
       </div>
 
@@ -585,7 +585,7 @@ export default function InternshipAdministratorDashboard() {
         {[
           { label:'Pending Placements',   value:stats?.pending_placements,   color:'text-amber-300',   link:'/admin/users?role=placements', linkText:'Assign now'  },
           { label:'Unassigned Students',  value:stats?.unassigned_students,  color:'text-rose-300',    link:'/admin/users?role=student',    linkText:'Assign now'  },
-          { label:'Evaluations Complete', value:stats?.evaluations_complete, color:'text-emerald-300', link:'/admin/evaluations',           linkText:'View reports'},
+          { label:'Completed Evaluations', value:stats?.evaluations_complete, color:'text-emerald-300', link:'/admin/evaluations',           linkText:'View reports'},
           { label:'Logs Overdue',         value:stats?.logs_overdue ?? 6,    color:'text-red-300',     link:'/admin/logs',                  linkText:'Review now'  },
         ].map(({ label, value, color, link, linkText }) => (
           <div key={label} className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-4 text-center">
@@ -707,6 +707,8 @@ export default function InternshipAdministratorDashboard() {
             )}
           </Card>
 
+
+
           {/* Evaluation Overview */}
           <Card title="Evaluation Overview" actionLabel="View All" actionLink="/admin/evaluations">
             {loading ? <ListSkeleton /> : (
@@ -754,10 +756,11 @@ export default function InternshipAdministratorDashboard() {
           </Card>
         </div>
 
-        {/* Right col N/A 2/5 */}
+        
+        {/* Right  col N/A 2/5 */}
         <div className="lg:col-span-2 space-y-5">
 
-          {/* User Overview */}
+          {/* User  Overview */}
           <Card title="User Overview" actionLabel="Manage Users" actionLink="/admin/users">
             {loading ? <ListSkeleton /> : (
               <div className="space-y-4">
@@ -796,8 +799,8 @@ export default function InternshipAdministratorDashboard() {
               {[
                 { label:'Register Student',  sub:'Add a new student account',     icon:Icon.plus,       onClick:() => setModal('register'),                                  color:'text-indigo-400 bg-indigo-600/20'   },
                 { label:'Assign Placement',  sub:'Create a new placement record',  icon:Icon.placements, onClick:() => setModal('placement'),                                color:'text-emerald-400 bg-emerald-500/20' },
-                { label:'Assign Supervisor', sub:'Link supervisor to a student',   icon:Icon.assign,     onClick:() => { setSelectedPlacement(null); setModal('supervisor') },color:'text-amber-400 bg-amber-500/20'     },
-                { label:'View Evaluations',  sub:'All scores across all students', icon:Icon.eval,       to:'/admin/evaluations',                                             color:'text-teal-400 bg-teal-500/20'       },
+                { label:'Assign Supervisor', sub:'Link supervisor and student',   icon:Icon.assign,     onClick:() => { setSelectedPlacement(null); setModal('supervisor') },color:'text-amber-400 bg-amber-500/20'     },
+                { label:'View Evaluations',  sub:'All scores for  all students', icon:Icon.eval,       to:'/admin/evaluations',                                             color:'text-teal-400 bg-teal-500/20'       },
                 { label:'Manage Users',      sub:'View and edit user accounts',    icon:Icon.users,      to:'/admin/users',                                                   color:'text-violet-400 bg-violet-500/20'   },
                 { label:'Generate Report',   sub:'Export system-wide reports',     icon:Icon.report,     onClick:() => setModal('report'),                                    color:'text-rose-400 bg-rose-500/20'       },
               ].map(({ label, sub, icon, onClick, to, color }) => {
