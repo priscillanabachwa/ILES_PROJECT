@@ -1,8 +1,10 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../Context/AuthContext';
 import { registerUser } from '../services/authService';
+import { toast } from 'react-toastify';
 import './Register.css';
-import ILES_LOGO from '../assets/iles_logo.png';
+import ILES_LOGO from '../assets/ILES_LOGO.png';
 
 // ==================== EYE ICONS ====================
 const EyeIcon = () => (
@@ -24,6 +26,7 @@ const EyeOffIcon = () => (
 
 // ==================== MAIN COMPONENT ====================
 export default function Register() {
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     first_name: '',
@@ -74,15 +77,15 @@ export default function Register() {
         phone_number: formData.phone_number,
         role: formData.role,
       });
-      localStorage.setItem('authToken', response.token);
-      localStorage.setItem('user', JSON.stringify(response.user));
+      login(response.user, response.token);
+      toast.success('Account created successfully! Welcome to ILES.');
       const roleRoutes = {
         student: '/student/dashboard',
         admin: '/admin/dashboard',
         academic_supervisor: '/academic/dashboard',
         workplace_supervisor: '/supervisor/dashboard',
       };
-        navigate(roleRoutes[response.user.role] || '/login');
+      navigate(roleRoutes[response.user.role] || '/login');
           
     } catch (err) {
       setError(err.message || 'Registration failed. Please try again.');
@@ -234,7 +237,7 @@ export default function Register() {
           {error && <div className="reg-error">{error}</div>}
 
           <button type="submit" className="reg-btn" disabled={loading}>
-            {loading ? 'Creating Account…' : 'Register'}
+            {loading ? 'Creating Account...' : 'Register'}
           </button>
         </form>
 

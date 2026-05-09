@@ -38,7 +38,7 @@ class AcademicEvaluation(models.Model):
         blank=True, null=True
     )
     grade=models.CharField(
-        max_length=2,
+        max_length=10,
         blank=True,null=True
     )
     status=models.CharField(
@@ -96,7 +96,7 @@ class AcademicEvaluation(models.Model):
         
 #ensuring all criteria are filled before submission
     def is_complete(self):
-        total_criteria=EvaluationCriteria.objects.filter(is_active=True).count
+        total_criteria=EvaluationCriteria.objects.filter(is_active=True).count()
         return self.items.count() == total_criteria
         
     def save(self, *args, **kwargs):

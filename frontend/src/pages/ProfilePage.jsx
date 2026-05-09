@@ -1,6 +1,7 @@
-import { useState, useRef, useEffect } from 'react'
+﻿import { useState, useRef, useEffect } from 'react'
 import { toast } from 'react-toastify'
 import { useAuth } from '../Context/AuthContext'
+import { updateUserProfile, getAuthToken } from '../services/authService'
 
 const ROLE_CONFIG = {
   student: {
@@ -60,11 +61,10 @@ const validators = {
 
 const validateField = (key, value) => validators[key]?.(value) || ''
 
-const formatDate = (iso) =>
-  iso ? new Date(iso).toLocaleDateString('en-UG', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
+const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '')
 
 const getFullName = (user) =>
-  [user?.first_name, user?.last_name].filter(Boolean).join(' ') || '—'
+  [user?.first_name, user?.last_name].filter(Boolean).map(cap).join(' ') || '—'
 
 const PencilIcon = ({ className = 'w-3.5 h-3.5' }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -139,13 +139,13 @@ function SectionDivider({ title, subtitle }) {
 }
 
 export default function ProfilePage() {
-  const { user } = useAuth()
+  const { user, login } = useAuth()
   const config = ROLE_CONFIG[user?.role] || ROLE_CONFIG.student
 
   const buildInitial = () =>
     Object.fromEntries(config.fields.map(({ key }) => [key, user?.[key] || '']))
 
-  const [form, setForm]               = useState(buildInitial)
+  const [form, setForm]               = useState(buildInitial())
   const [avatarPreview, setAvatar]    = useState(null)
   const [fieldErrors, setFieldErrors] = useState({})
   const [saving, setSaving]           = useState(false)
@@ -170,6 +170,8 @@ export default function ProfilePage() {
     setEditMode(false)
   }
 
+  const UPDATABLE_FIELDS = ['first_name', 'last_name', 'phone_number', 'institution', 'department', 'student_id', 'faculty', 'staff_id', 'organisation', 'job_title']
+
   const handleSave = async () => {
     const errs = {}
     config.fields.forEach(({ key }) => {
@@ -179,12 +181,18 @@ export default function ProfilePage() {
     if (Object.keys(errs).length) { setFieldErrors(errs); return }
     setSaving(true)
     try {
-      // TODO: connect to Django
+      // Only send fields that actually exist in the backend CustomUser model
+      const updatedData = Object.fromEntries(
+        UPDATABLE_FIELDS.map(key => [key, form[key] || ''])
+      )
+      const response = await updateUserProfile(updatedData)
+      const token = getAuthToken()
+      login({ ...user, ...response }, token)
       toast.success('Profile updated successfully.')
       setAvatar(null)
       setEditMode(false)
-    } catch {
-      toast.error('Failed to update profile. Please try again.')
+    } catch (err) {
+      toast.error(err.message || 'Failed to update profile. Please try again.')
     } finally {
       setSaving(false)
     }
@@ -234,9 +242,11 @@ export default function ProfilePage() {
         {/* VIEW MODE */}
         {!editMode && (
           <div className="grid grid-cols-2 gap-x-8 gap-y-5">
-            {config.fields.map(({ key, label }) => (
-              <InfoRow key={key} label={label} value={user?.[key]} />
-            ))}
+            {config.fields.map(({ key, label }) => {
+              const raw = user?.[key]
+              const value = (key === 'first_name' || key === 'last_name') ? cap(raw) : raw
+              return <InfoRow key={key} label={label} value={value} />
+            })}
           </div>
         )}
 
@@ -262,7 +272,7 @@ export default function ProfilePage() {
               <button onClick={handleSave} disabled={saving || hasErrors}
                 className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition shadow-sm
                   ${!hasErrors ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-slate-700 text-slate-500 cursor-not-allowed'}`}>
-                {saving ? 'Saving…' : 'Save Changes'}
+                {saving ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
           </div>

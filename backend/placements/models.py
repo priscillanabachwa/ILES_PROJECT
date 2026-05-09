@@ -54,6 +54,7 @@ class InternshipPlacement(models.Model):
 
     start_date = models.DateField()
     end_date = models.DateField()
+    placement_letter = models.FileField(upload_to='placement_documents/', blank=True, null=True)
 
     status = models.CharField(
         max_length=10,
