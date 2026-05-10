@@ -103,28 +103,3 @@ class InternshipPlacement(models.Model):
             ("can_approve_placements", "Can approve placements"),
             ("can_manage_placements", "Can manage placements"),
         ]
-
-
-class Semester(models.Model):
-    SEMESTER_CHOICES = [
-        ('I', 'Semester I'),
-        ('II', 'Semester II'),
-    ]
-
-    year = models.IntegerField()
-    semester = models.CharField(max_length=5, choices=SEMESTER_CHOICES)
-    start_date = models.DateField()
-    end_date = models.DateField()
-    is_active = models.BooleanField(default=False)
-
-    class Meta:
-        unique_together = [['year', 'semester']]
-        ordering = ['-year', 'semester']
-
-    def __str__(self):
-        return f"{self.year} — Semester {self.semester}"
-
-    def save(self, *args, **kwargs):
-        if self.is_active:
-            Semester.objects.exclude(pk=self.pk).update(is_active=False)
-        super().save(*args, **kwargs)

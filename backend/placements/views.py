@@ -2,8 +2,8 @@
 from django.shortcuts import render
 
 from rest_framework import viewsets
-from .models import InternshipPlacement, Company, Semester
-from .serializers import PlacementSerializer, CompanySerializer, SemesterSerializer
+from .models import InternshipPlacement, Company
+from .serializers import PlacementSerializer, CompanySerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import filters
 
@@ -37,10 +37,4 @@ class PlacementViewSet(viewsets.ModelViewSet):
         elif user.role == 'academic_supervisor':
             return InternshipPlacement.objects.filter(academic_supervisor=user)
         return super().get_queryset()
-
-
-class SemesterViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Semester.objects.all()
-    serializer_class = SemesterSerializer
-    permission_classes = [IsAuthenticated]
 
