@@ -168,7 +168,6 @@ export default function AcademicDashboard() {
   const [loading,    setLoading]        = useState(true)
   const [error,      setError]          = useState('')
   const [search,     setSearch]         = useState('')
-  const [semester,   setSemester]       = useState('2024-II')
   const [approvingId,   setApprovingId]   = useState(null)
 
   useEffect(() => {
@@ -177,9 +176,9 @@ export default function AcademicDashboard() {
       setError('')
       try {
         const [statsRes, placementsRes, logbooksRes, activityRes, scoresRes] = await Promise.all([
-          dashboardService.getAcademicStats(semester),
-          dashboardService.getAcademicPlacements(semester),
-          dashboardService.getPendingReviews(semester),
+          dashboardService.getAcademicStats(),
+          dashboardService.getAcademicPlacements(),
+          dashboardService.getPendingReviews(),
           dashboardService.getRecentActivity(),
           dashboardService.getEvaluationScores(),
         ])
@@ -195,7 +194,7 @@ export default function AcademicDashboard() {
       }
     }
     fetchAll()
-  }, [semester])
+  }, [])
 
   const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '')
   const fullName = [user?.first_name, user?.last_name].filter(Boolean).map(cap).join(' ') || 'Supervisor'
@@ -216,8 +215,6 @@ export default function AcademicDashboard() {
     p.student_name?.toLowerCase().includes(search.toLowerCase()) ||
     p.student_id?.toLowerCase().includes(search.toLowerCase())
   )
-  const SEMESTERS = ['2023-I', '2023-II', '2024-I', '2024-II', '2025-I', '2025-II', '2026-I', '2026-II']
-
   return (
     <div className="space-y-6">
 
@@ -228,20 +225,6 @@ export default function AcademicDashboard() {
           <p className="text-sm text-slate-400 mt-1">
             Manage your assigned students, review internship logs, and track evaluations.
           </p>
-        </div>
-        <div className="flex items-center gap-2 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2">
-          <svg className="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-          </svg>
-          <select
-            value={semester}
-            onChange={(e) => setSemester(e.target.value)}
-            className="text-xs font-medium text-slate-300 bg-transparent outline-none cursor-pointer pr-1"
-          >
-            {SEMESTERS.map((s) => (
-              <option key={s} value={s} className="bg-slate-800">Semester {s}</option>
-            ))}
-          </select>
         </div>
       </div>
 

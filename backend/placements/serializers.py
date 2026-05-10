@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import InternshipPlacement, Company
+from .models import InternshipPlacement, Company, Semester
 from user_accounts.models import CustomUser
 
 
@@ -129,3 +129,14 @@ class PlacementSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         validated_data.pop('company_name_input', None)
         return super().update(instance, validated_data)
+
+
+class SemesterSerializer(serializers.ModelSerializer):
+    label = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Semester
+        fields = ['id', 'year', 'semester', 'start_date', 'end_date', 'is_active', 'label']
+
+    def get_label(self, obj):
+        return f"{obj.year} — Semester {obj.semester}"

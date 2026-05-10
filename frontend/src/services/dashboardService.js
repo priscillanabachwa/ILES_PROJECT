@@ -188,7 +188,7 @@ async function getWorkplaceActivity() {
     data: logbooks.slice(0, 10).map(l => ({
       id: l.id,
       student_name: pm[l.placement]?.student_name || 'Unknown Student',
-      activity: `Weekly Log "? Week ${l.week_number}`,
+      activity: `Weekly Log — Week ${l.week_number}`,
       date: l.submitted_at || l.deadline,
       status: l.status,
       deadline: l.deadline,
@@ -259,7 +259,7 @@ async function getRecentActivity() {
     data: logbooks.slice(0, 10).map(l => ({
       id: l.id,
       student_name: pm[l.placement]?.student_name || 'Unknown Student',
-      activity: `Weekly Log "? Week ${l.week_number}`,
+      activity: `Weekly Log — Week ${l.week_number}`,
       date: l.submitted_at || l.deadline,
       status: l.status,
     })),

@@ -5,7 +5,7 @@ import { fetchWithAuth } from '../services/authService'
 const API = '/api'
 
 const formatDate = (iso) =>
-  iso ? new Date(iso).toLocaleDateString('en-UG', { day: 'numeric', month: 'short', year: 'numeric' }) : '"?'
+  iso ? new Date(iso).toLocaleDateString('en-UG', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
 
 function Skeleton({ className = '' }) {
   return <div className={`bg-slate-700/50 animate-pulse rounded-lg ${className}`} />
@@ -45,7 +45,7 @@ function ReviewModal({ log, onClose, onSuccess }) {
       <div className="relative bg-slate-800 border border-slate-700/50 rounded-2xl w-full max-w-lg shadow-2xl">
         <div className="flex items-start justify-between p-6 border-b border-slate-700/50">
           <div>
-            <h2 className="text-lg font-bold text-white">Review Log "? Week {log.week_number}</h2>
+            <h2 className="text-lg font-bold text-white">Review Log — Week {log.week_number}</h2>
             <p className="text-slate-400 text-sm mt-0.5">{log.student_name}</p>
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-white transition p-1">
@@ -109,7 +109,7 @@ function LogDetailModal({ log, onClose }) {
       <div className="relative bg-slate-800 border border-slate-700/50 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
         <div className="flex items-start justify-between p-6 border-b border-slate-700/50 sticky top-0 bg-slate-800">
           <div>
-            <h2 className="text-lg font-bold text-white">Week {log.week_number} "? {log.student_name}</h2>
+            <h2 className="text-lg font-bold text-white">Week {log.week_number} — {log.student_name}</h2>
             <p className="text-slate-400 text-sm mt-0.5">{log.company}</p>
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-white transition p-1">
@@ -206,7 +206,7 @@ export default function AcademicLogsPage() {
           (Array.isArray(logsData) ? logsData : []).map(l => ({
             ...l,
             student_name: pm[l.placement]?.student_name || `Placement #${l.placement}`,
-            company: pm[l.placement]?.company_name || '"?',
+            company: pm[l.placement]?.company_name || '—',
           }))
         )
       } catch {

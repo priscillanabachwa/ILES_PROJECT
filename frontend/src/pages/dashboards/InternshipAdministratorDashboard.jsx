@@ -534,7 +534,7 @@ export default function InternshipAdministratorDashboard() {
 
       <ToastContainer position="top-right" autoClose={4000} hideProgressBar={false} newestOnTop closeOnClick theme="dark" />
 
-      {modal === 'register'   && (
+      {modal === 'register' && (
         <RegisterStudentModal
           onClose={() => setModal(null)}
           onSuccess={() => dashboardService.getAdminUsers().then(r => setUsers(r.data)).catch(() => {})}
@@ -561,12 +561,6 @@ export default function InternshipAdministratorDashboard() {
         <div>
           <h1 className="text-2xl font-bold text-white">Welcome, {fullName} </h1>
           <p className="text-sm text-slate-400 mt-1">Manage students, placements, supervisors, and system-wide reports.</p>
-        </div>
-        <div className="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-xs text-slate-400 font-medium flex items-center gap-2">
-          <svg className="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-          </svg>
-          Semester 2024 — Semester II
         </div>
       </div>
 

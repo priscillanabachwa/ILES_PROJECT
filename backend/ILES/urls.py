@@ -18,7 +18,7 @@ from django.contrib import admin
 from django.urls import  path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from placements.views import PlacementViewSet, CompanyViewSet
+from placements.views import PlacementViewSet, CompanyViewSet, SemesterViewSet
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -28,6 +28,8 @@ urlpatterns = [
     path('api/placements/<int:pk>/', PlacementViewSet.as_view({'get': 'retrieve', 'put': 'update', 'patch': 'partial_update', 'delete': 'destroy'})),
     path('api/placements/companies/', CompanyViewSet.as_view({'get': 'list', 'post': 'create'})),
     path('api/placements/companies/<int:pk>/', CompanyViewSet.as_view({'get': 'retrieve', 'put': 'update', 'patch': 'partial_update', 'delete': 'destroy'})),
+    path('api/placements/semesters/', SemesterViewSet.as_view({'get': 'list'})),
+    path('api/placements/semesters/<int:pk>/', SemesterViewSet.as_view({'get': 'retrieve'})),
 
     path('api/evaluations/', include('academic_evaluations.urls')),
     path('api/weeklylogs/', include('weekly_logs.urls'))
