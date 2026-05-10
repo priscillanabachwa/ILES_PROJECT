@@ -14,17 +14,20 @@ class EvaluationCriteriaSerializer(serializers.ModelSerializer):
        read_only_fields = ['fields']
        
 class EvaluationScoreSerializer(serializers.ModelSerializer):
+    criteria_name = serializers.CharField(source='criteria.name', read_only=True)
+    max_score     = serializers.IntegerField(source='criteria.max_score', read_only=True)
+
     class Meta:
         model = EvaluationScore
-        fields ='__all__'
-        read_only_fields = ['total_score','evaluated_at']
+        fields = ['id', 'evaluation', 'criteria', 'criteria_name', 'score', 'max_score']
+        read_only_fields = ['evaluated_at']
 
-    def validate(self,data):
+    def validate(self, data):
         criteria = data.get('criteria')
         score = data.get('score')
-        if score >criteria.max_score:
+        if score > criteria.max_score:
             raise serializers.ValidationError(
-                f"Score{score} exceeds maximum allowed "
+                f"Score {score} exceeds maximum allowed ({criteria.max_score})"
             )
         return data
 
@@ -49,11 +52,9 @@ class AcademicEvaluationSerializer(serializers.ModelSerializer):
         return obj.calculate_total_score()
 
 
-    def update(self,instance, data, validated_data):
-        
-        if instance.status == 'submitted':
-             raise serializers.ValidationError ("Cannot edit a submitted evaluation")
-
+    def update(self, instance, validated_data):
+        if instance.status == 'SUBMITTED':
+            raise serializers.ValidationError("Cannot edit a submitted evaluation")
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()

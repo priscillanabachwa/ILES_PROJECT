@@ -8,5 +8,5 @@ router.register(r'criteria', EvaluationCriteriaViewSet, basename='criteria')
 router.register(r'scores', EvaluationScoreViewSet, basename='scores')
 
 urlpatterns = [
-    path('api/', include(router.urls)),
+    path('', include(router.urls)),
 ]

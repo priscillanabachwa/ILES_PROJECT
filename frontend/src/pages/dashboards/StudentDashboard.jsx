@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { useAuth } from '../../context/AuthContext'
+﻿import { useState, useEffect } from 'react'
+import { useAuth } from '../../Context/AuthContext'
 import { Link } from 'react-router-dom'
 import dashboardService from "../../services/dashboardService"
 
@@ -82,7 +82,7 @@ function StatCard({ label, value, sub, subLink, icon, accent }) {
         <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">{label}</p>
         <p className={`text-3xl font-bold mt-0.5 ${A.val}`}>{value ?? '—'}</p>
         {sub && subLink
-          ? <Link to={subLink} className={`text-xs font-medium mt-1 block hover:underline ${A.sub}`}>{sub} →</Link>
+          ? <Link to={subLink} className={`text-xs font-medium mt-1 block hover:underline ${A.sub}`}>{sub} </Link>
           : sub && <p className={`text-xs font-medium mt-1 ${A.sub}`}>{sub}</p>
         }
       </div>
@@ -97,7 +97,7 @@ function Card({ title, actionLabel, actionLink, children }) {
         <p className="text-sm font-bold text-white">{title}</p>
         {actionLabel && actionLink && (
           <Link to={actionLink} className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 hover:underline">
-            {actionLabel} →
+            {actionLabel} 
           </Link>
         )}
       </div>
@@ -121,7 +121,7 @@ function ScoreBreakdown({ scores }) {
             <div className="flex justify-between text-xs mb-1">
               <span className="text-slate-400">{label} <span className="text-slate-600">({weight}%)</span></span>
               <span className="font-semibold text-white">
-                {score != null ? `${score} → ${weighted}` : 'Pending'}
+                {score != null ? `${score}  ${weighted}` : 'Pending'}
               </span>
             </div>
             <div className="w-full bg-slate-700 rounded-full h-2">
@@ -141,7 +141,7 @@ function WorkflowStep({ label, active, done }) {
         ${done   ? 'bg-indigo-600 border-indigo-600 text-white' :
           active ? 'bg-slate-800 border-indigo-500 text-indigo-400' :
                    'bg-slate-800 border-slate-600 text-slate-600'}`}>
-        {done ? '✓' : ''}
+        {done ? '' : ''}
       </div>
       <p className={`text-xs font-medium text-center ${active || done ? 'text-slate-300' : 'text-slate-600'}`}>{label}</p>
     </div>
@@ -194,40 +194,8 @@ export default function StudentDashboard() {
         setLogbooks(logbooksRes.data)
         setDeadline(deadlineRes.data)
         setScores(scoresRes.data)
-      } catch {
-        // Mock data for frontend preview — remove when backend is connected
-        setStats({ logs_submitted: 6, pending_logs: 1, unread_feedback: 3, current_score: 76.4 })
-        setPlacement({
-          status: 'ACTIVE',
-          start_date: '2025-09-01',
-          end_date: '2025-11-30',
-          company: 'TechCorp Uganda',
-          company_address: 'Kampala, Uganda',
-          workplace_supervisor: 'David Ochieng',
-          workplace_supervisor_email: 'd.ochieng@techcorp.co.ug',
-          academic_supervisor: 'Prof. Grace Atim',
-          academic_supervisor_email: 'g.atim@mak.ac.ug',
-          duration_weeks: 12,
-          current_week: 6,
-        })
-        setLogbooks([
-          { id: 1, week_number: 6, activities: 'Developed REST API endpoints for user authentication module', submitted_at: '2026-04-05', deadline: '2026-04-06', status: 'reviewed' },
-          { id: 2, week_number: 5, activities: 'Attended team standup and worked on database schema design',  submitted_at: '2026-03-29', deadline: '2026-03-30', status: 'approved' },
-          { id: 3, week_number: 4, activities: 'Completed UI mockups and reviewed with senior engineer',      submitted_at: '2026-03-22', deadline: '2026-03-23', status: 'approved' },
-          { id: 4, week_number: 7, activities: 'Draft in progress',                                           submitted_at: null,         deadline: '2026-04-13', status: 'draft'    },
-        ])
-        setDeadline({ week_number: 7, due_date: '2026-04-13' })
-        setScores({
-          workplace_score: 80,
-          academic_score:  74,
-          logbook_score:   74,
-          final_score:     76.4,
-          grade:           'B+',
-          recent_feedback: [
-            { from: 'David Ochieng',    date: '2026-04-05', comment: 'Good work on the API documentation. Make sure to include error handling examples in the next log.' },
-            { from: 'Prof. Grace Atim', date: '2026-04-02', comment: 'Your reflection on challenges shows good academic thinking. Keep linking theory to practice.' },
-          ],
-        })
+      } catch (err) {
+        setError(err.message || 'Failed to load dashboard data. Please refresh.')
       } finally {
         setLoading(false)
       }
@@ -235,17 +203,18 @@ export default function StudentDashboard() {
     fetchAll()
   }, [])
 
-  const fullName       = [user?.first_name, user?.last_name].filter(Boolean).join(' ') || 'Student'
+  const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '')
+  const fullName       = [user?.first_name, user?.last_name].filter(Boolean).map(cap).join(' ') || 'Student'
   const days           = daysUntil(deadline?.due_date)
   const deadlineUrgent = days != null && days <= 2
 
   return (
     <div className="space-y-6">
 
-      {/* ── Header ── */}
+      {/*  Header  */}
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-white">Welcome, {fullName} 👋</h1>
+          <h1 className="text-2xl font-bold text-white">Welcome, {fullName} </h1>
           <p className="text-sm text-slate-400 mt-1">
             Track your internship progress, submit logbooks, and view your evaluations.
           </p>
@@ -264,12 +233,12 @@ export default function StudentDashboard() {
         )}
       </div>
 
-      {/* ── Error ── */}
+      {/*  Error  */}
       {error && (
         <div className="bg-red-500/10 border border-red-500/30 text-red-300 text-sm px-4 py-3 rounded-xl">{error}</div>
       )}
 
-      {/* ── Stat cards ── */}
+      {/*  Stat cards  */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="Logs Submitted"  value={stats?.logs_submitted}  sub="View all logs"    subLink="/student/logs"       accent="indigo"  icon={Icon.logbook}  />
         <StatCard label="Pending / Draft" value={stats?.pending_logs}    sub="Continue writing" subLink="/student/logs"       accent="amber"   icon={Icon.pending}  />
@@ -277,10 +246,10 @@ export default function StudentDashboard() {
         <StatCard label="Current Score"   value={stats?.current_score != null ? `${Number(stats.current_score).toFixed(1)}%` : null} sub="View breakdown" subLink="/student/evaluation" accent="emerald" icon={Icon.score} />
       </div>
 
-      {/* ── Main content ── */}
+      {/*  Main content  */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
 
-        {/* Left col — 3/5 */}
+        {/* Left col N/A 3/5 */}
         <div className="lg:col-span-3 space-y-5">
 
           <Card title="My Internship Placement">
@@ -361,7 +330,7 @@ export default function StudentDashboard() {
           </Card>
         </div>
 
-        {/* Right col — 2/5 */}
+        {/* Right col N/A 2/5 */}
         <div className="lg:col-span-2 space-y-5">
 
           <Card title="Score Breakdown" actionLabel="Full Evaluation" actionLink="/student/evaluation">

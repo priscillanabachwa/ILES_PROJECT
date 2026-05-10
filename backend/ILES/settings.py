@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
-from decouple import config
+from decouple import config, Csv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,13 +20,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-rm48xl&j0f1aqxf36)ajqe8(luf$(=p$di3@au9#$-ruwiu5&t'
+SECRET_KEY = config('SECRET_KEY')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
 
 
 # Application definition
@@ -41,12 +39,15 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'rest_framework.authtoken',
+    'ILES',
     'placements.apps.PlacementsConfig',
     'academic_evaluations.apps.AcademicEvaluationsConfig',
     'user_accounts.apps.UserAccountsConfig',
     'weekly_logs.apps.WeeklyLogsConfig',
 ]
-
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+)
 
 
 
@@ -99,11 +100,11 @@ WSGI_APPLICATION = 'ILES.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'iles_db',
-        'USER': 'iles_user',
-        'PASSWORD': 'iles_password',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'NAME': config('DB_NAME', default='iles_db'),
+        'USER': config('DB_USER', default='iles_user'),
+        'PASSWORD': config('DB_PASSWORD', default=''),
+        'HOST': config('DB_HOST', default='localhost'),
+        'PORT': config('DB_PORT', default='5432'),
     }
 }
 
@@ -150,49 +151,50 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 # ==================== CORS Configuration ====================
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
+    'http://localhost:5173',
     'http://localhost:5174',
     'http://localhost:8000',
+    'http://127.0.0.1:5173',
     'http://127.0.0.1:5174',
     'http://127.0.0.1:8000',
 ]
 
 # ==================== CSRF Configuration ====================
 CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:5173',
     'http://localhost:5174',
     'http://localhost:8000',
+    'http://127.0.0.1:5173',
     'http://127.0.0.1:5174',
     'http://127.0.0.1:8000',
 ]
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
-
-# CORS Configuration - Allow requests from React frontend
-CORS_ALLOWED_ORIGINS = [
-    'http://localhost:5174',
-    'http://localhost:8000',
-]
-
-CORS_ALLOW_CREDENTIALS = True
-
-
+# ==================== Email Configuration ====================
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'your-email@gmail.com'
-EMAIL_HOST_PASSWORD = 'your-app-password'
-DEFAULT_FROM_EMAIL = 'your-email@gmail.com'
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL = f'ILES System <{config("EMAIL_HOST_USER", default="")}>'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# ==================== Twilio SMS Configuration ====================
+TWILIO_ACCOUNT_SID = config('TWILIO_ACCOUNT_SID', default='')
+TWILIO_AUTH_TOKEN = config('TWILIO_AUTH_TOKEN', default='')
+TWILIO_PHONE_NUMBER = config('TWILIO_PHONE_NUMBER', default='')
 
 # ==================== CACHING Configuration ====================
 # Using Django's default in-memory cache (suitable for development)
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'iles-cache',
+        'LOCATION': 'ILES-cache',
     }
 }
 

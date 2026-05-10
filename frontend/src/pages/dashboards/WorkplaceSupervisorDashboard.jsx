@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
-import { useAuth } from '../../context/AuthContext'
+﻿import { useState, useEffect } from 'react'
+import { useAuth } from '../../Context/AuthContext'
 import { Link } from 'react-router-dom'
+import { toast } from 'react-toastify'
 import dashboardService from "../../services/dashboardService"
 
 const formatDate = (iso) =>
@@ -125,7 +126,7 @@ function StatCard({ label, value, sub, subLink, icon, accent }) {
         <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">{label}</p>
         <p className={`text-3xl font-bold mt-0.5 ${A.val}`}>{value ?? '—'}</p>
         {sub && subLink
-          ? <Link to={subLink} className={`text-xs font-medium mt-1 block hover:underline ${A.sub}`}>{sub} →</Link>
+          ? <Link to={subLink} className={`text-xs font-medium mt-1 block hover:underline ${A.sub}`}>{sub} </Link>
           : sub && <p className={`text-xs font-medium mt-1 ${A.sub}`}>{sub}</p>
         }
       </div>
@@ -139,7 +140,7 @@ function Card({ title, actionLabel, actionLink, children }) {
       <div className="flex items-center justify-between px-5 py-4 border-b border-slate-700/50">
         <p className="text-sm font-bold text-white">{title}</p>
         {actionLabel && actionLink && (
-          <Link to={actionLink} className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 hover:underline">{actionLabel} →</Link>
+          <Link to={actionLink} className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 hover:underline">{actionLabel} </Link>
         )}
       </div>
       <div className="p-5">{children}</div>
@@ -157,6 +158,9 @@ export default function WorkplaceSupervisorDashboard() {
   const [activity,   setActivity]   = useState([])
   const [loading,    setLoading]    = useState(true)
   const [error,      setError]      = useState('')
+  const [reviewingId,  setReviewingId]  = useState(null)
+  const [reviewComment, setReviewComment] = useState('')
+  const [actionLoading, setActionLoading] = useState(false)
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -171,45 +175,52 @@ export default function WorkplaceSupervisorDashboard() {
         ])
         setStats(statsRes.data); setPlacements(placementsRes.data)
         setReviews(reviewsRes.data); setScores(scoresRes.data); setActivity(activityRes.data)
-      } catch {
-        // Mock data for frontend preview — remove when backend is connected
-        setStats({ assigned_students: 8, pending_reviews: 3, approved_logs: 24, average_score: 82 })
-        setPlacements([
-          { id:1, student_name:'Amara Nkosi',    student_id:'2500703348', department:'Computer Science',    status:'ACTIVE'    },
-          { id:2, student_name:'Brian Otim',     student_id:'2500703349', department:'Software Engineering', status:'ACTIVE'    },
-          { id:3, student_name:'Cynthia Akello', student_id:'2500703350', department:'Information Systems',  status:'ACTIVE'    },
-          { id:4, student_name:'Denis Okello',   student_id:'2500703351', department:'Computer Science',    status:'COMPLETED' },
-        ])
-        setReviews([
-          { id:1, student_name:'Amara Nkosi',    week_number:6, submitted_at:'2026-04-05', deadline:'2026-03-01', status:'submitted', activities_preview:'Developed REST API endpoints for user authentication...' },
-          { id:2, student_name:'Brian Otim',     week_number:7, submitted_at:'2026-04-04', deadline:'2026-04-10', status:'submitted', activities_preview:'Attended team standup and worked on database schema...' },
-          { id:3, student_name:'Cynthia Akello', week_number:5, submitted_at:'2026-04-03', deadline:'2026-04-10', status:'submitted', activities_preview:'Completed UI mockups and reviewed with senior engineer...' },
-        ])
-        setScores([
-          { criteria:'Technical Skills', score:85 },
-          { criteria:'Communication',    score:78 },
-          { criteria:'Professionalism',  score:82 },
-          { criteria:'Initiative',       score:80 },
-        ])
-        setActivity([
-          { id:1, student_name:'Amara Nkosi',    activity:'Weekly Log — Week 6',  date:'2026-04-05', status:'submitted', deadline:'2026-03-01' },
-          { id:2, student_name:'Brian Otim',     activity:'Weekly Log — Week 7',  date:'2026-04-04', status:'submitted', deadline:'2026-04-10' },
-          { id:3, student_name:'Cynthia Akello', activity:'Log Approved — Week 4',date:'2026-04-03', status:'approved',  deadline:null         },
-          { id:4, student_name:'Denis Okello',   activity:'Score Submitted',      date:'2026-04-01', status:'reviewed',  deadline:null         },
-        ])
+      } catch (err) {
+        setError(err.message || 'Failed to load dashboard data. Please refresh.')
       } finally { setLoading(false) }
     }
     fetchAll()
   }, [])
 
-  const fullName = [user?.first_name, user?.last_name].filter(Boolean).join(' ') || 'Supervisor'
+  const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '')
+  const fullName = [user?.first_name, user?.last_name].filter(Boolean).map(cap).join(' ') || 'Supervisor'
+
+  const handleReviewSubmit = async (logId) => {
+    if (!reviewComment.trim()) { toast.error('Please enter a comment before submitting.'); return }
+    setActionLoading(true)
+    try {
+      await dashboardService.reviewLog(logId, reviewComment)
+      toast.success('Log reviewed successfully.')
+      setReviewingId(null)
+      setReviewComment('')
+      setReviews(prev => prev.filter(r => r.id !== logId))
+      setStats(prev => prev ? { ...prev, pending_reviews: Math.max(0, prev.pending_reviews - 1) } : prev)
+    } catch (err) {
+      toast.error(err.message || 'Failed to submit review.')
+    } finally { setActionLoading(false) }
+  }
+
+  const handleReject = async (logId) => {
+    if (!reviewComment.trim()) { toast.error('Please enter a reason for rejection.'); return }
+    setActionLoading(true)
+    try {
+      await dashboardService.rejectLog(logId, reviewComment)
+      toast.success('Log returned to student for revision.')
+      setReviewingId(null)
+      setReviewComment('')
+      setReviews(prev => prev.filter(r => r.id !== logId))
+      setStats(prev => prev ? { ...prev, pending_reviews: Math.max(0, prev.pending_reviews - 1) } : prev)
+    } catch (err) {
+      toast.error(err.message || 'Failed to reject log.')
+    } finally { setActionLoading(false) }
+  }
 
   return (
     <div className="space-y-6">
 
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-white">Welcome, {fullName} 👋</h1>
+          <h1 className="text-2xl font-bold text-white">Welcome, {fullName} </h1>
           <p className="text-sm text-slate-400 mt-1">Review student logs, approve submissions, and score intern performance.</p>
         </div>
         <div className="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-xs text-slate-400 font-medium flex items-center gap-2">
@@ -247,26 +258,57 @@ export default function WorkplaceSupervisorDashboard() {
                         <p className="text-xs text-slate-400 mt-0.5 truncate">{r.activities_preview}</p>
                         <p className="text-xs text-slate-600 mt-0.5">
                           Submitted {formatDate(r.submitted_at)}
-                          {isOverdue(r.deadline) && <span className="text-red-400 font-medium ml-2">· Past deadline</span>}
+                          {isOverdue(r.deadline) && <span className="text-red-400 font-medium ml-2">x Past deadline</span>}
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-700/50">
-                      <Link to={`/supervisor/reviews/${r.id}`} className="flex-1 text-center text-xs font-semibold text-indigo-400 border border-indigo-500/30 bg-indigo-600/10 hover:bg-indigo-600/20 py-1.5 rounded-lg transition">
-                        Review & Comment
-                      </Link>
-                      <button className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 transition">
-                        {Icon.check} Approve
-                      </button>
-                      <button className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20 transition">
-                        {Icon.reject} Reject
-                      </button>
+                    <div className="mt-3 pt-3 border-t border-slate-700/50 space-y-2">
+                      {reviewingId === r.id ? (
+                        <>
+                          <textarea
+                            rows={2}
+                            placeholder="Write your review comment..."
+                            value={reviewComment}
+                            onChange={e => setReviewComment(e.target.value)}
+                            className="w-full rounded-lg px-3 py-2 text-xs text-white bg-slate-700/50 border border-slate-600 outline-none focus:border-indigo-500 resize-none placeholder-slate-500"
+                          />
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleReviewSubmit(r.id)}
+                              disabled={actionLoading}
+                              className="flex-1 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition disabled:opacity-50"
+                            >
+                              {actionLoading ? 'Submitting...' : 'Submit Review'}
+                            </button>
+                            <button
+                              onClick={() => handleReject(r.id)}
+                              disabled={actionLoading}
+                              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20 transition disabled:opacity-50"
+                            >
+                              {Icon.reject} Reject
+                            </button>
+                            <button
+                              onClick={() => { setReviewingId(null); setReviewComment('') }}
+                              className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 border border-slate-600 hover:bg-slate-700/50 transition"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </>
+                      ) : (
+                        <button
+                          onClick={() => { setReviewingId(r.id); setReviewComment('') }}
+                          className="w-full text-center text-xs font-semibold text-indigo-400 border border-indigo-500/30 bg-indigo-600/10 hover:bg-indigo-600/20 py-1.5 rounded-lg transition"
+                        >
+                          Review & Comment
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
                 {stats?.pending_reviews > 4 && (
                   <Link to="/supervisor/reviews" className="text-xs text-amber-400 font-semibold hover:underline block pt-1">
-                    View all pending ({stats.pending_reviews}) →
+                    View all pending ({stats.pending_reviews}) 
                   </Link>
                 )}
               </div>
@@ -312,7 +354,7 @@ export default function WorkplaceSupervisorDashboard() {
                     <AvatarCircle name={p.student_name} index={i} />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-white truncate">{p.student_name}</p>
-                      <p className="text-xs text-slate-400 truncate">{p.student_id} · {p.department}</p>
+                      <p className="text-xs text-slate-400 truncate">{p.student_id} x {p.department}</p>
                     </div>
                     <Badge status={p.status} />
                   </div>
