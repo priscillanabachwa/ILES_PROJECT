@@ -293,10 +293,10 @@ function PlacementsTab({ placements, setPlacements, loadingPlacements }) {
                         <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
                           {getNameInitials(p.student_name)}
                         </div>
-                        <p className="text-white text-sm font-semibold">{p.student_name || '"?'}</p>
+                        <p className="text-white text-sm font-semibold">{p.student_name || '—'}</p>
                       </div>
                     </td>
-                    <td className="px-4 py-4"><p className="text-slate-300 text-sm">{p.company_name || '"?'}</p></td>
+                    <td className="px-4 py-4"><p className="text-slate-300 text-sm">{p.company_name || '—'}</p></td>
                     <td className="px-4 py-4">
                       <p className="text-slate-400 text-xs truncate max-w-[100px]">
                         {p.academic_supervisor_name || <span className="text-red-400 italic">None</span>}
@@ -548,7 +548,7 @@ export default function AdminUsersPage() {
                           </span>
                         </td>
                         <td className="px-5 py-4">
-                          <p className="text-slate-400 text-sm">{u.phone_number || '"?'}</p>
+                          <p className="text-slate-400 text-sm">{u.phone_number || '—'}</p>
                         </td>
                         <td className="px-5 py-4">
                           <button onClick={() => setSelectedUser(u)}

@@ -5,7 +5,7 @@ import { fetchWithAuth } from '../services/authService'
 const API = '/api'
 
 const formatDate = (iso) =>
-  iso ? new Date(iso).toLocaleDateString('en-UG', { day: 'numeric', month: 'short', year: 'numeric' }) : '"?'
+  iso ? new Date(iso).toLocaleDateString('en-UG', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
 
 const getInitials = (name) =>
   name?.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() || '?'
@@ -95,7 +95,7 @@ function LogDetailModal({ log, onClose, onStatusChange }) {
       <div className="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700 sticky top-0 bg-slate-800">
           <div>
-            <p className="text-sm font-bold text-white">Week {log.week_number} "? Log #{log.id}</p>
+            <p className="text-sm font-bold text-white">Week {log.week_number} — Log #{log.id}</p>
             <p className="text-xs text-slate-400 mt-0.5">Submitted {formatDate(log.submitted_at)}</p>
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-white transition">
@@ -401,7 +401,7 @@ export default function AdminLogsPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between flex-wrap gap-2 mb-1">
                     <div>
-                      <p className="text-sm font-bold text-white">Week {log.week_number} "? Placement #{log.placement}</p>
+                      <p className="text-sm font-bold text-white">Week {log.week_number} — Placement #{log.placement}</p>
                       <p className="text-xs text-slate-500">Log #{log.id}</p>
                     </div>
                     <div className="flex items-center gap-2">

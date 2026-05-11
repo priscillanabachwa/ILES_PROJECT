@@ -9,7 +9,7 @@ function Skeleton({ className = '' }) {
 }
 
 function ScoreBadge({ score }) {
-  if (score == null) return <span className="text-slate-600 text-sm">"?</span>
+  if (score == null) return <span className="text-slate-600 text-sm">—</span>
   const color =
     score >= 80 ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' :
     score >= 60 ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' :
@@ -45,7 +45,7 @@ function ScoreDetailModal({ placement, evaluation, onClose }) {
                 <div>
                   <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Total Score</p>
                   <p className="text-3xl font-black text-white">
-                    {evaluation.total_score != null ? `${Number(evaluation.total_score).toFixed(0)}%` : '"?'}
+                    {evaluation.total_score != null ? `${Number(evaluation.total_score).toFixed(0)}%` : '—'}
                   </p>
                 </div>
                 <div className="text-right">
@@ -56,7 +56,7 @@ function ScoreDetailModal({ placement, evaluation, onClose }) {
                     evaluation.grade === 'C' ? 'text-amber-400' :
                     evaluation.grade ? 'text-red-400' : 'text-slate-600'
                   }`}>
-                    {evaluation.grade || '"?'}
+                    {evaluation.grade || '—'}
                   </span>
                 </div>
               </div>
@@ -87,11 +87,11 @@ function ScoreDetailModal({ placement, evaluation, onClose }) {
             <div className="grid grid-cols-1 gap-2 text-sm">
               <div className="bg-slate-700/30 rounded-xl p-3 border border-slate-700/50">
                 <p className="text-xs text-slate-500 mb-0.5">Academic Supervisor</p>
-                <p className="text-slate-300">{placement.academic_supervisor_name || '"?'}</p>
+                <p className="text-slate-300">{placement.academic_supervisor_name || '—'}</p>
               </div>
               <div className="bg-slate-700/30 rounded-xl p-3 border border-slate-700/50">
                 <p className="text-xs text-slate-500 mb-0.5">Status</p>
-                <p className="text-slate-300 capitalize">{placement.status?.toLowerCase() || '"?'}</p>
+                <p className="text-slate-300 capitalize">{placement.status?.toLowerCase() || '—'}</p>
               </div>
             </div>
           </div>
@@ -161,7 +161,7 @@ export default function WorkplaceScoresPage() {
         {[
           { label: 'Total Interns', value: placements.length,    color: 'text-white',       bg: 'bg-slate-800/50 border-slate-700/50'    },
           { label: 'Evaluated',     value: evaluated.length,      color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
-          { label: 'Avg. Score',    value: avgScore != null ? `${avgScore}%` : '"?', color: 'text-indigo-400', bg: 'bg-indigo-600/10 border-indigo-500/20' },
+          { label: 'Avg. Score',    value: avgScore != null ? `${avgScore}%` : '—', color: 'text-indigo-400', bg: 'bg-indigo-600/10 border-indigo-500/20' },
         ].map(({ label, value, color, bg }) => (
           <div key={label} className={`rounded-2xl p-5 border ${bg}`}>
             <p className="text-slate-400 text-xs uppercase tracking-wider mb-2">{label}</p>
@@ -211,11 +211,11 @@ export default function WorkplaceScoresPage() {
                           <div className="w-8 h-8 rounded-full bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 font-bold text-xs flex-shrink-0">
                             {placement.student_name?.[0] || '?'}
                           </div>
-                          <p className="text-white text-sm font-medium">{placement.student_name || '"?'}</p>
+                          <p className="text-white text-sm font-medium">{placement.student_name || '—'}</p>
                         </div>
                       </td>
                       <td className="px-5 py-4">
-                        <p className="text-slate-300 text-sm">{placement.company_name || '"?'}</p>
+                        <p className="text-slate-300 text-sm">{placement.company_name || '—'}</p>
                       </td>
                       <td className="px-5 py-4">
                         <ScoreBadge score={ev?.total_score != null ? Number(ev.total_score) : null} />
@@ -227,7 +227,7 @@ export default function WorkplaceScoresPage() {
                           ev?.grade === 'C' ? 'text-amber-400' :
                           ev?.grade ? 'text-red-400' : 'text-slate-600'
                         }`}>
-                          {ev?.grade || '"?'}
+                          {ev?.grade || '—'}
                         </span>
                       </td>
                       <td className="px-5 py-4">
