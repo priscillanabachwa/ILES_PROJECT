@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
 from django.core.mail import send_mail
-from .models import WeeklyLogbook
+from .models import WeeklyLogbook, LogBookReview
 from .serializers import WeeklyLogbookSerializer
 from .permissions import CanSubmitLog, CanApproveLog, CanReviewLog, CanRejectLog
     
@@ -113,12 +113,13 @@ class WeeklyLogbookViewSet(viewsets.ModelViewSet):
                 status=400
             )
         log.status = 'reviewed'
-        log.save()  
+        log.supervisor_comment = comment
+        log.save()
 
         LogBookReview.objects.create(
             logbook=log,
             supervisor=request.user,
-            comment=comment_text,
+            comment=comment,
             status_at_review='reviewed'
         )
         return Response(WeeklyLogbookSerializer(log).data)

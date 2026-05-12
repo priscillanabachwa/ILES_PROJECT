@@ -200,7 +200,7 @@ function LogDetailModal({ log, onClose, onStatusChange }) {
 
           {log.status === 'approved' && (
             <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 text-center">
-              <p className="text-xs text-emerald-300 font-medium">??? This log has been approved</p>
+              <p className="text-xs text-emerald-300 font-medium">This log has been approved</p>
             </div>
           )}
         </div>
@@ -459,7 +459,7 @@ export default function AdminLogsPage() {
                 )}
 
                 {log.status === 'approved' && (
-                  <span className="text-xs text-emerald-400 font-medium ml-1">??? Approved</span>
+                  <span className="text-xs text-emerald-400 font-medium ml-1">Approved</span>
                 )}
 
                 <span className="ml-auto text-xs text-slate-600">Log #{log.id}</span>
