@@ -170,19 +170,21 @@ export default function MyLogsPage() {
   const [placementId, setPlacementId] = useState(null)
 
   /* ── form state ─────────────────────────────────────────────────────── */
-  const [view,       setView]       = useState(location.state?.openForm ? 'new' : 'history')
-  const [weekNumber, setWeekNumber] = useState('')
-  const [activities, setActivities] = useState('')
-  const [challenges, setChallenges] = useState('')
-  const [lesson,     setLesson]     = useState('')
-  const [saveAs,     setSaveAs]     = useState('submitted') // default: Submit Now
-  const [attachment, setAttachment] = useState(null)
-  const [submitting, setSubmitting] = useState(false)
+  const [view,        setView]       = useState(location.state?.openForm ? 'new' : 'history')
+  const [editingLog,  setEditingLog] = useState(null)
+  const [weekNumber,  setWeekNumber] = useState('')
+  const [activities,  setActivities] = useState('')
+  const [challenges,  setChallenges] = useState('')
+  const [lesson,      setLesson]     = useState('')
+  const [saveAs,      setSaveAs]     = useState('submitted')
+  const [attachment,  setAttachment] = useState(null)
+  const [submitting,  setSubmitting] = useState(false)
 
   // inline field errors (only shown after submit attempt)
   const [fieldErrors, setFieldErrors] = useState({})
 
-  const fileRef = useRef(null)
+  const fileRef    = useRef(null)
+  const formTopRef = useRef(null)
 
   /* ── data ───────────────────────────────────────────────────────────── */
   const fetchLogs = useCallback(async () => {
@@ -240,6 +242,7 @@ export default function MyLogsPage() {
 
   /* ── form reset ─────────────────────────────────────────────────────── */
   const resetForm = () => {
+    setEditingLog(null)
     setWeekNumber('')
     setActivities('')
     setChallenges('')
@@ -248,6 +251,21 @@ export default function MyLogsPage() {
     setAttachment(null)
     setFieldErrors({})
     if (fileRef.current) fileRef.current.value = ''
+  }
+
+  /* ── load draft into form ────────────────────────────────────────────── */
+  const handleEditDraft = (log) => {
+    setEditingLog(log)
+    setWeekNumber(String(log.week_number))
+    setActivities(log.activities || '')
+    setChallenges(log.challenges || '')
+    setLesson(log.lesson || '')
+    setSaveAs('draft')
+    setAttachment(null)
+    setFieldErrors({})
+    if (fileRef.current) fileRef.current.value = ''
+    setView('new')
+    setTimeout(() => formTopRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
   }
 
   /* ── submit ─────────────────────────────────────────────────────────── */
@@ -266,7 +284,10 @@ export default function MyLogsPage() {
     setFieldErrors(errs)
 
     if (Object.keys(errs).length > 0) {
-      toast.error('Please fix the highlighted fields before saving.')
+      const firstKey = Object.keys(errs)[0]
+      const messages = { weekNumber: 'Please enter a week number.', activities: 'Please fill in the Activities field — it is required.', lesson: 'Please fill in Lessons Learned before submitting.' }
+      toast.error(messages[firstKey] || 'Please fix the highlighted fields before saving.')
+      formTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
       return
     }
 
@@ -287,14 +308,22 @@ export default function MyLogsPage() {
       body.append('status',      saveAs)
       if (attachment) body.append('attachment', attachment)
 
-      await axios.post(`${API}/weeklylogs/logbooks/`, body, {
-        headers: { Authorization: `Token ${getAuthToken()}` },
-      })
+      if (editingLog) {
+        await axios.patch(`${API}/weeklylogs/logbooks/${editingLog.id}/`, body, {
+          headers: { Authorization: `Token ${getAuthToken()}` },
+        })
+      } else {
+        await axios.post(`${API}/weeklylogs/logbooks/`, body, {
+          headers: { Authorization: `Token ${getAuthToken()}` },
+        })
+      }
 
       toast.success(
         saveAs === 'submitted'
           ? 'Log submitted successfully! Your supervisor has been notified.'
-          : 'Draft saved. You can edit and submit it later.'
+          : editingLog
+            ? 'Draft updated. You can continue editing or submit when ready.'
+            : 'Draft saved. You can edit and submit it later.'
       )
 
       resetForm()
@@ -311,7 +340,15 @@ export default function MyLogsPage() {
         } else if (data.detail) {
           msg = data.detail
         } else if (data.non_field_errors) {
-          msg = Array.isArray(data.non_field_errors) ? data.non_field_errors[0] : data.non_field_errors
+          const raw = Array.isArray(data.non_field_errors) ? data.non_field_errors[0] : data.non_field_errors
+          // friendlier message for unique-week constraint
+          msg = raw.toLowerCase().includes('week_number')
+            ? `You already have a log for Week ${weekNumber}. Please choose a different week number.`
+            : raw
+        } else if (data.week_number) {
+          msg = Array.isArray(data.week_number) ? data.week_number[0] : data.week_number
+        } else if (data.activities) {
+          msg = 'Activities field is required.'
         } else {
           const first = Object.entries(data)[0]
           if (first) {
@@ -528,12 +565,25 @@ export default function MyLogsPage() {
                       <WorkflowTracker status={log.status} />
                     </div>
                   </div>
-                  <div className="flex items-center mt-3 pt-3 border-t border-slate-700/50 text-xs">
-                    {log.status === 'approved'            && <span className="text-emerald-400 font-medium">Approved by supervisor</span>}
-                    {log.status === 'reviewed'            && <span className="text-blue-400 font-medium">Reviewed – awaiting approval</span>}
-                    {log.status === 'workplace_reviewed'  && <span className="text-purple-400 font-medium">Workplace reviewed – awaiting academic review</span>}
-                    {log.status === 'submitted'           && <span className="text-amber-400 font-medium">Awaiting workplace supervisor review</span>}
-                    {log.status === 'draft'               && <span className="text-slate-500">Draft – not yet submitted</span>}
+                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-700/50 text-xs">
+                    <span>
+                      {log.status === 'approved'            && <span className="text-emerald-400 font-medium">Approved by supervisor</span>}
+                      {log.status === 'reviewed'            && <span className="text-blue-400 font-medium">Reviewed – awaiting approval</span>}
+                      {log.status === 'workplace_reviewed'  && <span className="text-purple-400 font-medium">Workplace reviewed – awaiting academic review</span>}
+                      {log.status === 'submitted'           && <span className="text-amber-400 font-medium">Awaiting workplace supervisor review</span>}
+                      {log.status === 'draft'               && <span className="text-slate-500">Draft – not yet submitted</span>}
+                    </span>
+                    {log.status === 'draft' && (
+                      <button
+                        onClick={() => handleEditDraft(log)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600/15 text-indigo-400 border border-indigo-500/30 hover:bg-indigo-600/25 transition"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                        </svg>
+                        Edit &amp; Submit
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -544,19 +594,28 @@ export default function MyLogsPage() {
 
       {/* ══════════ NEW LOG FORM ════════════════════════════════════ */}
       {view === 'new' && (
-        <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl overflow-hidden">
+        <div ref={formTopRef} className="bg-slate-800/50 border border-slate-700/50 rounded-2xl overflow-hidden">
 
           {/* Form header */}
           <div className="px-6 py-4 border-b border-slate-700/50 flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-indigo-600/20 text-indigo-400 flex items-center justify-center">
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${editingLog ? 'bg-amber-500/20 text-amber-400' : 'bg-indigo-600/20 text-indigo-400'}`}>
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round"
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                {editingLog
+                  ? <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                  : <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                }
               </svg>
             </div>
             <div>
-              <p className="text-sm font-bold text-white">New Weekly Logbook Entry</p>
-              <p className="text-xs text-slate-400">Fields marked <span className="text-red-400">*</span> are required</p>
+              <p className="text-sm font-bold text-white">
+                {editingLog ? `Edit Draft — Week ${editingLog.week_number}` : 'New Weekly Logbook Entry'}
+              </p>
+              <p className="text-xs text-slate-400">
+                {editingLog
+                  ? 'Update your draft and submit when ready.'
+                  : <>Fields marked <span className="text-red-400">*</span> are required</>
+                }
+              </p>
             </div>
           </div>
 
@@ -627,6 +686,24 @@ export default function MyLogsPage() {
 
             {/* Supporting Document */}
             <Field label="Supporting Document" hint="PDF, Word, Excel, JPG, PNG — max 10 MB">
+              {/* Existing attachment on edit (when no new file picked yet) */}
+              {!attachment && editingLog?.attachment_url && (
+                <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-600 bg-slate-700/30 mb-2">
+                  <div className="w-9 h-9 rounded-lg bg-indigo-600/20 text-indigo-400 flex items-center justify-center flex-shrink-0">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
+                    </svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-slate-400 mb-0.5">Current attachment</p>
+                    <a href={editingLog.attachment_url} target="_blank" rel="noopener noreferrer"
+                      className="text-sm text-indigo-400 hover:text-indigo-300 truncate block">
+                      {decodeURIComponent(editingLog.attachment_url.split('/').pop())}
+                    </a>
+                  </div>
+                  <span className="text-xs text-slate-500">Replace below</span>
+                </div>
+              )}
               {attachment ? (
                 <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-600 bg-slate-700/30">
                   <div className="w-9 h-9 rounded-lg bg-indigo-600/20 text-indigo-400 flex items-center justify-center flex-shrink-0">

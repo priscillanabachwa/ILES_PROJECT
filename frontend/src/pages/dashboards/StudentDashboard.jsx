@@ -271,12 +271,12 @@ export default function StudentDashboard() {
                     </div>
                     <div className="bg-slate-700/30 border border-slate-700/50 rounded-xl p-3">
                       <div className="flex items-center gap-1.5 text-slate-500 mb-1">{Icon.user}<span className="text-xs font-semibold uppercase tracking-wide">Workplace Supervisor</span></div>
-                      <p className="text-sm font-semibold text-white">{placement.workplace_supervisor}</p>
+                      <p className="text-sm font-semibold text-white capitalize">{placement.workplace_supervisor}</p>
                       <p className="text-xs text-slate-400 mt-0.5">{placement.workplace_supervisor_email}</p>
                     </div>
                     <div className="bg-slate-700/30 border border-slate-700/50 rounded-xl p-3">
                       <div className="flex items-center gap-1.5 text-slate-500 mb-1">{Icon.user}<span className="text-xs font-semibold uppercase tracking-wide">Academic Supervisor</span></div>
-                      <p className="text-sm font-semibold text-white">{placement.academic_supervisor}</p>
+                      <p className="text-sm font-semibold text-white capitalize">{placement.academic_supervisor}</p>
                       <p className="text-xs text-slate-400 mt-0.5">{placement.academic_supervisor_email}</p>
                     </div>
                     <div className="bg-slate-700/30 border border-slate-700/50 rounded-xl p-3">

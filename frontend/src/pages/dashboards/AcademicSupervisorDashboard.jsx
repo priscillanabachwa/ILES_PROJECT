@@ -274,7 +274,7 @@ export default function AcademicDashboard() {
                   <div key={p.id} className="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-700/30 transition">
                     <AvatarCircle name={p.student_name} index={i} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-white truncate">{p.student_name}</p>
+                      <p className="text-sm font-semibold text-white truncate capitalize">{p.student_name}</p>
                       <p className="text-xs text-slate-400">{p.student_id} x {p.company}</p>
                     </div>
                     <Badge status={p.status} />
@@ -310,7 +310,7 @@ export default function AcademicDashboard() {
                             <td className="py-3 pr-3">
                               <div className="flex items-center gap-2">
                                 <AvatarCircle name={a.student_name} index={i} size="sm" />
-                                <span className="font-semibold text-white truncate">{a.student_name}</span>
+                                <span className="font-semibold text-white truncate capitalize">{a.student_name}</span>
                               </div>
                             </td>
                             <td className="py-3 pr-3 text-slate-400 truncate">{a.activity}</td>
@@ -344,7 +344,7 @@ export default function AcademicDashboard() {
                     <div className="flex items-start gap-3">
                       <AvatarCircle name={l.student_name} index={i} size="sm" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-white">Week {l.week_number} — {l.student_name}</p>
+                        <p className="text-xs font-semibold text-white capitalize">Week {l.week_number} — {l.student_name}</p>
                         <p className="text-xs text-slate-400 mt-0.5">Submitted {formatDate(l.submitted_at)}</p>
                         {isOverdue(l.deadline) && (
                           <p className="text-xs text-red-400 font-medium mt-0.5">Past deadline</p>

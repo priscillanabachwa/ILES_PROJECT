@@ -249,7 +249,7 @@ export default function WorkplaceSupervisorDashboard() {
                       <AvatarCircle name={r.student_name} index={i} />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between flex-wrap gap-2">
-                          <p className="text-sm font-semibold text-white">Week {r.week_number} — {r.student_name}</p>
+                          <p className="text-sm font-semibold text-white capitalize">Week {r.week_number} — {r.student_name}</p>
                           {isOverdue(r.deadline) ? <Badge status="overdue" /> : <Badge status={r.status} />}
                         </div>
                         <p className="text-xs text-slate-400 mt-0.5 truncate">{r.activities_preview}</p>
@@ -327,7 +327,7 @@ export default function WorkplaceSupervisorDashboard() {
                   <tbody className="divide-y divide-slate-700/30">
                     {activity.map((a, i) => (
                       <tr key={a.id} className="hover:bg-slate-700/20 transition">
-                        <td className="py-3 pr-3"><div className="flex items-center gap-2"><AvatarCircle name={a.student_name} index={i} size="sm" /><span className="font-semibold text-white truncate">{a.student_name}</span></div></td>
+                        <td className="py-3 pr-3"><div className="flex items-center gap-2"><AvatarCircle name={a.student_name} index={i} size="sm" /><span className="font-semibold text-white truncate capitalize">{a.student_name}</span></div></td>
                         <td className="py-3 pr-3 text-slate-400 truncate">{a.activity}</td>
                         <td className="py-3 pr-3 text-slate-500">{formatDate(a.date)}</td>
                         <td className="py-3"><Badge status={a.status} overdue={isOverdue(a.deadline)} /></td>
@@ -350,7 +350,7 @@ export default function WorkplaceSupervisorDashboard() {
                   <div key={p.id} className="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-700/30 transition">
                     <AvatarCircle name={p.student_name} index={i} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-white truncate">{p.student_name}</p>
+                      <p className="text-sm font-semibold text-white truncate capitalize">{p.student_name}</p>
                       <p className="text-xs text-slate-400 truncate">{p.student_id} x {p.department}</p>
                     </div>
                     <Badge status={p.status} />

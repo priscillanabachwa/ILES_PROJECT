@@ -43,8 +43,8 @@ function ReviewModal({ log, onClose, onSuccess }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-slate-800 border border-slate-700/50 rounded-2xl w-full max-w-lg shadow-2xl">
-        <div className="flex items-start justify-between p-6 border-b border-slate-700/50">
+      <div className="relative bg-slate-800 border border-slate-700/50 rounded-2xl w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh]">
+        <div className="flex items-start justify-between p-6 border-b border-slate-700/50 flex-shrink-0">
           <div>
             <h2 className="text-lg font-bold text-white">Review Log — Week {log.week_number}</h2>
             <p className="text-slate-400 text-sm mt-0.5">{log.student_name}</p>
@@ -55,7 +55,7 @@ function ReviewModal({ log, onClose, onSuccess }) {
             </svg>
           </button>
         </div>
-        <div className="p-6 space-y-4">
+        <div className="p-6 space-y-4 overflow-y-auto flex-1">
           <div className="bg-slate-700/30 rounded-xl p-4 border border-slate-700/50 space-y-3 max-h-48 overflow-y-auto">
             <div>
               <p className="text-xs text-slate-500 mb-1">Activities</p>
@@ -74,6 +74,24 @@ function ReviewModal({ log, onClose, onSuccess }) {
               </div>
             )}
           </div>
+          {log.attachment_url && (
+            <a
+              href={log.attachment_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 px-4 py-3 bg-indigo-600/10 border border-indigo-500/20 rounded-xl hover:bg-indigo-600/20 transition group"
+            >
+              <svg className="w-5 h-5 text-indigo-400 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
+              </svg>
+              <span className="text-sm text-indigo-300 group-hover:text-indigo-200 flex-1 truncate">
+                {decodeURIComponent(log.attachment_url.split('/').pop())}
+              </span>
+              <svg className="w-4 h-4 text-indigo-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+              </svg>
+            </a>
+          )}
           {log.workplace_comment && (
             <div className="bg-purple-500/10 border border-purple-500/20 rounded-xl p-3">
               <p className="text-xs text-purple-400 mb-1">Workplace Supervisor Comment</p>
@@ -92,16 +110,16 @@ function ReviewModal({ log, onClose, onSuccess }) {
               className="w-full bg-slate-700/50 border border-slate-600 rounded-xl px-4 py-3 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 resize-none"
             />
           </div>
-          <div className="flex gap-3">
-            <button onClick={onClose}
-              className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-slate-600 text-slate-400 hover:bg-slate-700/50 transition">
-              Cancel
-            </button>
-            <button onClick={handleSubmit} disabled={submitting}
-              className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white transition disabled:opacity-50">
-              {submitting ? 'Submitting...' : 'Submit Review'}
-            </button>
-          </div>
+        </div>
+        <div className="flex gap-3 p-6 pt-4 border-t border-slate-700/50 flex-shrink-0">
+          <button onClick={onClose}
+            className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-slate-600 text-slate-400 hover:bg-slate-700/50 transition">
+            Cancel
+          </button>
+          <button onClick={handleSubmit} disabled={submitting}
+            className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white transition disabled:opacity-50">
+            {submitting ? 'Submitting...' : 'Submit Review'}
+          </button>
         </div>
       </div>
     </div>

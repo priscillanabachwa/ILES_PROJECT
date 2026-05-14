@@ -75,6 +75,12 @@ class WeeklyLogbookViewSet(viewsets.ModelViewSet):
             )
         return super().update(request, *args, **kwargs)
 
+    def perform_update(self, serializer):
+        extra = {}
+        if serializer.validated_data.get('status') == 'submitted':
+            extra['submitted_at'] = timezone.now()
+        serializer.save(**extra)
+
     @action(detail=True, methods=['post'], url_path='submit')
     def submit(self, request, pk=None):
         log = self.get_object()
