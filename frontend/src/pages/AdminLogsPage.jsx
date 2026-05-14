@@ -14,11 +14,12 @@ const isOverdue = (deadline) =>
   deadline ? new Date(deadline) < new Date() : false
 
 const STATUS_STYLES = {
-  draft:     'bg-slate-500/20 text-slate-400 border border-slate-500/30',
-  submitted: 'bg-amber-500/20 text-amber-300 border border-amber-500/30',
-  reviewed:  'bg-blue-500/20 text-blue-300 border border-blue-500/30',
-  approved:  'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
-  overdue:   'bg-red-500/20 text-red-300 border border-red-500/30',
+  draft:               'bg-slate-500/20 text-slate-400 border border-slate-500/30',
+  submitted:           'bg-amber-500/20 text-amber-300 border border-amber-500/30',
+  workplace_reviewed:  'bg-purple-500/20 text-purple-300 border border-purple-500/30',
+  reviewed:            'bg-blue-500/20 text-blue-300 border border-blue-500/30',
+  approved:            'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
+  overdue:             'bg-red-500/20 text-red-300 border border-red-500/30',
 }
 
 function Badge({ status, overdue = false }) {
@@ -162,10 +163,19 @@ function LogDetailModal({ log, onClose, onStatusChange }) {
             </div>
           )}
 
+          {log.workplace_comment && (
+            <div className="space-y-1.5">
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Workplace Supervisor Comment</p>
+              <div className="bg-purple-500/10 border border-purple-500/20 rounded-xl p-4">
+                <p className="text-sm text-slate-300">{log.workplace_comment}</p>
+              </div>
+            </div>
+          )}
+
           {log.status !== 'approved' && (
             <div className="space-y-1.5">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
-                {log.status === 'reviewed' ? 'Supervisor Comment' : 'Add Comment (required to review)'}
+                {log.status === 'reviewed' ? 'Academic Supervisor Comment' : 'Admin Comment (required to review)'}
               </p>
               <textarea
                 rows={3}
@@ -183,7 +193,7 @@ function LogDetailModal({ log, onClose, onStatusChange }) {
                 className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-slate-600 text-slate-400 hover:bg-slate-700/50 transition">
                 Cancel
               </button>
-              {log.status === 'submitted' && (
+              {(log.status === 'submitted' || log.status === 'workplace_reviewed') && (
                 <button onClick={() => handleAction('reviewed')} disabled={saving}
                   className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white transition disabled:opacity-50">
                   {saving ? 'Saving...' : 'Mark Reviewed'}
@@ -280,20 +290,22 @@ export default function AdminLogsPage() {
   })
 
   const counts = {
-    all:       logs.length,
-    draft:     logs.filter((l) => l.status === 'draft').length,
-    submitted: logs.filter((l) => l.status === 'submitted').length,
-    reviewed:  logs.filter((l) => l.status === 'reviewed').length,
-    approved:  logs.filter((l) => l.status === 'approved').length,
-    overdue:   logs.filter((l) => isOverdue(l.deadline) && l.status === 'submitted').length,
+    all:                logs.length,
+    draft:              logs.filter((l) => l.status === 'draft').length,
+    submitted:          logs.filter((l) => l.status === 'submitted').length,
+    workplace_reviewed: logs.filter((l) => l.status === 'workplace_reviewed').length,
+    reviewed:           logs.filter((l) => l.status === 'reviewed').length,
+    approved:           logs.filter((l) => l.status === 'approved').length,
+    overdue:            logs.filter((l) => isOverdue(l.deadline) && l.status === 'submitted').length,
   }
 
   const FILTERS = [
-    { key:'all',       label:'All'       },
-    { key:'submitted', label:'Submitted' },
-    { key:'reviewed',  label:'Reviewed'  },
-    { key:'approved',  label:'Approved'  },
-    { key:'draft',     label:'Draft'     },
+    { key:'all',                label:'All'                },
+    { key:'submitted',          label:'Submitted'          },
+    { key:'workplace_reviewed', label:'Workplace Reviewed' },
+    { key:'reviewed',           label:'Reviewed'           },
+    { key:'approved',           label:'Approved'           },
+    { key:'draft',              label:'Draft'              },
   ]
 
   return (
@@ -327,12 +339,13 @@ export default function AdminLogsPage() {
       {/* Stat pills */}
       <div className="grid grid-cols-3 lg:grid-cols-6 gap-3">
         {[
-          { key:'all',       label:'Total',    color:'text-white'       },
-          { key:'submitted', label:'Pending',  color:'text-amber-300'   },
-          { key:'reviewed',  label:'Reviewed', color:'text-blue-300'    },
-          { key:'approved',  label:'Approved', color:'text-emerald-300' },
-          { key:'draft',     label:'Draft',    color:'text-slate-400'   },
-          { key:'overdue',   label:'Overdue',  color:'text-red-300'     },
+          { key:'all',                label:'Total',              color:'text-white'        },
+          { key:'submitted',          label:'Pending',            color:'text-amber-300'    },
+          { key:'workplace_reviewed', label:'WP Reviewed',        color:'text-purple-300'   },
+          { key:'reviewed',           label:'Reviewed',           color:'text-blue-300'     },
+          { key:'approved',           label:'Approved',           color:'text-emerald-300'  },
+          { key:'draft',              label:'Draft',              color:'text-slate-400'    },
+          { key:'overdue',            label:'Overdue',            color:'text-red-300'      },
         ].map(({ key, label, color }) => (
           <div key={key} className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-3 text-center">
             <p className="text-xs text-slate-500 mb-1">{label}</p>
@@ -448,7 +461,7 @@ export default function AdminLogsPage() {
                   </button>
                 )}
 
-                {log.status === 'submitted' && (
+                {(log.status === 'submitted' || log.status === 'workplace_reviewed') && (
                   <button
                     onClick={() => handleQuickReview(log)}
                     disabled={actioningId === log.id}

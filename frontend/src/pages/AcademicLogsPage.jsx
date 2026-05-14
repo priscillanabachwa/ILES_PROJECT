@@ -12,11 +12,12 @@ function Skeleton({ className = '' }) {
 }
 
 const STATUS_STYLES = {
-  draft:     'bg-slate-500/15 text-slate-400 border-slate-500/25',
-  submitted: 'bg-amber-500/15 text-amber-400 border-amber-500/25',
-  reviewed:  'bg-blue-500/15 text-blue-400 border-blue-500/25',
-  approved:  'bg-emerald-500/15 text-emerald-400 border-emerald-500/25',
-  rejected:  'bg-red-500/15 text-red-400 border-red-500/25',
+  draft:               'bg-slate-500/15 text-slate-400 border-slate-500/25',
+  submitted:           'bg-amber-500/15 text-amber-400 border-amber-500/25',
+  workplace_reviewed:  'bg-purple-500/15 text-purple-400 border-purple-500/25',
+  reviewed:            'bg-blue-500/15 text-blue-400 border-blue-500/25',
+  approved:            'bg-emerald-500/15 text-emerald-400 border-emerald-500/25',
+  rejected:            'bg-red-500/15 text-red-400 border-red-500/25',
 }
 
 function ReviewModal({ log, onClose, onSuccess }) {
@@ -73,6 +74,12 @@ function ReviewModal({ log, onClose, onSuccess }) {
               </div>
             )}
           </div>
+          {log.workplace_comment && (
+            <div className="bg-purple-500/10 border border-purple-500/20 rounded-xl p-3">
+              <p className="text-xs text-purple-400 mb-1">Workplace Supervisor Comment</p>
+              <p className="text-slate-300 text-sm">{log.workplace_comment}</p>
+            </div>
+          )}
           <div>
             <label className="text-xs text-slate-500 uppercase tracking-wider mb-2 block">
               Supervisor Comment <span className="text-red-400">*</span>
@@ -137,9 +144,15 @@ function LogDetailModal({ log, onClose }) {
               </div>
             )}
           </div>
+          {log.workplace_comment && (
+            <div className="bg-purple-500/10 border border-purple-500/20 rounded-xl p-4">
+              <p className="text-xs text-purple-400 mb-1">Workplace Supervisor Comment</p>
+              <p className="text-slate-300 text-sm">{log.workplace_comment}</p>
+            </div>
+          )}
           {log.supervisor_comment && (
             <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
-              <p className="text-xs text-blue-400 mb-1">Supervisor Comment</p>
+              <p className="text-xs text-blue-400 mb-1">Academic Supervisor Comment</p>
               <p className="text-slate-300 text-sm">{log.supervisor_comment}</p>
             </div>
           )}
@@ -232,10 +245,11 @@ export default function AcademicLogsPage() {
     }
   }
 
-  const total     = logs.length
-  const submitted = logs.filter(l => l.status === 'submitted').length
-  const reviewed  = logs.filter(l => l.status === 'reviewed').length
-  const approved  = logs.filter(l => l.status === 'approved').length
+  const total              = logs.length
+  const submitted          = logs.filter(l => l.status === 'submitted').length
+  const workplaceReviewed  = logs.filter(l => l.status === 'workplace_reviewed').length
+  const reviewed           = logs.filter(l => l.status === 'reviewed').length
+  const approved           = logs.filter(l => l.status === 'approved').length
 
   const filtered = logs.filter((l) => {
     const matchStatus = statusFilter === 'all' || l.status === statusFilter
@@ -259,12 +273,13 @@ export default function AcademicLogsPage() {
         <p className="text-sm text-slate-400 mt-1">Review and approve weekly logs from your assigned students</p>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         {[
-          { label: 'Total Logs', value: total,     color: 'text-white',       bg: 'bg-slate-800/50 border-slate-700/50'    },
-          { label: 'Submitted',  value: submitted,  color: 'text-amber-400',   bg: 'bg-amber-500/10 border-amber-500/20'    },
-          { label: 'Reviewed',   value: reviewed,   color: 'text-blue-400',    bg: 'bg-blue-500/10 border-blue-500/20'      },
-          { label: 'Approved',   value: approved,   color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20'},
+          { label: 'Total Logs',          value: total,             color: 'text-white',        bg: 'bg-slate-800/50 border-slate-700/50'       },
+          { label: 'Submitted',           value: submitted,         color: 'text-amber-400',    bg: 'bg-amber-500/10 border-amber-500/20'        },
+          { label: 'Workplace Reviewed',  value: workplaceReviewed, color: 'text-purple-400',   bg: 'bg-purple-500/10 border-purple-500/20'      },
+          { label: 'Reviewed',            value: reviewed,          color: 'text-blue-400',     bg: 'bg-blue-500/10 border-blue-500/20'          },
+          { label: 'Approved',            value: approved,          color: 'text-emerald-400',  bg: 'bg-emerald-500/10 border-emerald-500/20'    },
         ].map(({ label, value, color, bg }) => (
           <div key={label} className={`rounded-2xl p-5 border ${bg}`}>
             <p className="text-slate-400 text-xs uppercase tracking-wider mb-2">{label}</p>
@@ -286,10 +301,11 @@ export default function AcademicLogsPage() {
         </div>
         <div className="flex gap-2 flex-wrap">
           {[
-            { key: 'all',       label: 'All'       },
-            { key: 'submitted', label: 'Submitted' },
-            { key: 'reviewed',  label: 'Reviewed'  },
-            { key: 'approved',  label: 'Approved'  },
+            { key: 'all',                label: 'All'                },
+            { key: 'submitted',          label: 'Submitted'          },
+            { key: 'workplace_reviewed', label: 'Workplace Reviewed' },
+            { key: 'reviewed',           label: 'Reviewed'           },
+            { key: 'approved',           label: 'Approved'           },
           ].map(({ key, label }) => (
             <button key={key} onClick={() => setStatusFilter(key)}
               className={`px-4 py-2.5 rounded-xl text-sm font-medium transition ${
@@ -354,7 +370,7 @@ export default function AcademicLogsPage() {
                           className="px-3 py-1.5 bg-slate-700/50 hover:bg-slate-700 text-slate-300 border border-slate-600 rounded-lg text-xs font-medium transition">
                           View
                         </button>
-                        {log.status === 'submitted' && (
+                        {log.status === 'workplace_reviewed' && (
                           <button onClick={() => setReviewLog(log)}
                             className="px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 border border-blue-500/30 rounded-lg text-xs font-medium transition">
                             Review
@@ -376,7 +392,7 @@ export default function AcademicLogsPage() {
         )}
         <div className="px-5 py-3 border-t border-slate-700/50 flex items-center justify-between">
           <p className="text-slate-500 text-xs">Showing {filtered.length} of {total} logs</p>
-          <p className="text-slate-500 text-xs">{submitted} pending review x {reviewed} awaiting approval</p>
+          <p className="text-slate-500 text-xs">{workplaceReviewed} pending your review · {reviewed} awaiting approval</p>
         </div>
       </div>
     </div>

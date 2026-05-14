@@ -14,16 +14,17 @@ const isOverdue = (deadline) =>
   deadline ? new Date(deadline) < new Date() : false
 
 const STATUS_STYLES = {
-  ACTIVE:    'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30',
-  COMPLETED: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
-  PENDING:   'bg-amber-500/20 text-amber-300 border border-amber-500/30',
-  CANCELLED: 'bg-red-500/20 text-red-300 border border-red-500/30',
-  submitted: 'bg-amber-500/20 text-amber-300 border border-amber-500/30',
-  reviewed:  'bg-blue-500/20 text-blue-300 border border-blue-500/30',
-  approved:  'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
-  rejected:  'bg-red-500/20 text-red-300 border border-red-500/30',
-  draft:     'bg-slate-500/20 text-slate-400 border border-slate-500/30',
-  overdue:   'bg-red-500/20 text-red-300 border border-red-500/30',
+  ACTIVE:              'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30',
+  COMPLETED:           'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
+  PENDING:             'bg-amber-500/20 text-amber-300 border border-amber-500/30',
+  CANCELLED:           'bg-red-500/20 text-red-300 border border-red-500/30',
+  submitted:           'bg-amber-500/20 text-amber-300 border border-amber-500/30',
+  workplace_reviewed:  'bg-purple-500/20 text-purple-300 border border-purple-500/30',
+  reviewed:            'bg-blue-500/20 text-blue-300 border border-blue-500/30',
+  approved:            'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
+  rejected:            'bg-red-500/20 text-red-300 border border-red-500/30',
+  draft:               'bg-slate-500/20 text-slate-400 border border-slate-500/30',
+  overdue:             'bg-red-500/20 text-red-300 border border-red-500/30',
 }
 
 function Badge({ status, overdue = false }) {
@@ -189,7 +190,7 @@ export default function WorkplaceSupervisorDashboard() {
     if (!reviewComment.trim()) { toast.error('Please enter a comment before submitting.'); return }
     setActionLoading(true)
     try {
-      await dashboardService.reviewLog(logId, reviewComment)
+      await dashboardService.reviewLogWorkplace(logId, reviewComment)
       toast.success('Log reviewed successfully.')
       setReviewingId(null)
       setReviewComment('')

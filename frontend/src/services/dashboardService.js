@@ -118,6 +118,7 @@ async function getWorkplaceStats() {
     data: {
       assigned_students: placements.filter(p => p.status === 'ACTIVE').length,
       pending_reviews: logbooks.filter(l => l.status === 'submitted').length,
+      workplace_reviewed: logbooks.filter(l => l.status === 'workplace_reviewed').length,
       approved_logs: logbooks.filter(l => l.status === 'approved').length,
       average_score: null,
     },
@@ -213,7 +214,8 @@ async function getAcademicStats() {
   return {
     data: {
       assigned_students: placements.length,
-      pending_reviews: logbooks.filter(l => ['submitted', 'reviewed'].includes(l.status)).length,
+      pending_reviews: logbooks.filter(l => l.status === 'workplace_reviewed').length,
+      awaiting_approval: logbooks.filter(l => l.status === 'reviewed').length,
       completed_evaluations: completedEvals.length,
       average_score: avgScore,
     },
@@ -241,7 +243,7 @@ async function getPendingReviews() {
   const pm = buildPlacementMap(placements);
   return {
     data: logbooks
-      .filter(l => ['submitted', 'reviewed'].includes(l.status))
+      .filter(l => ['workplace_reviewed', 'reviewed'].includes(l.status))
       .map(l => ({
         ...l,
         student_name: pm[l.placement]?.student_name || 'Unknown Student',
@@ -385,6 +387,13 @@ async function reviewLog(logId, comment) {
   });
 }
 
+async function reviewLogWorkplace(logId, comment) {
+  return fetchWithAuth(`${LOGBOOKS}${logId}/review/`, {
+    method: 'POST',
+    body: JSON.stringify({ workplace_comment: comment }),
+  });
+}
+
 async function approveLog(logId) {
   return fetchWithAuth(`${LOGBOOKS}${logId}/approve/`, { method: 'POST' });
 }
@@ -474,6 +483,7 @@ const dashboardService = {
 
   // Actions
   reviewLog,
+  reviewLogWorkplace,
   approveLog,
   rejectLog,
   markPlacementCompleted,

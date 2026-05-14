@@ -14,16 +14,17 @@ const isOverdue = (deadline) =>
   deadline ? new Date(deadline) < new Date() : false
 
 const STATUS_STYLES = {
-  'In Progress': 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30',
-  ACTIVE:        'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30',
-  COMPLETED:     'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
-  PENDING:       'bg-amber-500/20 text-amber-300 border border-amber-500/30',
-  submitted:     'bg-amber-500/20 text-amber-300 border border-amber-500/30',
-  reviewed:      'bg-blue-500/20 text-blue-300 border border-blue-500/30',
-  approved:      'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
-  overdue:       'bg-red-500/20 text-red-300 border border-red-500/30',
-  Overdue:       'bg-red-500/20 text-red-300 border border-red-500/30',
-  draft:         'bg-slate-500/20 text-slate-400 border border-slate-500/30',
+  'In Progress':      'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30',
+  ACTIVE:             'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30',
+  COMPLETED:          'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
+  PENDING:            'bg-amber-500/20 text-amber-300 border border-amber-500/30',
+  submitted:          'bg-amber-500/20 text-amber-300 border border-amber-500/30',
+  workplace_reviewed: 'bg-purple-500/20 text-purple-300 border border-purple-500/30',
+  reviewed:           'bg-blue-500/20 text-blue-300 border border-blue-500/30',
+  approved:           'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
+  overdue:            'bg-red-500/20 text-red-300 border border-red-500/30',
+  Overdue:            'bg-red-500/20 text-red-300 border border-red-500/30',
+  draft:              'bg-slate-500/20 text-slate-400 border border-slate-500/30',
 }
 
 function Badge({ status, overdue = false }) {
@@ -351,6 +352,14 @@ export default function AcademicDashboard() {
                       </div>
                       <Badge status={l.status} overdue={isOverdue(l.deadline)} />
                     </div>
+                    {l.status === 'workplace_reviewed' && (
+                      <Link
+                        to="/academic/logs"
+                        className="mt-2 w-full py-1.5 rounded-lg text-xs font-semibold bg-purple-500/10 text-purple-400 border border-purple-500/30 hover:bg-purple-500/20 transition flex items-center justify-center gap-1"
+                      >
+                        Review Log
+                      </Link>
+                    )}
                     {l.status === 'reviewed' && (
                       <button
                         onClick={() => handleApprove(l.id)}

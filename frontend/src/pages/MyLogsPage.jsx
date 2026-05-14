@@ -29,10 +29,11 @@ const fmtSize = (b) =>
 const isOverdue = (d) => (d ? new Date(d) < new Date() : false)
 
 const STATUS = {
-  draft:     'bg-slate-500/20 text-slate-400 border-slate-500/30',
-  submitted: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
-  reviewed:  'bg-blue-500/20 text-blue-300 border-blue-500/30',
-  approved:  'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+  draft:               'bg-slate-500/20 text-slate-400 border-slate-500/30',
+  submitted:           'bg-amber-500/20 text-amber-300 border-amber-500/30',
+  workplace_reviewed:  'bg-purple-500/20 text-purple-300 border-purple-500/30',
+  reviewed:            'bg-blue-500/20 text-blue-300 border-blue-500/30',
+  approved:            'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
 }
 
 // ── small shared components ────────────────────────────────────────────────
@@ -78,7 +79,7 @@ function ListSkeleton() {
 }
 
 function WorkflowTracker({ status }) {
-  const steps = ['draft', 'submitted', 'reviewed', 'approved']
+  const steps = ['draft', 'submitted', 'workplace_reviewed', 'reviewed', 'approved']
   const idx   = steps.indexOf(status?.toLowerCase() ?? '')
   return (
     <div className="flex items-start mt-3 pt-3 border-t border-slate-700/50">
@@ -96,7 +97,7 @@ function WorkflowTracker({ status }) {
               )}
             </div>
             <p className={`text-xs text-center ${i <= idx ? 'text-slate-300' : 'text-slate-600'}`}>
-              {step.charAt(0).toUpperCase() + step.slice(1)}
+              {step === 'workplace_reviewed' ? 'WP Reviewed' : step.charAt(0).toUpperCase() + step.slice(1)}
             </p>
           </div>
           {i < steps.length - 1 && (
@@ -188,7 +189,9 @@ export default function MyLogsPage() {
     try {
       const data = await fetchWithAuth(`${API}/weeklylogs/logbooks/`)
       setLogs(Array.isArray(data) ? data : [])
-    } catch { /* silent */ }
+    } catch (err) {
+      setListError(err.message || 'Failed to refresh logs. Please reload the page.')
+    }
   }, [])
 
   useEffect(() => {
@@ -295,6 +298,7 @@ export default function MyLogsPage() {
       )
 
       resetForm()
+      setFilter('all')
       await fetchLogs()
       setView('history')
 
@@ -335,19 +339,21 @@ export default function MyLogsPage() {
       l.activities?.toLowerCase().includes(search.toLowerCase()))
   )
   const counts = {
-    all:       safeLogs.length,
-    draft:     safeLogs.filter(l => l.status === 'draft').length,
-    submitted: safeLogs.filter(l => l.status === 'submitted').length,
-    reviewed:  safeLogs.filter(l => l.status === 'reviewed').length,
-    approved:  safeLogs.filter(l => l.status === 'approved').length,
+    all:                safeLogs.length,
+    draft:              safeLogs.filter(l => l.status === 'draft').length,
+    submitted:          safeLogs.filter(l => l.status === 'submitted').length,
+    workplace_reviewed: safeLogs.filter(l => l.status === 'workplace_reviewed').length,
+    reviewed:           safeLogs.filter(l => l.status === 'reviewed').length,
+    approved:           safeLogs.filter(l => l.status === 'approved').length,
   }
 
   const FILTERS = [
-    { key: 'all',       label: 'All'       },
-    { key: 'draft',     label: 'Draft'     },
-    { key: 'submitted', label: 'Submitted' },
-    { key: 'reviewed',  label: 'Reviewed'  },
-    { key: 'approved',  label: 'Approved'  },
+    { key: 'all',                label: 'All'        },
+    { key: 'draft',              label: 'Draft'      },
+    { key: 'submitted',          label: 'Submitted'  },
+    { key: 'workplace_reviewed', label: 'WP Reviewed'},
+    { key: 'reviewed',           label: 'Reviewed'   },
+    { key: 'approved',           label: 'Approved'   },
   ]
 
   /* ── render ─────────────────────────────────────────────────────────── */
@@ -393,13 +399,14 @@ export default function MyLogsPage() {
       {view === 'history' && (
         <>
           {/* Summary cards */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
             {[
-              { key: 'all',       label: 'Total',     color: 'text-white'       },
-              { key: 'draft',     label: 'Draft',     color: 'text-slate-400'   },
-              { key: 'submitted', label: 'Submitted', color: 'text-amber-300'   },
-              { key: 'reviewed',  label: 'Reviewed',  color: 'text-blue-300'    },
-              { key: 'approved',  label: 'Approved',  color: 'text-emerald-300' },
+              { key: 'all',                label: 'Total',      color: 'text-white'        },
+              { key: 'draft',              label: 'Draft',      color: 'text-slate-400'    },
+              { key: 'submitted',          label: 'Submitted',  color: 'text-amber-300'    },
+              { key: 'workplace_reviewed', label: 'WP Review',  color: 'text-purple-300'   },
+              { key: 'reviewed',           label: 'Reviewed',   color: 'text-blue-300'     },
+              { key: 'approved',           label: 'Approved',   color: 'text-emerald-300'  },
             ].map(({ key, label, color }) => (
               <button
                 key={key}
@@ -522,10 +529,11 @@ export default function MyLogsPage() {
                     </div>
                   </div>
                   <div className="flex items-center mt-3 pt-3 border-t border-slate-700/50 text-xs">
-                    {log.status === 'approved'  && <span className="text-emerald-400 font-medium">Approved by supervisor</span>}
-                    {log.status === 'reviewed'  && <span className="text-blue-400 font-medium">Reviewed – awaiting approval</span>}
-                    {log.status === 'submitted' && <span className="text-amber-400 font-medium">Awaiting supervisor review</span>}
-                    {log.status === 'draft'     && <span className="text-slate-500">Draft – not yet submitted</span>}
+                    {log.status === 'approved'            && <span className="text-emerald-400 font-medium">Approved by supervisor</span>}
+                    {log.status === 'reviewed'            && <span className="text-blue-400 font-medium">Reviewed – awaiting approval</span>}
+                    {log.status === 'workplace_reviewed'  && <span className="text-purple-400 font-medium">Workplace reviewed – awaiting academic review</span>}
+                    {log.status === 'submitted'           && <span className="text-amber-400 font-medium">Awaiting workplace supervisor review</span>}
+                    {log.status === 'draft'               && <span className="text-slate-500">Draft – not yet submitted</span>}
                   </div>
                 </div>
               ))}

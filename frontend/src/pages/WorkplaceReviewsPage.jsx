@@ -12,11 +12,12 @@ function Skeleton({ className = '' }) {
 }
 
 const STATUS_STYLES = {
-  draft:     'bg-slate-500/15 text-slate-400 border-slate-500/25',
-  submitted: 'bg-amber-500/15 text-amber-400 border-amber-500/25',
-  reviewed:  'bg-blue-500/15 text-blue-400 border-blue-500/25',
-  approved:  'bg-emerald-500/15 text-emerald-400 border-emerald-500/25',
-  rejected:  'bg-red-500/15 text-red-400 border-red-500/25',
+  draft:               'bg-slate-500/15 text-slate-400 border-slate-500/25',
+  submitted:           'bg-amber-500/15 text-amber-400 border-amber-500/25',
+  workplace_reviewed:  'bg-purple-500/15 text-purple-400 border-purple-500/25',
+  reviewed:            'bg-blue-500/15 text-blue-400 border-blue-500/25',
+  approved:            'bg-emerald-500/15 text-emerald-400 border-emerald-500/25',
+  rejected:            'bg-red-500/15 text-red-400 border-red-500/25',
 }
 
 function ReviewModal({ log, onClose, onSuccess }) {
@@ -29,10 +30,10 @@ function ReviewModal({ log, onClose, onSuccess }) {
     try {
       await fetchWithAuth(`${API}/weeklylogs/logbooks/${log.id}/review/`, {
         method: 'POST',
-        body: JSON.stringify({ supervisor_comment: comment.trim() }),
+        body: JSON.stringify({ workplace_comment: comment.trim() }),
       })
-      toast.success('Review submitted successfully.')
-      onSuccess(log.id, 'reviewed', comment.trim())
+      toast.success('Workplace review submitted successfully.')
+      onSuccess(log.id, 'workplace_reviewed', comment.trim())
       onClose()
     } catch {
       toast.error('Failed to submit review.')
@@ -136,12 +137,12 @@ export default function WorkplaceReviewsPage() {
 
   const handleReviewSuccess = (id, newStatus, comment) => {
     setLogs(prev => prev.map(l =>
-      l.id === id ? { ...l, status: newStatus, supervisor_comment: comment } : l
+      l.id === id ? { ...l, status: newStatus, workplace_comment: comment } : l
     ))
   }
 
   const pendingLogs  = logs.filter(l => l.status === 'submitted')
-  const reviewedLogs = logs.filter(l => l.status === 'reviewed' || l.status === 'approved')
+  const reviewedLogs = logs.filter(l => ['workplace_reviewed', 'reviewed', 'approved'].includes(l.status))
 
   const activeLogs = tab === 'submitted' ? pendingLogs : reviewedLogs
 
@@ -164,9 +165,9 @@ export default function WorkplaceReviewsPage() {
 
       <div className="grid grid-cols-3 gap-4">
         {[
-          { label: 'Pending Review', value: pendingLogs.length,  color: 'text-amber-400',   bg: 'bg-amber-500/10 border-amber-500/20'    },
-          { label: 'Reviewed',       value: logs.filter(l => l.status === 'reviewed').length, color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20' },
-          { label: 'Approved',       value: logs.filter(l => l.status === 'approved').length, color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
+          { label: 'Pending Review',      value: pendingLogs.length, color: 'text-amber-400',   bg: 'bg-amber-500/10 border-amber-500/20'       },
+          { label: 'Workplace Reviewed', value: logs.filter(l => l.status === 'workplace_reviewed').length, color: 'text-purple-400', bg: 'bg-purple-500/10 border-purple-500/20' },
+          { label: 'Approved',           value: logs.filter(l => l.status === 'approved').length, color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
         ].map(({ label, value, color, bg }) => (
           <div key={label} className={`rounded-2xl p-5 border ${bg}`}>
             <p className="text-slate-400 text-xs uppercase tracking-wider mb-2">{label}</p>
@@ -197,7 +198,7 @@ export default function WorkplaceReviewsPage() {
             className={`px-4 py-2.5 rounded-xl text-sm font-medium transition ${
               tab === 'reviewed' ? 'bg-indigo-600 text-white' : 'bg-slate-800/50 border border-slate-700/50 text-slate-400 hover:text-white'
             }`}>
-            Reviewed
+            My Reviews
           </button>
         </div>
       </div>
@@ -239,10 +240,10 @@ export default function WorkplaceReviewsPage() {
                       </span>
                     </div>
                     <p className="text-slate-400 text-sm line-clamp-2">{log.activities || '—'}</p>
-                    {log.supervisor_comment && (
-                      <div className="mt-2 bg-blue-500/10 border border-blue-500/20 rounded-lg px-3 py-2">
-                        <p className="text-xs text-blue-400 mb-0.5">Your review</p>
-                        <p className="text-slate-300 text-xs">{log.supervisor_comment}</p>
+                    {log.workplace_comment && (
+                      <div className="mt-2 bg-purple-500/10 border border-purple-500/20 rounded-lg px-3 py-2">
+                        <p className="text-xs text-purple-400 mb-0.5">Your workplace review</p>
+                        <p className="text-slate-300 text-xs">{log.workplace_comment}</p>
                       </div>
                     )}
                   </div>
@@ -255,9 +256,9 @@ export default function WorkplaceReviewsPage() {
                       Review
                     </button>
                   )}
-                  {(log.status === 'reviewed' || log.status === 'approved') && (
+                  {['workplace_reviewed', 'reviewed', 'approved'].includes(log.status) && (
                     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border capitalize ${STATUS_STYLES[log.status]}`}>
-                      {log.status}
+                      {log.status === 'workplace_reviewed' ? 'Workplace Reviewed' : log.status}
                     </span>
                   )}
                 </div>
