@@ -154,28 +154,23 @@ export default function WorkplaceSupervisorDashboard() {
 
   const [stats,      setStats]      = useState(null)
   const [placements, setPlacements] = useState([])
-  const [reviews,    setReviews]    = useState([])
   const [scores,     setScores]     = useState([])
   const [activity,   setActivity]   = useState([])
   const [loading,    setLoading]    = useState(true)
   const [error,      setError]      = useState('')
-  const [reviewingId,  setReviewingId]  = useState(null)
-  const [reviewComment, setReviewComment] = useState('')
-  const [actionLoading, setActionLoading] = useState(false)
 
   useEffect(() => {
     const fetchAll = async () => {
       setLoading(true); setError('')
       try {
-        const [statsRes, placementsRes, reviewsRes, scoresRes, activityRes] = await Promise.all([
+        const [statsRes, placementsRes, scoresRes, activityRes] = await Promise.all([
           dashboardService.getWorkplaceStats(),
           dashboardService.getWorkplacePlacements(),
-          dashboardService.getWorkplacePendingReviews(),
           dashboardService.getWorkplaceScores(),
           dashboardService.getWorkplaceActivity(),
         ])
         setStats(statsRes.data); setPlacements(placementsRes.data)
-        setReviews(reviewsRes.data); setScores(scoresRes.data); setActivity(activityRes.data)
+        setScores(scoresRes.data); setActivity(activityRes.data)
       } catch (err) {
         setError(err.message || 'Failed to load dashboard data. Please refresh.')
       } finally { setLoading(false) }
@@ -186,128 +181,47 @@ export default function WorkplaceSupervisorDashboard() {
   const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '')
   const fullName = [user?.first_name, user?.last_name].filter(Boolean).map(cap).join(' ') || 'Supervisor'
 
-  const handleReviewSubmit = async (logId) => {
-    if (!reviewComment.trim()) { toast.error('Please enter a comment before submitting.'); return }
-    setActionLoading(true)
-    try {
-      await dashboardService.reviewLogWorkplace(logId, reviewComment)
-      toast.success('Log reviewed successfully.')
-      setReviewingId(null)
-      setReviewComment('')
-      setReviews(prev => prev.filter(r => r.id !== logId))
-      setStats(prev => prev ? { ...prev, pending_reviews: Math.max(0, prev.pending_reviews - 1) } : prev)
-    } catch (err) {
-      toast.error(err.message || 'Failed to submit review.')
-    } finally { setActionLoading(false) }
-  }
-
-  const handleReject = async (logId) => {
-    if (!reviewComment.trim()) { toast.error('Please enter a reason for rejection.'); return }
-    setActionLoading(true)
-    try {
-      await dashboardService.rejectLog(logId, reviewComment)
-      toast.success('Log returned to student for revision.')
-      setReviewingId(null)
-      setReviewComment('')
-      setReviews(prev => prev.filter(r => r.id !== logId))
-      setStats(prev => prev ? { ...prev, pending_reviews: Math.max(0, prev.pending_reviews - 1) } : prev)
-    } catch (err) {
-      toast.error(err.message || 'Failed to reject log.')
-    } finally { setActionLoading(false) }
-  }
-
   return (
     <div className="space-y-6">
 
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-white">Welcome, {fullName} </h1>
-          <p className="text-sm text-slate-400 mt-1">Review student logs, approve submissions, and score intern performance.</p>
+          <p className="text-sm text-slate-400 mt-1">Evaluate intern performance and track your assigned students.</p>
         </div>
       </div>
 
       {error && <div className="bg-red-500/10 border border-red-500/30 text-red-300 text-sm px-4 py-3 rounded-xl">{error}</div>}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Assigned Students"   value={stats?.assigned_students}  sub="View all students" subLink="/supervisor/students" accent="indigo"  icon={Icon.students} />
-        <StatCard label="Pending Reviews"      value={stats?.pending_reviews}    sub="Review now"        subLink="/supervisor/reviews"  accent="amber"   icon={Icon.logbook}  />
-        <StatCard label="Approved Logs"        value={stats?.approved_logs}      sub="View approved"     subLink="/supervisor/reviews"  accent="emerald" icon={Icon.approved} />
-        <StatCard label="Avg. Workplace Score" value={stats ? `${Number(stats.average_score).toFixed(0)}%` : null} sub="Contributes 40% to final" accent="rose" icon={Icon.score} />
+        <StatCard label="Assigned Students"   value={stats?.assigned_students}  sub="View all students"       subLink="/supervisor/scores" accent="indigo"  icon={Icon.students} />
+        <StatCard label="Scores Submitted"    value={stats?.approved_logs}      sub="Go to scores"            subLink="/supervisor/scores" accent="emerald" icon={Icon.score}    />
+        <StatCard label="Approved Logs"       value={stats?.approved_logs}      sub="Logs approved"           subLink="/supervisor/scores" accent="amber"   icon={Icon.approved} />
+        <StatCard label="Avg. Workplace Score" value={stats ? `${Number(stats.average_score).toFixed(0)}%` : null} sub="Contributes 40% to final" accent="rose" icon={Icon.report} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
 
         <div className="lg:col-span-3 space-y-5">
 
-          <Card title="Pending Reviews" actionLabel="View All" actionLink="/supervisor/reviews">
-            {loading ? <ListSkeleton /> : (
+          <Card title="Recent Student Activity" actionLabel="View All" actionLink="/supervisor/scores">
+            {loading ? <ListSkeleton /> : activity.length === 0 ? (
+              <p className="text-xs text-slate-500">No recent activity from your students.</p>
+            ) : (
               <div className="space-y-3">
-                {reviews.length === 0 && <p className="text-xs text-slate-500">No pending reviews. You are all caught up!</p>}
-                {reviews.slice(0,4).map((r, i) => (
-                  <div key={r.id} className={`p-3 rounded-xl border transition ${isOverdue(r.deadline) ? 'border-red-500/30 bg-red-500/10' : 'border-slate-700/50 hover:border-indigo-500/40 hover:bg-indigo-600/10'}`}>
-                    <div className="flex items-start gap-3">
-                      <AvatarCircle name={r.student_name} index={i} />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between flex-wrap gap-2">
-                          <p className="text-sm font-semibold text-white capitalize">Week {r.week_number} — {r.student_name}</p>
-                          {isOverdue(r.deadline) ? <Badge status="overdue" /> : <Badge status={r.status} />}
-                        </div>
-                        <p className="text-xs text-slate-400 mt-0.5 truncate">{r.activities_preview}</p>
-                        <p className="text-xs text-slate-600 mt-0.5">
-                          Submitted {formatDate(r.submitted_at)}
-                          {isOverdue(r.deadline) && <span className="text-red-400 font-medium ml-2">x Past deadline</span>}
-                        </p>
+                {activity.slice(0, 5).map((a, i) => (
+                  <div key={a.id} className="flex items-start gap-3 p-3 rounded-xl border border-slate-700/50 hover:bg-slate-700/20 transition">
+                    <AvatarCircle name={a.student_name} index={i} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <p className="text-sm font-semibold text-white capitalize">{a.student_name}</p>
+                        <Badge status={a.status} overdue={isOverdue(a.deadline)} />
                       </div>
-                    </div>
-                    <div className="mt-3 pt-3 border-t border-slate-700/50 space-y-2">
-                      {reviewingId === r.id ? (
-                        <>
-                          <textarea
-                            rows={2}
-                            placeholder="Write your review comment..."
-                            value={reviewComment}
-                            onChange={e => setReviewComment(e.target.value)}
-                            className="w-full rounded-lg px-3 py-2 text-xs text-white bg-slate-700/50 border border-slate-600 outline-none focus:border-indigo-500 resize-none placeholder-slate-500"
-                          />
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => handleReviewSubmit(r.id)}
-                              disabled={actionLoading}
-                              className="flex-1 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition disabled:opacity-50"
-                            >
-                              {actionLoading ? 'Submitting...' : 'Submit Review'}
-                            </button>
-                            <button
-                              onClick={() => handleReject(r.id)}
-                              disabled={actionLoading}
-                              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20 transition disabled:opacity-50"
-                            >
-                              {Icon.reject} Reject
-                            </button>
-                            <button
-                              onClick={() => { setReviewingId(null); setReviewComment('') }}
-                              className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 border border-slate-600 hover:bg-slate-700/50 transition"
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        </>
-                      ) : (
-                        <button
-                          onClick={() => { setReviewingId(r.id); setReviewComment('') }}
-                          className="w-full text-center text-xs font-semibold text-indigo-400 border border-indigo-500/30 bg-indigo-600/10 hover:bg-indigo-600/20 py-1.5 rounded-lg transition"
-                        >
-                          Review & Comment
-                        </button>
-                      )}
+                      <p className="text-xs text-slate-400 mt-0.5 truncate">{a.activity}</p>
+                      <p className="text-xs text-slate-600 mt-0.5">{formatDate(a.date)}</p>
                     </div>
                   </div>
                 ))}
-                {stats?.pending_reviews > 4 && (
-                  <Link to="/supervisor/reviews" className="text-xs text-amber-400 font-semibold hover:underline block pt-1">
-                    View all pending ({stats.pending_reviews}) 
-                  </Link>
-                )}
               </div>
             )}
           </Card>
@@ -388,10 +302,9 @@ export default function WorkplaceSupervisorDashboard() {
           <Card title="Quick Actions">
             <div className="space-y-2">
               {[
-                { label:'View My Students',  sub:'All assigned interns',          icon:Icon.students, to:'/supervisor/students', color:'text-indigo-400 bg-indigo-600/20'  },
-                { label:'Review Submissions', sub:'Approve or reject log entries', icon:Icon.logbook,  to:'/supervisor/reviews',  color:'text-amber-400 bg-amber-500/20'    },
-                { label:'Score Performance',  sub:'Submit workplace scores',       icon:Icon.score,    to:'/supervisor/scores',   color:'text-emerald-400 bg-emerald-500/20' },
-                { label:'Generate Report',    sub:'Download student reports',      icon:Icon.report,   to:'/supervisor/reports',  color:'text-rose-400 bg-rose-500/20'      },
+                { label:'View My Students', sub:'All assigned interns',      icon:Icon.students, to:'/supervisor/scores',  color:'text-indigo-400 bg-indigo-600/20'   },
+                { label:'Score Performance', sub:'Submit workplace scores',   icon:Icon.score,    to:'/supervisor/scores',  color:'text-emerald-400 bg-emerald-500/20' },
+                { label:'Generate Report',  sub:'Download student reports',  icon:Icon.report,   to:'/supervisor/reports', color:'text-rose-400 bg-rose-500/20'       },
               ].map(({ label, sub, icon, to, color }) => (
                 <Link key={label} to={to} className="flex items-center gap-3 p-3 rounded-xl border border-slate-700/50 hover:border-indigo-500/40 hover:bg-indigo-600/10 transition group">
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${color}`}>{icon}</div>

@@ -104,32 +104,10 @@ class WeeklyLogbookViewSet(viewsets.ModelViewSet):
         log = self.get_object()
         role = request.user.role
 
-        if role == 'workplace_supervisor':
+        if role in ('academic_supervisor', 'admin'):
             if log.status != 'submitted':
                 return Response(
-                    {'detail': 'Workplace supervisors can only review submitted logs.'},
-                    status=400
-                )
-            comment = request.data.get('workplace_comment', '').strip()
-            if not comment:
-                return Response(
-                    {'detail': 'A workplace comment is required to review a log.'},
-                    status=400
-                )
-            log.status = 'workplace_reviewed'
-            log.workplace_comment = comment
-            log.save()
-            LogBookReview.objects.create(
-                logbook=log,
-                supervisor=request.user,
-                comment=comment,
-                status_at_review='workplace_reviewed'
-            )
-
-        elif role == 'academic_supervisor':
-            if log.status != 'workplace_reviewed':
-                return Response(
-                    {'detail': 'Academic supervisors can only review logs that have been reviewed by the workplace supervisor.'},
+                    {'detail': 'Only submitted logs can be reviewed.'},
                     status=400
                 )
             comment = request.data.get('supervisor_comment', '').strip()
@@ -147,29 +125,6 @@ class WeeklyLogbookViewSet(viewsets.ModelViewSet):
                 comment=comment,
                 status_at_review='reviewed'
             )
-
-        elif role == 'admin':
-            if log.status not in ('submitted', 'workplace_reviewed'):
-                return Response(
-                    {'detail': 'Admins can review submitted or workplace-reviewed logs.'},
-                    status=400
-                )
-            comment = request.data.get('supervisor_comment', '').strip()
-            if not comment:
-                return Response(
-                    {'detail': 'A supervisor comment is required to review a log.'},
-                    status=400
-                )
-            log.status = 'reviewed'
-            log.supervisor_comment = comment
-            log.save()
-            LogBookReview.objects.create(
-                logbook=log,
-                supervisor=request.user,
-                comment=comment,
-                status_at_review='reviewed'
-            )
-
         else:
             return Response(
                 {'detail': 'You do not have permission to review logs.'},
@@ -201,26 +156,10 @@ class WeeklyLogbookViewSet(viewsets.ModelViewSet):
         log = self.get_object()
         role = request.user.role
 
-        if role == 'workplace_supervisor':
-            if log.status != 'submitted':
+        if role in ('academic_supervisor', 'admin'):
+            if log.status not in ('submitted', 'reviewed'):
                 return Response(
-                    {'detail': 'Workplace supervisors can only reject submitted logs.'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            comment = request.data.get('supervisor_comment', '').strip()
-            if not comment:
-                return Response(
-                    {'detail': 'A comment is required to reject a log.'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            log.status = 'draft'
-            log.workplace_comment = comment
-            log.save()
-
-        elif role in ('academic_supervisor', 'admin'):
-            if log.status not in ('workplace_reviewed', 'reviewed'):
-                return Response(
-                    {'detail': 'You can only reject logs that have been workplace-reviewed or reviewed.'},
+                    {'detail': 'You can only reject submitted or reviewed logs.'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
             comment = request.data.get('supervisor_comment', '').strip()
@@ -232,7 +171,6 @@ class WeeklyLogbookViewSet(viewsets.ModelViewSet):
             log.status = 'draft'
             log.supervisor_comment = comment
             log.save()
-
         else:
             return Response(
                 {'detail': 'You do not have permission to reject logs.'},

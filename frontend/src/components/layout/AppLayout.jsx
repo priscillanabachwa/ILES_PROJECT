@@ -30,7 +30,6 @@ const NAV = {
   ],
   workplace_supervisor: [
     { to: '/supervisor/dashboard',     label: 'Dashboard'     },
-    { to: '/supervisor/reviews',       label: 'Reviews'       },
     { to: '/supervisor/scores',        label: 'Scores'        },
     { to: '/supervisor/notifications', label: 'Notifications' },
     { to: '/supervisor/profile',       label: 'Profile'       },

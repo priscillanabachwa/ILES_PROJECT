@@ -7,12 +7,15 @@ from django.core.exceptions import ValidationError
 
 
 class EvaluationCriteria(models.Model):
-    name=models.CharField(max_length=100,unique=True)
-    description=models.TextField(blank=True,null=True)
-    max_score=models.DecimalField(max_digits=5,decimal_places=2,default=0)
-    weight=models.DecimalField(max_digits=5,decimal_places=2,default=0)
-    is_active= models.BooleanField(default=True)
-    
+    EVALUATOR_TYPE_CHOICES = [('academic', 'Academic'), ('workplace', 'Workplace')]
+
+    name           = models.CharField(max_length=100, unique=True)
+    description    = models.TextField(blank=True, null=True)
+    max_score      = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    weight         = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    is_active      = models.BooleanField(default=True)
+    evaluator_type = models.CharField(max_length=20, choices=EVALUATOR_TYPE_CHOICES, default='academic')
+
     def __str__(self):
         return f'{self.name} (weight:{self.weight})'
     
@@ -94,9 +97,13 @@ class AcademicEvaluation(models.Model):
         else:
             return 'F'
         
-#ensuring all criteria are filled before submission
     def is_complete(self):
-        total_criteria=EvaluationCriteria.objects.filter(is_active=True).count()
+        evaluator_type = (
+            'workplace'
+            if hasattr(self.evaluator, 'role') and self.evaluator.role == 'workplace_supervisor'
+            else 'academic'
+        )
+        total_criteria = EvaluationCriteria.objects.filter(is_active=True, evaluator_type=evaluator_type).count()
         return self.items.count() == total_criteria
         
     def save(self, *args, **kwargs):

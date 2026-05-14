@@ -25,7 +25,7 @@ class EvaluationScoreSerializer(serializers.ModelSerializer):
     def validate(self, data):
         criteria = data.get('criteria')
         score = data.get('score')
-        if score > criteria.max_score:
+        if criteria is not None and score is not None and score > criteria.max_score:
             raise serializers.ValidationError(
                 f"Score {score} exceeds maximum allowed ({criteria.max_score})"
             )

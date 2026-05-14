@@ -145,13 +145,13 @@ function App() {
               </ProtectedRoute>
             }>
               <Route path="/supervisor/dashboard" element={<WorkplaceSupervisorDashboard />} />
-              <Route path="/supervisor/reviews" element={<WorkplaceReviewsPage />} />
               <Route path="/supervisor/scores" element={<WorkplaceScoresPage />} />
               <Route path="/supervisor/notifications" element={<NotificationsPage />} />
               <Route path="/supervisor/profile" element={<ProfilePage />} />
-              <Route path="/supervisor/students" element={<Navigate to="/supervisor/reviews" replace />} />
-              <Route path="/supervisor/activity" element={<Navigate to="/supervisor/reviews" replace />} />
+              <Route path="/supervisor/students" element={<Navigate to="/supervisor/scores" replace />} />
+              <Route path="/supervisor/activity" element={<Navigate to="/supervisor/scores" replace />} />
               <Route path="/supervisor/reports" element={<Navigate to="/supervisor/scores" replace />} />
+              <Route path="/supervisor/reviews" element={<Navigate to="/supervisor/scores" replace />} />
             </Route>
 
             {/* Admin Routes */}
