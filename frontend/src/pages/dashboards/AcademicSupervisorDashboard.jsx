@@ -71,41 +71,6 @@ function ListSkeleton() {
   )
 }
 
-function MiniBarChart({ scores }) {
-  const COLORS = ['#818cf8', '#34d399', '#fbbf24', '#f87171']
-  const xTicks = [0, 25, 50, 75, 100]
-  return (
-    <div>
-      <div className="space-y-3 mb-2">
-        {scores.map(({ criteria, score }, i) => (
-          <div key={criteria}>
-            <div className="flex justify-between text-xs mb-1">
-              <span className="text-slate-400">{criteria}</span>
-              <span className="font-semibold text-white">{Number(score).toFixed(0)}</span>
-            </div>
-            <div className="w-full bg-slate-700 rounded-full h-1.5">
-              <div
-                className="h-1.5 rounded-full transition-all"
-                style={{ width: `${Math.min(score, 100)}%`, backgroundColor: COLORS[i % COLORS.length] }}
-              />
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="relative mt-3 border-t border-slate-700">
-        <div className="flex justify-between mt-1">
-          {xTicks.map((tick) => (
-            <div key={tick} className="flex flex-col items-center">
-              <div className="w-px h-1.5 bg-slate-600" />
-              <span className="text-slate-500 mt-0.5" style={{ fontSize: '9px' }}>{tick}</span>
-            </div>
-          ))}
-        </div>
-        <p className="text-center text-slate-500 mt-1" style={{ fontSize: '9px' }}>Score (out of 100)</p>
-      </div>
-    </div>
-  )
-}
 
 const Icon = {
   students: <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-5-3.87M9 20H4v-2a4 4 0 015-3.87m6-4a4 4 0 11-8 0 4 4 0 018 0zm6 0a3 3 0 11-6 0 3 3 0 016 0z"/></svg>,
@@ -382,10 +347,18 @@ export default function AcademicDashboard() {
           <Card title="Evaluation Summary Scores" actionLabel="Full Report" actionLink="/academic/evaluations">
             {loading ? <ListSkeleton /> : (
               <>
-                {scores.length === 0
-                  ? <p className="text-xs text-slate-500">No scores yet.</p>
-                  : <MiniBarChart scores={scores} />
-                }
+                {scores.length === 0 ? (
+                  <p className="text-xs text-slate-500">No scores yet.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {scores.map(({ criteria, score }) => (
+                      <div key={criteria} className="flex items-center justify-between px-3 py-2 bg-slate-700/30 rounded-lg border border-slate-700/50">
+                        <span className="text-slate-400 text-xs">{criteria}</span>
+                        <span className="text-white text-xs font-semibold">{Number(score).toFixed(0)} / 100</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 <div className="grid grid-cols-2 gap-3 mt-4">
                   <div className="bg-indigo-600/10 border border-indigo-500/20 rounded-xl p-3 text-center">
                     <p className="text-xs text-indigo-400">Avg. Score</p>

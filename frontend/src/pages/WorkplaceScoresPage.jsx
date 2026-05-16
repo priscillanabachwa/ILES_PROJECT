@@ -140,7 +140,7 @@ function EvaluateModal({ row, criteria, onClose, onSuccess }) {
                 const pct    = val !== '' && maxNum > 0 ? Math.min(100, (numVal / maxNum) * 100) : 0
                 return (
                   <div key={c.id} className="bg-slate-700/30 rounded-xl p-4 border border-slate-700/50">
-                    <div className="flex items-start justify-between gap-3 mb-2">
+                    <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
                         <p className="text-slate-200 text-sm font-medium">{c.name}</p>
                         {c.description && (
@@ -165,16 +165,6 @@ function EvaluateModal({ row, criteria, onClose, onSuccess }) {
                         <span className="text-slate-500 text-xs w-14">/ {c.max_score}</span>
                       </div>
                     </div>
-                    {val !== '' && (
-                      <div className="h-1.5 bg-slate-600/50 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full rounded-full transition-all ${
-                            pct >= 80 ? 'bg-emerald-500' : pct >= 60 ? 'bg-amber-500' : 'bg-red-500'
-                          }`}
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                    )}
                   </div>
                 )
               })}
