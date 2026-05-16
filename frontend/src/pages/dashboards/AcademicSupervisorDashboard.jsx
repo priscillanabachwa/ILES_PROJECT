@@ -410,7 +410,6 @@ export default function AcademicDashboard() {
                 { label: 'View My Students',  sub: 'All assigned students',         icon: Icon.students, to: '/academic/students',   color: 'text-indigo-400 bg-indigo-600/20' },
                 { label: 'Review Submissions', sub: 'Pending internship logs',       icon: Icon.logbook,  to: '/academic/logs',        color: 'text-amber-400 bg-amber-500/20'   },
                 { label: 'Submit Evaluation',  sub: 'Complete a student evaluation', icon: Icon.eval,     to: '/academic/evaluations', color: 'text-teal-400 bg-teal-500/20'     },
-                { label: 'Generate Report',    sub: 'Download evaluation reports',   icon: Icon.report,   to: '/academic/evaluations', color: 'text-rose-400 bg-rose-500/20'     },
               ].map(({ label, sub, icon, to, color }) => (
                 <Link
                   key={label}

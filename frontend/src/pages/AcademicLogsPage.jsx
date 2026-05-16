@@ -221,13 +221,16 @@ export default function AcademicLogsPage() {
   const [reviewLog, setReviewLog] = useState(null)
   const [detailLog, setDetailLog] = useState(null)
 
+  const [evaluatedPlacements, setEvaluatedPlacements] = useState(new Set())
+
   useEffect(() => {
     const fetchAll = async () => {
       setLoading(true)
       try {
-        const [logsData, placementsData] = await Promise.all([
+        const [logsData, placementsData, evalsData] = await Promise.all([
           fetchWithAuth(`${API}/weeklylogs/logbooks/`).catch(() => []),
           fetchWithAuth(`${API}/placements/`).catch(() => []),
+          fetchWithAuth(`${API}/evaluations/evaluations/`).catch(() => []),
         ])
         const pm = Object.fromEntries(
           (Array.isArray(placementsData) ? placementsData : []).map(p => [p.id, p])
@@ -239,6 +242,11 @@ export default function AcademicLogsPage() {
             company: pm[l.placement]?.company_name || '—',
           }))
         )
+        setEvaluatedPlacements(new Set(
+          (Array.isArray(evalsData) ? evalsData : [])
+            .filter(e => e.status === 'SUBMITTED')
+            .map(e => e.placement)
+        ))
       } catch {
         toast.error('Failed to load logs.')
       } finally { setLoading(false) }
@@ -390,12 +398,28 @@ export default function AcademicLogsPage() {
                             Review
                           </button>
                         )}
-                        {log.status === 'reviewed' && (
-                          <button onClick={() => handleApprove(log)}
-                            className="px-3 py-1.5 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/30 rounded-lg text-xs font-medium transition">
-                            Approve
-                          </button>
-                        )}
+                        {log.status === 'reviewed' && (() => {
+                          const canApprove = evaluatedPlacements.has(log.placement)
+                          return (
+                            <div className="relative group">
+                              <button
+                                onClick={() => canApprove && handleApprove(log)}
+                                disabled={!canApprove}
+                                className={`px-3 py-1.5 border rounded-lg text-xs font-medium transition ${
+                                  canApprove
+                                    ? 'bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border-emerald-500/30'
+                                    : 'bg-slate-700/30 text-slate-500 border-slate-600/30 cursor-not-allowed'
+                                }`}>
+                                Approve
+                              </button>
+                              {!canApprove && (
+                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-slate-900 border border-slate-700 text-slate-300 text-xs rounded-lg px-3 py-2 opacity-0 group-hover:opacity-100 transition pointer-events-none z-10 text-center">
+                                  Submit an evaluation for this student first
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })()}
                       </div>
                     </td>
                   </tr>

@@ -136,6 +136,7 @@ class WeeklyLogbookViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'], url_path='approve')
     def approve(self, request, pk=None):
+        from academic_evaluations.models import AcademicEvaluation
         log = self.get_object()
         if request.user.role not in ('academic_supervisor', 'admin'):
             return Response(
@@ -144,9 +145,20 @@ class WeeklyLogbookViewSet(viewsets.ModelViewSet):
             )
         if log.status != 'reviewed':
             return Response(
-                {'detail': 'Only academically reviewed logs can be approved.'},
+                {'detail': 'Only reviewed logs can be approved.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+        if request.user.role == 'academic_supervisor':
+            has_evaluation = AcademicEvaluation.objects.filter(
+                placement=log.placement,
+                evaluator=request.user,
+                status='SUBMITTED',
+            ).exists()
+            if not has_evaluation:
+                return Response(
+                    {'detail': 'You must submit an evaluation for this student before approving their logs.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
         log.status = 'approved'
         log.save()
         return Response(WeeklyLogbookSerializer(log).data)

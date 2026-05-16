@@ -154,7 +154,11 @@ function EvaluateModal({ row, criteria, onClose, onSuccess }) {
                           max={maxNum}
                           step="0.5"
                           value={val}
-                          onChange={(e) => setScores(prev => ({ ...prev, [c.id]: e.target.value }))}
+                          onChange={(e) => {
+                            const raw = e.target.value
+                            const clamped = raw === '' ? '' : Math.min(Number(raw), maxNum)
+                            setScores(prev => ({ ...prev, [c.id]: clamped }))
+                          }}
                           className="w-20 bg-slate-600/50 border border-slate-500 rounded-lg px-3 py-1.5 text-sm text-white text-center focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30"
                           placeholder="0"
                         />

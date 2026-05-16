@@ -118,7 +118,7 @@ function App() {
               <Route path="/academic/dashboard" element={<AcademicSupervisorDashboard />} />
               <Route path="/academic/logs" element={<AcademicLogsPage />} />
               <Route path="/academic/evaluations" element={<AcademicEvaluationsPage />} />
-              <Route path="/academic/notifications" element={<NotificationsPage />} />
+<Route path="/academic/notifications" element={<NotificationsPage />} />
               <Route path="/academic/profile" element={<ProfilePage />} />
               <Route path="/academic/students" element={<Navigate to="/academic/logs" replace />} />
               <Route path="/academic/activity" element={<Navigate to="/academic/logs" replace />} />
