@@ -29,10 +29,11 @@ const NAV = {
     { to: '/academic/profile',         label: 'Profile'         },
   ],
   workplace_supervisor: [
-    { to: '/supervisor/dashboard',     label: 'Dashboard'     },
-    { to: '/supervisor/scores',        label: 'Scores'        },
-    { to: '/supervisor/notifications', label: 'Notifications' },
-    { to: '/supervisor/profile',       label: 'Profile'       },
+    { to: '/supervisor/dashboard',     label: 'Dashboard'       },
+    { to: '/supervisor/logs',          label: 'Internship Logs' },
+    { to: '/supervisor/scores',        label: 'Scores'          },
+    { to: '/supervisor/notifications', label: 'Notifications'   },
+    { to: '/supervisor/profile',       label: 'Profile'         },
   ],
 }
 

@@ -20,6 +20,7 @@ import AcademicLogsPage from './pages/AcademicLogsPage.jsx'
 import AcademicEvaluationsPage from './pages/AcademicEvaluationsPage.jsx'
 import WorkplaceReviewsPage from './pages/WorkplaceReviewsPage.jsx'
 import WorkplaceScoresPage from './pages/WorkplaceScoresPage.jsx'
+import WorkplaceLogsPage from './pages/WorkplaceLogsPage.jsx'
 import StudentEvaluationPage from './pages/StudentEvaluationPage.jsx'
 import StudentFeedbackPage from './pages/StudentFeedbackPage.jsx'
 import NotificationsPage from './pages/NotificationsPage.jsx'
@@ -145,6 +146,7 @@ function App() {
               </ProtectedRoute>
             }>
               <Route path="/supervisor/dashboard" element={<WorkplaceSupervisorDashboard />} />
+              <Route path="/supervisor/logs" element={<WorkplaceLogsPage />} />
               <Route path="/supervisor/scores" element={<WorkplaceScoresPage />} />
               <Route path="/supervisor/notifications" element={<NotificationsPage />} />
               <Route path="/supervisor/profile" element={<ProfilePage />} />

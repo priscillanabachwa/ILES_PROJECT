@@ -18,9 +18,8 @@ const STATUS_STYLES = {
   ACTIVE:             'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30',
   COMPLETED:          'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
   PENDING:            'bg-amber-500/20 text-amber-300 border border-amber-500/30',
-  submitted:          'bg-amber-500/20 text-amber-300 border border-amber-500/30',
-  workplace_reviewed: 'bg-purple-500/20 text-purple-300 border border-purple-500/30',
-  reviewed:           'bg-blue-500/20 text-blue-300 border border-blue-500/30',
+  submitted: 'bg-amber-500/20 text-amber-300 border border-amber-500/30',
+  reviewed:  'bg-blue-500/20 text-blue-300 border border-blue-500/30',
   approved:           'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
   overdue:            'bg-red-500/20 text-red-300 border border-red-500/30',
   Overdue:            'bg-red-500/20 text-red-300 border border-red-500/30',
@@ -352,10 +351,10 @@ export default function AcademicDashboard() {
                       </div>
                       <Badge status={l.status} overdue={isOverdue(l.deadline)} />
                     </div>
-                    {l.status === 'workplace_reviewed' && (
+                    {l.status === 'submitted' && (
                       <Link
                         to="/academic/logs"
-                        className="mt-2 w-full py-1.5 rounded-lg text-xs font-semibold bg-purple-500/10 text-purple-400 border border-purple-500/30 hover:bg-purple-500/20 transition flex items-center justify-center gap-1"
+                        className="mt-2 w-full py-1.5 rounded-lg text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/30 hover:bg-amber-500/20 transition flex items-center justify-center gap-1"
                       >
                         Review Log
                       </Link>
