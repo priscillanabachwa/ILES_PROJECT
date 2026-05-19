@@ -37,5 +37,4 @@ class PlacementViewSet(viewsets.ModelViewSet):
         elif user.role == 'academic_supervisor':
             return InternshipPlacement.objects.filter(academic_supervisor=user)
         return super().get_queryset()
-          
 
