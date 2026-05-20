@@ -66,12 +66,12 @@ class WeeklyLogbookViewSet(viewsets.ModelViewSet):
         if instance.status == 'approved':
             return Response(
                 {'detail': 'Cannot edit an approved log.'},
-                status=status.HTTP_400_BAD_REQUEST
+                status=400
             )
         if user.role == 'student' and instance.status != 'draft':
             return Response(
                 {'detail': 'You can only edit logs while they are in draft status.'},
-                status=status.HTTP_400_BAD_REQUEST
+                status=400
             )
         return super().update(request, *args, **kwargs)
 
@@ -118,7 +118,7 @@ class WeeklyLogbookViewSet(viewsets.ModelViewSet):
         LogBookReview.objects.create(
             logbook=log,
             supervisor=request.user,
-            comment=comment_text,
+            comment=comment,
             status_at_review='reviewed'
         )
         return Response(WeeklyLogbookSerializer(log).data)
@@ -136,7 +136,7 @@ class WeeklyLogbookViewSet(viewsets.ModelViewSet):
         if log.status != 'reviewed':
             return Response(
                 {'detail': 'Only reviewed logs can be approved.'},
-                status=status.HTTP_400_BAD_REQUEST
+                status=400
             )
         log.status = 'approved'
         log.save()
@@ -148,18 +148,18 @@ class WeeklyLogbookViewSet(viewsets.ModelViewSet):
         if request.user.role not in ('workplace_supervisor', 'academic_supervisor', 'admin'):
             return Response(
                 {'detail': 'You do not have permission to reject logs.'},
-                status=status.HTTP_403_FORBIDDEN
+                status=403
             )
         if log.status != 'submitted':
             return Response(
                 {'detail': 'Only submitted logs can be rejected.'},
-                status=status.HTTP_400_BAD_REQUEST
+                status=400
             )
         comment = request.data.get('supervisor_comment', '').strip()
         if not comment:
             return Response(
                 {'detail': 'A supervisor comment is required to reject a log.'},
-                status=status.HTTP_400_BAD_REQUEST
+                status=400
             )
         log.status = 'draft'
         log.supervisor_comment = comment
