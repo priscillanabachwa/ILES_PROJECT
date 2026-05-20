@@ -12,6 +12,8 @@ def notify_on_placement_change(sender, instance, created, **kwargs):
     academic_sup  = instance.academic_supervisor
     company_name  = instance.company.company_name if instance.company else 'your assigned company'
 
+    
+
     if created:
         title = 'Internship Placement Assigned'
         msg   = (f'Hello {student.first_name},\n\n'
@@ -22,6 +24,9 @@ def notify_on_placement_change(sender, instance, created, **kwargs):
         notify_user(student, title, msg, 'placement')
 
         # Also notify supervisors when they are assigned
+
+
+
         if workplace_sup:
             ws_title = 'New Intern Assigned to You'
             ws_msg   = (f'Hello {workplace_sup.first_name},\n\n'
@@ -29,12 +34,16 @@ def notify_on_placement_change(sender, instance, created, **kwargs):
                         f'as an intern at {company_name}.\n\nPlease log in to view their profile.')
             notify_user(workplace_sup, ws_title, ws_msg, 'placement')
 
+
+
         if academic_sup:
             as_title = 'New Intern Assigned to You'
             as_msg   = (f'Hello {academic_sup.first_name},\n\n'
                         f'{student.get_full_name() or student.email} has been assigned to you '
                         f'for academic supervision at {company_name}.\n\nPlease log in to view their profile.')
             notify_user(academic_sup, as_title, as_msg, 'placement')
+
+
 
     else:
         # Placement updated (e.g. status changed, supervisor reassigned)

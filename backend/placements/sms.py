@@ -1,6 +1,8 @@
 from twilio.rest import Client
 from django.conf import settings
 
+
+
 def send_sms(to_number, message):
     try:
         client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
