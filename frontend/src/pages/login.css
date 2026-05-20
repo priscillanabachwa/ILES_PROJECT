@@ -35,10 +35,10 @@
 }
 
 .logo-wrap {
-  width: 100px;
-  height: 100px;
+  width: 200px;
+  height: 200px;
   background: #bce0f7;
-  border-radius: 12px;
+  border-radius: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -47,8 +47,8 @@
 }
 
 .logo-img {
-  width: 80px;
-  height: 80px;
+  width: 200px;
+  height: 200px;
   object-fit: contain;
 }
 
@@ -437,23 +437,6 @@
   margin-bottom: 2rem;
 }
 
-.logo-wrap {
-  width: 100px;
-  height: 100px;
-  background: #bce0f7;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 1rem;
-  overflow: hidden;
-}
-
-.logo-img {
-  width: 80px;
-  height: 80px;
-  object-fit: contain;
-}
 
 .system-name {
   font-size: 12px;
