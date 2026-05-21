@@ -34,15 +34,17 @@ class EvaluationScoreSerializer(serializers.ModelSerializer):
 
 
 class AcademicEvaluationSerializer(serializers.ModelSerializer):
-    items = EvaluationScoreSerializer(many=True, read_only=True)
-    total_score = serializers.SerializerMethodField()
+    items         = EvaluationScoreSerializer(many=True, read_only=True)
+    total_score   = serializers.SerializerMethodField()
+    evaluator_role = serializers.SerializerMethodField()
 
     class Meta:
         model = AcademicEvaluation
         fields =[
-            'id', 'placement',  'items', 
-            'total_score', 'grade', 'status', 'overall_comment', 
-            'submitted_at', 'created_at','activity_choices'
+            'id', 'placement', 'items',
+            'total_score', 'grade', 'status', 'overall_comment',
+            'submitted_at', 'created_at', 'activity_choices',
+            'evaluator_role',
         ]
         read_only_fields = [
             'submitted_at','activity_choices', 'total_score','grade', 'created_at','submitted_at'
@@ -50,6 +52,9 @@ class AcademicEvaluationSerializer(serializers.ModelSerializer):
 
     def get_total_score(self, obj):
         return obj.calculate_total_score()
+
+    def get_evaluator_role(self, obj):
+        return getattr(obj.evaluator, 'role', None)
 
 
     def update(self, instance, validated_data):

@@ -138,9 +138,8 @@ function WorkflowStep({ label, active, done }) {
   return (
     <div className="flex flex-col items-center gap-1 flex-1">
       <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border-2 transition
-        ${done   ? 'bg-indigo-600 border-indigo-600 text-white' :
-          active ? 'bg-slate-800 border-indigo-500 text-indigo-400' :
-                   'bg-slate-800 border-slate-600 text-slate-600'}`}>
+        ${(done || active) ? 'bg-indigo-600 border-indigo-600 text-white' :
+                             'bg-slate-800 border-slate-600 text-slate-600'}`}>
         {done ? '' : ''}
       </div>
       <p className={`text-xs font-medium text-center ${active || done ? 'text-slate-300' : 'text-slate-600'}`}>{label}</p>
@@ -158,6 +157,7 @@ function WorkflowTracker({ status }) {
           <WorkflowStep label={step.charAt(0).toUpperCase() + step.slice(1)} active={i === idx} done={i < idx} />
           {i < steps.length - 1 && (
             <div className={`h-0.5 flex-1 mt-[-12px] ${i < idx ? 'bg-indigo-600' : 'bg-slate-700'}`} />
+
           )}
         </div>
       ))}

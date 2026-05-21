@@ -49,13 +49,20 @@ async function getStudentStats() {
   const submitted = logbooks.filter(l => ['submitted', 'reviewed', 'approved'].includes(l.status));
   const pending = logbooks.filter(l => ['draft', 'submitted'].includes(l.status));
   const withFeedback = logbooks.filter(l => l.supervisor_comment && l.status !== 'draft');
-  const latestEval = Array.isArray(evals) ? evals[0] : null;
+  const evalsArr = Array.isArray(evals) ? evals : [];
+  const academicEval  = evalsArr.find(e => e.evaluator_role === 'academic_supervisor');
+  const workplaceEval = evalsArr.find(e => e.evaluator_role === 'workplace_supervisor');
+  const aScore = academicEval?.total_score  != null ? Number(academicEval.total_score)  : null;
+  const wScore = workplaceEval?.total_score != null ? Number(workplaceEval.total_score) : null;
+  const currentScore = aScore != null && wScore != null
+    ? Number(((aScore * 0.6) + (wScore * 0.4)).toFixed(1))
+    : aScore ?? wScore ?? null;
   return {
     data: {
       logs_submitted: submitted.length,
       pending_logs: pending.length,
       unread_feedback: withFeedback.length,
-      current_score: latestEval?.total_score != null ? Number(latestEval.total_score) : null,
+      current_score: currentScore,
     },
   };
 }
@@ -86,7 +93,39 @@ async function getStudentScores() {
     fetchWithAuth(LOGBOOKS),
   ]);
   if (!Array.isArray(evals) || !evals.length) return { data: null };
-  const latest = evals[0];
+
+  const academicEval   = evals.find(e => e.evaluator_role === 'academic_supervisor')
+  const workplaceEval  = evals.find(e => e.evaluator_role === 'workplace_supervisor')
+
+  const academicScore  = academicEval?.total_score  != null ? Number(academicEval.total_score)  : null
+  const workplaceScore = workplaceEval?.total_score != null ? Number(workplaceEval.total_score) : null
+
+  // Logbook score: find the logbook criterion score inside the academic evaluation
+  const logbookItem    = academicEval?.items?.find(i =>
+    i.criteria_name?.toLowerCase().includes('logbook')
+  )
+  const logbookScore   = logbookItem ? Number(logbookItem.score) : null
+
+  // Final score: 40% workplace + 60% academic (if both exist, otherwise show whichever is available)
+  let finalScore = null
+  if (academicScore != null && workplaceScore != null) {
+    finalScore = (academicScore * 0.6) + (workplaceScore * 0.4)
+  } else if (academicScore != null) {
+    finalScore = academicScore
+  } else if (workplaceScore != null) {
+    finalScore = workplaceScore
+  }
+
+  // Grade from final score
+  const gradeFromScore = (s) => {
+    if (s == null) return null
+    if (s >= 80) return 'A'
+    if (s >= 70) return 'B'
+    if (s >= 60) return 'C'
+    if (s >= 50) return 'D'
+    return 'F'
+  }
+
   const feedback = logbooks
     .filter(l => l.supervisor_comment)
     .slice(0, 3)
@@ -95,13 +134,14 @@ async function getStudentScores() {
       date: l.submitted_at || l.deadline,
       comment: l.supervisor_comment,
     }));
+
   return {
     data: {
-      final_score: latest.total_score != null ? Number(latest.total_score) : null,
-      grade: latest.grade || null,
-      workplace_score: null,
-      academic_score: null,
-      logbook_score: null,
+      final_score:     finalScore != null ? Number(finalScore.toFixed(1)) : null,
+      grade:           gradeFromScore(finalScore),
+      academic_score:  academicScore,
+      workplace_score: workplaceScore,
+      logbook_score:   logbookScore,
       recent_feedback: feedback,
     },
   };

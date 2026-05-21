@@ -8,10 +8,16 @@ class AcademicEvaluationViewSet(viewsets.ModelViewSet):
     serializer_class = AcademicEvaluationSerializer
 
     def get_queryset(self):
-        return AcademicEvaluation.objects.filter(
-            is_active=True,
-            evaluator=self.request.user,
-        ).prefetch_related('items__criteria')
+        user = self.request.user
+        qs = AcademicEvaluation.objects.filter(is_active=True).prefetch_related('items__criteria')
+
+        if user.role == 'student':
+            # Students see evaluations submitted for their own placements
+            return qs.filter(placement__student=user, status='SUBMITTED')
+        if user.role == 'admin':
+            return qs
+        # Supervisors see evaluations they created
+        return qs.filter(evaluator=user)
 
     def perform_create(self, serializer):
         serializer.save(evaluator=self.request.user)

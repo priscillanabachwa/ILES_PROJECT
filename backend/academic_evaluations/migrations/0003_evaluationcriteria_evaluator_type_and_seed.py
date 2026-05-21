@@ -43,22 +43,12 @@ def seed_criteria(apps, schema_editor):
         {
             'name': 'Final Internship Report',
             'description': 'Comprehensiveness, structure, and quality of the final internship report.',
-            'max_score': 100, 'weight': 13, 'evaluator_type': 'academic',
+            'max_score': 100, 'weight': 25, 'evaluator_type': 'academic',
         },
         {
             'name': 'Theory-to-Practice Application',
             'description': 'Evidence of applying academic theory and course knowledge to real workplace situations.',
-            'max_score': 100, 'weight': 12, 'evaluator_type': 'academic',
-        },
-        {
-            'name': 'Academic Alignment',
-            'description': 'Alignment of internship activities with programme objectives and intended learning outcomes.',
-            'max_score': 100, 'weight': 13, 'evaluator_type': 'academic',
-        },
-        {
-            'name': 'Site Visit / Interview Performance',
-            'description': 'Performance during the academic supervisor site visit or structured interview assessment.',
-            'max_score': 100, 'weight': 12, 'evaluator_type': 'academic',
+            'max_score': 100, 'weight': 25, 'evaluator_type': 'academic',
         },
     ]
 

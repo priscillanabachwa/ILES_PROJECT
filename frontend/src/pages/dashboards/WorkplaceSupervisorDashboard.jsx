@@ -244,39 +244,6 @@ export default function WorkplaceSupervisorDashboard() {
             )}
           </Card>
 
-          <Card title="Workplace Scores" actionLabel="View All" actionLink="/supervisor/scores">
-            {loading ? <ListSkeleton /> : (
-              <>
-                {scores.length === 0 ? (
-                  <p className="text-xs text-slate-500">No scores submitted yet.</p>
-                ) : (
-                  <div className="space-y-2">
-                    {scores.map(({ criteria, score }) => (
-                      <div key={criteria} className="flex items-center justify-between px-3 py-2 bg-slate-700/30 rounded-lg border border-slate-700/50">
-                        <span className="text-slate-400 text-xs">{criteria}</span>
-                        <span className="text-white text-xs font-semibold">{Number(score).toFixed(0)} / 100</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <div className="grid grid-cols-2 gap-3 mt-4">
-                  <div className="bg-indigo-600/10 border border-indigo-500/20 rounded-xl p-3 text-center">
-                    <p className="text-xs text-indigo-400">Avg. Score</p>
-                    <p className="text-xl font-bold text-indigo-300 mt-0.5">{stats ? `${Number(stats.average_score).toFixed(0)}%` : '—'}</p>
-                  </div>
-                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 text-center">
-                    <p className="text-xs text-amber-400">Weight</p>
-                    <p className="text-xl font-bold text-amber-300 mt-0.5">40%</p>
-                  </div>
-                </div>
-                <div className="mt-3 bg-slate-700/30 border border-slate-700/50 rounded-xl p-3">
-                  <p className="text-xs text-slate-400 font-medium mb-1">Your contribution</p>
-                  <p className="text-xs text-slate-500">Your scores contribute 40% to each student's final grade</p>
-                </div>
-              </>
-            )}
-          </Card>
-
           <Card title="Quick Actions">
             <div className="space-y-2">
               {[

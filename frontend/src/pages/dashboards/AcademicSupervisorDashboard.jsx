@@ -344,36 +344,54 @@ export default function AcademicDashboard() {
             )}
           </Card>
 
-          <Card title="Evaluation Summary Scores" actionLabel="Full Report" actionLink="/academic/evaluations">
+          <Card title="Evaluation Overview" actionLabel="Go to Evaluations" actionLink="/academic/evaluations">
             {loading ? <ListSkeleton /> : (
-              <>
-                {scores.length === 0 ? (
-                  <p className="text-xs text-slate-500">No scores yet.</p>
-                ) : (
-                  <div className="space-y-2">
-                    {scores.map(({ criteria, score }) => (
-                      <div key={criteria} className="flex items-center justify-between px-3 py-2 bg-slate-700/30 rounded-lg border border-slate-700/50">
-                        <span className="text-slate-400 text-xs">{criteria}</span>
-                        <span className="text-white text-xs font-semibold">{Number(score).toFixed(0)} / 100</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <div className="grid grid-cols-2 gap-3 mt-4">
-                  <div className="bg-indigo-600/10 border border-indigo-500/20 rounded-xl p-3 text-center">
-                    <p className="text-xs text-indigo-400">Avg. Score</p>
-                    <p className="text-xl font-bold text-indigo-300 mt-0.5">
-                      {stats ? `${Number(stats.average_score).toFixed(0)}%` : '—'}
-                    </p>
+              <div className="space-y-3">
+                {/* Top 3 stat tiles */}
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="bg-slate-700/30 border border-slate-700/50 rounded-xl p-3 text-center">
+                    <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-1">Total</p>
+                    <p className="text-2xl font-black text-white">{stats?.assigned_students ?? '—'}</p>
+                    <p className="text-[10px] text-slate-500 mt-0.5">students</p>
                   </div>
                   <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 text-center">
-                    <p className="text-xs text-emerald-400">Evaluated</p>
-                    <p className="text-xl font-bold text-emerald-300 mt-0.5">
-                      {stats?.completed_evaluations ?? '—'}
+                    <p className="text-[10px] text-emerald-400 uppercase tracking-wider mb-1">Done</p>
+                    <p className="text-2xl font-black text-emerald-300">{stats?.completed_evaluations ?? '—'}</p>
+                    <p className="text-[10px] text-emerald-500 mt-0.5">evaluated</p>
+                  </div>
+                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 text-center">
+                    <p className="text-[10px] text-amber-400 uppercase tracking-wider mb-1">Pending</p>
+                    <p className="text-2xl font-black text-amber-300">
+                      {stats ? Math.max(0, stats.assigned_students - stats.completed_evaluations) : '—'}
                     </p>
+                    <p className="text-[10px] text-amber-500 mt-0.5">remaining</p>
                   </div>
                 </div>
-              </>
+
+                {/* Average score */}
+                <div className="flex items-center justify-between bg-indigo-600/10 border border-indigo-500/20 rounded-xl px-4 py-3">
+                  <div>
+                    <p className="text-xs text-indigo-400 font-medium">Average Score</p>
+                    <p className="text-xs text-slate-500 mt-0.5">Across all submitted evaluations</p>
+                  </div>
+                  <p className="text-2xl font-black text-indigo-300">
+                    {stats?.average_score != null ? `${Number(stats.average_score).toFixed(0)}%` : '—'}
+                  </p>
+                </div>
+
+                {/* CTA if there are pending evaluations */}
+                {stats && stats.assigned_students > stats.completed_evaluations && (
+                  <Link
+                    to="/academic/evaluations"
+                    className="flex items-center justify-between w-full px-4 py-3 bg-amber-500/10 border border-amber-500/20 rounded-xl hover:bg-amber-500/20 transition group"
+                  >
+                    <p className="text-xs font-semibold text-amber-300">
+                      {stats.assigned_students - stats.completed_evaluations} student{stats.assigned_students - stats.completed_evaluations !== 1 ? 's' : ''} still need an evaluation
+                    </p>
+                    <span className="text-amber-500 group-hover:text-amber-300 transition">{Icon.chevron}</span>
+                  </Link>
+                )}
+              </div>
             )}
           </Card>
 

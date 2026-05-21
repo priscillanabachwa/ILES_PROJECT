@@ -233,8 +233,19 @@ export default function AdminLogsPage() {
       setLoading(true)
       setError('')
       try {
-        const data = await fetchWithAuth(`${API}/weeklylogs/logbooks/`)
-        setLogs(Array.isArray(data) ? data : [])
+        const [logsData, placementsData] = await Promise.all([
+          fetchWithAuth(`${API}/weeklylogs/logbooks/`),
+          fetchWithAuth(`${API}/placements/`).catch(() => []),
+        ])
+        const pm = Object.fromEntries(
+          (Array.isArray(placementsData) ? placementsData : []).map(p => [p.id, p])
+        )
+        const enriched = (Array.isArray(logsData) ? logsData : []).map(l => ({
+          ...l,
+          student_name: pm[l.placement]?.student_name || '',
+          company:      pm[l.placement]?.company_name  || '',
+        }))
+        setLogs(enriched)
       } catch (err) {
         setError(err.message || 'Failed to load logs.')
       } finally { setLoading(false) }
@@ -281,10 +292,12 @@ export default function AdminLogsPage() {
 
   const filtered = logs.filter((l) => {
     const matchStatus = statusFilter === 'all' || l.status === statusFilter
+    const q = search.toLowerCase()
     const matchSearch = search === '' ||
-      `week ${l.week_number}`.includes(search.toLowerCase()) ||
-      l.activities?.toLowerCase().includes(search.toLowerCase()) ||
-      String(l.placement).includes(search)
+      l.student_name.toLowerCase().includes(q) ||
+      l.company.toLowerCase().includes(q) ||
+      `week ${l.week_number}`.includes(q) ||
+      l.activities?.toLowerCase().includes(q)
     return matchStatus && matchSearch
   })
 
@@ -373,7 +386,7 @@ export default function AdminLogsPage() {
           <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
           </svg>
-          <input type="text" placeholder="Search activities or week number..."
+          <input type="text" placeholder="Search by student, company, or week..."
             value={search} onChange={(e) => setSearch(e.target.value)}
             className="bg-transparent outline-none text-sm text-slate-300 placeholder-slate-600 w-full" />
         </div>
@@ -410,8 +423,10 @@ export default function AdminLogsPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between flex-wrap gap-2 mb-1">
                     <div>
-                      <p className="text-sm font-bold text-white">Week {log.week_number} — Placement #{log.placement}</p>
-                      <p className="text-xs text-slate-500">Log #{log.id}</p>
+                      <p className="text-sm font-bold text-white capitalize">
+                        Week {log.week_number} — {log.student_name || `Placement #${log.placement}`}
+                      </p>
+                      <p className="text-xs text-slate-500">{log.company || `Log #${log.id}`}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       {isOverdue(log.deadline) && log.status === 'submitted' && (
