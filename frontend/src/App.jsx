@@ -1,5 +1,11 @@
-import React from 'react'
-import { BrowserRouter, Routes, Route, Navigate} from 'react-router-dom'
+import React, { useEffect } from 'react'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+
+function ScrollToTop() {
+  const { pathname } = useLocation()
+  useEffect(() => { window.scrollTo(0, 0) }, [pathname])
+  return null
+}
 import AppLayout from './components/layout/AppLayout'
 import AcademicSupervisorDashboard from './pages/dashboards/AcademicSupervisorDashboard.jsx'
 import StudentDashboard from './pages/dashboards/StudentDashboard.jsx'
@@ -100,6 +106,7 @@ function App() {
     <AuthProvider>
       <ErrorBoundary>
         <BrowserRouter>
+          <ScrollToTop />
           <Routes>
             {/* Default route - redirect to login */}
             <Route path="/" element={<Navigate to="/login" replace />} />

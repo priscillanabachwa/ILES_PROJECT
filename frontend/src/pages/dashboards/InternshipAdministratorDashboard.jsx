@@ -102,7 +102,7 @@ function FormField({ label, required, children }) {
 }
 
 const inputCls = "w-full rounded-lg px-3 py-2 text-sm text-white bg-slate-700/50 border border-slate-600 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition placeholder-slate-500"
-const selectCls = "w-full rounded-lg px-3 py-2 text-sm text-white bg-slate-700/50 border border-slate-600 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition"
+const selectCls = "w-full rounded-lg px-3 py-2 text-sm text-white bg-slate-800 border border-slate-600 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition appearance-none cursor-pointer"
 
 function RegisterStudentModal({ onClose, onSuccess }) {
   const [form, setForm] = useState({ first_name: '', last_name: '', email: '', password: '' })
@@ -168,7 +168,7 @@ function AssignPlacementModal({ onClose, onSuccess }) {
   const [students, setStudents] = useState([])
   const [companies, setCompanies] = useState([])
   const [loadingOpts, setLoadingOpts] = useState(true)
-  const [form, setForm] = useState({ student: '', company: '', company_name: '', start_date: '', end_date: '' })
+  const [form, setForm] = useState({ student: '', company_name: '', start_date: '', end_date: '' })
   const [saving, setSaving] = useState(false)
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }))
 
@@ -188,14 +188,16 @@ function AssignPlacementModal({ onClose, onSuccess }) {
   }, [])
 
   const handleSubmit = async () => {
-    if (!form.student || (!form.company && !form.company_name) || !form.start_date || !form.end_date) {
+    if (!form.student || !form.company_name.trim() || !form.start_date || !form.end_date) {
       toast.error('Please fill in all required fields.')
       return
     }
     setSaving(true)
     try {
       const payload = { student: form.student, start_date: form.start_date, end_date: form.end_date }
-      if (form.company) { payload.company = form.company } else { payload.company_name_input = form.company_name }
+      // Match typed name against existing companies (case-insensitive)
+      const match = companies.find(c => c.company_name.toLowerCase() === form.company_name.trim().toLowerCase())
+      if (match) { payload.company = match.id } else { payload.company_name_input = form.company_name.trim() }
       await dashboardService.createPlacement(payload)
       toast.success('Placement created successfully!')
       onSuccess?.()
@@ -213,7 +215,7 @@ function AssignPlacementModal({ onClose, onSuccess }) {
         <>
           <FormField label="Student" required>
             <select className={selectCls} value={form.student} onChange={set('student')}>
-              <option value="">Select student</option>
+              <option value="" className="bg-slate-800">Select student</option>
               {students.map(s => (
                 <option key={s.id} value={s.id}>
                   {`${s.first_name || ''} ${s.last_name || ''}`.trim() || s.email}
@@ -222,18 +224,20 @@ function AssignPlacementModal({ onClose, onSuccess }) {
             </select>
           </FormField>
           <FormField label="Company / Organisation" required>
-            <select className={selectCls} value={form.company} onChange={set('company')}>
-              <option value="">Select existing company or add new below</option>
+            <input
+              className={inputCls}
+              list="company-suggestions"
+              placeholder="Type or select a company..."
+              value={form.company_name}
+              onChange={set('company_name')}
+              autoComplete="off"
+            />
+            <datalist id="company-suggestions">
               {companies.map(c => (
-                <option key={c.id} value={c.id}>{c.company_name}</option>
+                <option key={c.id} value={c.company_name} />
               ))}
-            </select>
+            </datalist>
           </FormField>
-          {!form.company && (
-            <FormField label="New Company Name" required>
-              <input className={inputCls} placeholder="e.g. TechCorp Uganda" value={form.company_name} onChange={set('company_name')} />
-            </FormField>
-          )}
           <div className="grid grid-cols-2 gap-4">
             <FormField label="Start Date" required>
               <input className={inputCls} type="date" value={form.start_date} onChange={set('start_date')} />
@@ -318,7 +322,7 @@ function AssignSupervisorModal({ onClose, placement = null, allPlacements = [], 
           {!placement ? (
             <FormField label="Placement / Student" required>
               <select className={selectCls} value={form.placement_id} onChange={set('placement_id')}>
-                <option value="">Select placement</option>
+                <option value="" className="bg-slate-800">Select placement</option>
                 {allPlacements.map(p => (
                   <option key={p.id} value={p.id}>{p.student_name} — {p.company}</option>
                 ))}
@@ -331,7 +335,7 @@ function AssignSupervisorModal({ onClose, placement = null, allPlacements = [], 
           )}
           <FormField label="Academic Supervisor">
             <select className={selectCls} value={form.academic_supervisor} onChange={set('academic_supervisor')}>
-              <option value="">None / Keep existing</option>
+              <option value="" className="bg-slate-800">None / Keep existing</option>
               {academicSups.map(s => (
                 <option key={s.id} value={s.id}>
                   {`${s.first_name || ''} ${s.last_name || ''}`.trim() || s.email}
@@ -341,7 +345,7 @@ function AssignSupervisorModal({ onClose, placement = null, allPlacements = [], 
           </FormField>
           <FormField label="Workplace Supervisor">
             <select className={selectCls} value={form.workplace_supervisor} onChange={set('workplace_supervisor')}>
-              <option value="">None / Keep existing</option>
+              <option value="" className="bg-slate-800">None / Keep existing</option>
               {workplaceSups.map(s => (
                 <option key={s.id} value={s.id}>
                   {`${s.first_name || ''} ${s.last_name || ''}`.trim() || s.email}

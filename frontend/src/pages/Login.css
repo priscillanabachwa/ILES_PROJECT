@@ -114,6 +114,16 @@
   padding-right: 46px;
 }
 
+/* Hide browser's built-in password reveal button (Edge / Chrome) */
+.password-wrapper input::-ms-reveal,
+.password-wrapper input::-ms-clear,
+.password-wrapper input::-webkit-contacts-auto-fill-button,
+.password-wrapper input::-webkit-credentials-auto-fill-button {
+  display: none !important;
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .password-toggle {
   position: absolute;
   right: 12px;
@@ -515,6 +525,16 @@
 
 .password-wrapper input {
   padding-right: 46px;
+}
+
+/* Hide browser's built-in password reveal button (Edge / Chrome) */
+.password-wrapper input::-ms-reveal,
+.password-wrapper input::-ms-clear,
+.password-wrapper input::-webkit-contacts-auto-fill-button,
+.password-wrapper input::-webkit-credentials-auto-fill-button {
+  display: none !important;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .password-toggle {

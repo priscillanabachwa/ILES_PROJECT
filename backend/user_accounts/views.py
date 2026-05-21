@@ -29,6 +29,15 @@ class CustomUserViewSet(viewsets.ModelViewSet):
             qs = qs.filter(role=role)
         return qs
 
+    def destroy(self, request, *args, **kwargs):
+        if getattr(request.user, 'role', None) != 'admin':
+            return Response({'detail': 'Only administrators can delete users.'}, status=status.HTTP_403_FORBIDDEN)
+        instance = self.get_object()
+        if instance.id == request.user.id:
+            return Response({'detail': 'You cannot delete your own account.'}, status=status.HTTP_400_BAD_REQUEST)
+        instance.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 class NotificationViewSet(viewsets.GenericViewSet):
     """List, mark-read, delete, and filter notifications for the logged-in user."""

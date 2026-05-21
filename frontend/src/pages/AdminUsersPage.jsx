@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { fetchWithAuth } from '../services/authService'
 import dashboardService from '../services/dashboardService'
+import { useAuth } from '../Context/AuthContext'
 
 const API = '/api'
 
@@ -334,8 +335,55 @@ function PlacementsTab({ placements, setPlacements, loadingPlacements }) {
   )
 }
 
+function DeleteConfirmModal({ user, onClose, onConfirm, deleting }) {
+  if (!user) return null
+  const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-slate-800 border border-slate-700/50 rounded-2xl w-full max-w-sm shadow-2xl">
+        <div className="p-6 space-y-4">
+          {/* Icon */}
+          <div className="w-12 h-12 rounded-full bg-red-500/15 border border-red-500/30 flex items-center justify-center mx-auto">
+            <svg className="w-6 h-6 text-red-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round"
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+            </svg>
+          </div>
+          {/* Text */}
+          <div className="text-center">
+            <p className="text-white font-bold text-lg">Delete User</p>
+            <p className="text-slate-400 text-sm mt-1">
+              Are you sure you want to permanently delete <span className="text-white font-semibold">{fullName}</span>?
+            </p>
+            <p className="text-slate-500 text-xs mt-2">This action cannot be undone.</p>
+          </div>
+          {/* Buttons */}
+          <div className="flex gap-3 pt-1">
+            <button
+              onClick={onClose}
+              disabled={deleting}
+              className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-slate-600 text-slate-400 hover:bg-slate-700/50 disabled:opacity-50 transition"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onConfirm}
+              disabled={deleting}
+              className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-red-600 hover:bg-red-700 text-white disabled:opacity-50 transition"
+            >
+              {deleting ? 'Deleting...' : 'Delete'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function AdminUsersPage() {
   const [searchParams] = useSearchParams()
+  const { user: currentUser } = useAuth()
 
   const [users,            setUsers]            = useState([])
   const [placements,       setPlacements]       = useState([])
@@ -346,6 +394,8 @@ export default function AdminUsersPage() {
   const [statusFilter,     setStatusFilter]     = useState('all')
   const [selectedUser,     setSelectedUser]     = useState(null)
   const [showRegister,     setShowRegister]     = useState(false)
+  const [userToDelete,     setUserToDelete]     = useState(null)
+  const [deleting,         setDeleting]         = useState(false)
 
   useEffect(() => {
     // Fetch users
@@ -395,6 +445,22 @@ export default function AdminUsersPage() {
     }
   }
 
+  const handleDeleteConfirm = async () => {
+    if (!userToDelete) return
+    setDeleting(true)
+    try {
+      await fetchWithAuth(`${API}/accounts/users/${userToDelete.id}/`, { method: 'DELETE' })
+      setUsers(prev => prev.filter(u => u.id !== userToDelete.id))
+      const name = `${userToDelete.first_name || ''} ${userToDelete.last_name || ''}`.trim() || userToDelete.email
+      toast.success(`${name} has been deleted.`)
+      setUserToDelete(null)
+    } catch (err) {
+      toast.error(err.message || 'Failed to delete user.')
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   const ROLE_FILTERS = [
     { key:'all',                  label:'All Roles'  },
     { key:'student',              label:'Students'   },
@@ -417,6 +483,14 @@ export default function AdminUsersPage() {
           user={selectedUser}
           onClose={() => setSelectedUser(null)}
           onResetPassword={handleResetPassword}
+        />
+      )}
+      {userToDelete && (
+        <DeleteConfirmModal
+          user={userToDelete}
+          onClose={() => setUserToDelete(null)}
+          onConfirm={handleDeleteConfirm}
+          deleting={deleting}
         />
       )}
 
@@ -551,10 +625,18 @@ export default function AdminUsersPage() {
                           <p className="text-slate-400 text-sm">{u.phone_number || '—'}</p>
                         </td>
                         <td className="px-5 py-4">
-                          <button onClick={() => setSelectedUser(u)}
-                            className="px-3 py-1.5 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-400 border border-indigo-500/30 rounded-lg text-xs font-medium transition">
-                            View
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button onClick={() => setSelectedUser(u)}
+                              className="px-3 py-1.5 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-400 border border-indigo-500/30 rounded-lg text-xs font-medium transition">
+                              View
+                            </button>
+                            {u.id !== currentUser?.id && (
+                              <button onClick={() => setUserToDelete(u)}
+                                className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/25 text-red-400 border border-red-500/30 rounded-lg text-xs font-medium transition">
+                                Delete
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}

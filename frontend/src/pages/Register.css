@@ -145,6 +145,16 @@
   padding-right: 46px;
 }
 
+/* Hide browser's built-in password reveal button (Edge / Chrome) */
+.pw-wrap input::-ms-reveal,
+.pw-wrap input::-ms-clear,
+.pw-wrap input::-webkit-contacts-auto-fill-button,
+.pw-wrap input::-webkit-credentials-auto-fill-button {
+  display: none !important;
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .pw-toggle {
   position: absolute;
   right: 12px;

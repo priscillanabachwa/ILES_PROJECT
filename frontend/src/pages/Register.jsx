@@ -78,7 +78,8 @@ export default function Register() {
         role: formData.role,
       });
       login(response.user, response.token);
-      toast.success('Account created successfully! Welcome to ILES.');
+      const firstName = response.user?.first_name || response.user?.email?.split('@')[0] || 'there'
+      toast.success(`Welcome to ILES, ${firstName}! Your account has been created successfully.`, { autoClose: 5000 })
       const roleRoutes = {
         student: '/student/dashboard',
         admin: '/admin/dashboard',

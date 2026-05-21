@@ -105,6 +105,9 @@ export const fetchWithAuth = async (url, options = {}) => {
     );
   }
 
+  // 204 No Content (e.g. DELETE) — no body to parse
+  if (response.status === 204) return null;
+
   return response.json();
 };
 
