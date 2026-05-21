@@ -1,5 +1,5 @@
 ﻿import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { NavLink, useNavigate, Outlet } from 'react-router-dom';
+import { NavLink, Link, useNavigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../../Context/AuthContext'
 import { fetchWithAuth } from '../../services/authService'
 import ILESLogo from '../../assets/ILES_LOGO.png'
@@ -18,6 +18,7 @@ const NAV = {
   student: [
     { to: '/student/dashboard',     label: 'Dashboard'     },
     { to: '/student/logs',          label: 'My Logs'       },
+    { to: '/student/evaluation',    label: 'Evaluations'   },
     { to: '/student/notifications', label: 'Notifications' },
     { to: '/student/profile',       label: 'Profile'       },
   ],
@@ -62,6 +63,50 @@ const TYPE_ICONS = {
   general:       '[Info]',
 }
 
+// Where each notification type should navigate, keyed by role
+const NOTIF_LINKS = {
+  student: {
+    log_submitted: '/student/logs',
+    log_reviewed:  '/student/logs',
+    log_approved:  '/student/logs',
+    log_rejected:  '/student/logs',
+    evaluation:    '/student/evaluation',
+    placement:     '/student/dashboard',
+    welcome:       '/student/dashboard',
+    general:       '/student/notifications',
+  },
+  academic_supervisor: {
+    log_submitted: '/academic/logs',
+    log_reviewed:  '/academic/logs',
+    log_approved:  '/academic/logs',
+    log_rejected:  '/academic/logs',
+    evaluation:    '/academic/evaluations',
+    placement:     '/academic/dashboard',
+    welcome:       '/academic/dashboard',
+    general:       '/academic/notifications',
+  },
+  workplace_supervisor: {
+    log_submitted: '/supervisor/logs',
+    log_reviewed:  '/supervisor/logs',
+    log_approved:  '/supervisor/logs',
+    log_rejected:  '/supervisor/logs',
+    evaluation:    '/supervisor/scores',
+    placement:     '/supervisor/dashboard',
+    welcome:       '/supervisor/dashboard',
+    general:       '/supervisor/notifications',
+  },
+  admin: {
+    log_submitted: '/admin/logs',
+    log_reviewed:  '/admin/logs',
+    log_approved:  '/admin/logs',
+    log_rejected:  '/admin/logs',
+    evaluation:    '/admin/evaluations',
+    placement:     '/admin/dashboard',
+    welcome:       '/admin/dashboard',
+    general:       '/admin/notifications',
+  },
+}
+
 function formatTime(iso) {
   if (!iso) return ''
   const diff = Date.now() - new Date(iso).getTime()
@@ -75,7 +120,6 @@ function formatTime(iso) {
 
 function NotificationBell() {
   const { user }        = useAuth()
-  const navigate        = useNavigate()
   const [open,          setOpen]    = useState(false)
   const [notifications, setNotifs]  = useState([])
   const [unreadCount,   setUnread]  = useState(0)
@@ -114,6 +158,17 @@ function NotificationBell() {
     } catch { /* silent */ }
   }
 
+  const [selected, setSelected] = useState(null)
+
+  const handleNotifClick = (n) => {
+    if (!n.is_read) markRead(n.id)
+    setSelected(n)
+  }
+
+  const selectedLink = selected
+    ? (NOTIF_LINKS[user?.role]?.[selected.notification_type] || NOTIF_PATH[user?.role] || '/')
+    : '/'
+
   const markAllRead = async () => {
     try {
       await fetchWithAuth(`${API}/accounts/notifications/mark-all-read/`, { method: 'POST' })
@@ -127,7 +182,7 @@ function NotificationBell() {
   return (
     <div className="relative" ref={dropdownRef}>
       <button
-        onClick={() => { setOpen(o => !o); if (!open) fetchNotifs() }}
+        onClick={() => { setOpen(o => !o); setSelected(null); if (!open) fetchNotifs() }}
         className="relative w-9 h-9 rounded-full flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-700/50 transition"
         aria-label="Notifications"
       >
@@ -144,63 +199,96 @@ function NotificationBell() {
 
       {open && (
         <div className="absolute right-0 top-11 w-80 bg-slate-800 border border-slate-700/60 rounded-2xl shadow-2xl z-50 overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700/50">
-            <div className="flex items-center gap-2">
-              <span className="text-white font-semibold text-sm">Notifications</span>
-              {unreadCount > 0 && (
-                <span className="bg-indigo-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{unreadCount}</span>
-              )}
-            </div>
-            {unreadCount > 0 && (
-              <button onClick={markAllRead} className="text-xs text-indigo-400 hover:text-indigo-300 transition">
-                Mark all read
-              </button>
-            )}
-          </div>
 
-          <div className="max-h-80 overflow-y-auto divide-y divide-slate-700/30">
-            {recent.length === 0 ? (
-              <div className="py-10 text-center">
-                <svg className="w-8 h-8 text-slate-600 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-                </svg>
-                <p className="text-slate-500 text-sm">No notifications yet</p>
+          {selected ? (
+            /* ── Detail view ── */
+            <>
+              <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-700/50">
+                <button onClick={() => setSelected(null)} className="text-slate-400 hover:text-white transition p-0.5">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/>
+                  </svg>
+                </button>
+                <span className="text-white font-semibold text-sm">Notification</span>
               </div>
-            ) : (
-              recent.map(n => (
-                <div
-                  key={n.id}
-                  onClick={() => !n.is_read && markRead(n.id)}
-                  className={`flex items-start gap-3 px-4 py-3 transition cursor-pointer ${
-                    n.is_read ? 'hover:bg-slate-700/20' : 'bg-indigo-600/5 hover:bg-indigo-600/10'
-                  }`}
+              <div className="p-4 space-y-3">
+                <p className="text-white text-sm font-semibold leading-snug">{selected.title}</p>
+                <p className="text-slate-300 text-xs leading-relaxed">{selected.message}</p>
+                <p className="text-[10px] text-slate-500">{formatTime(selected.created_at)}</p>
+              </div>
+              <div className="px-4 pb-4">
+                <Link
+                  to={selectedLink}
+                  onClick={() => { setOpen(false); setSelected(null); }}
+                  className="w-full block text-center py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition"
                 >
-                  <span className="text-base flex-shrink-0 mt-0.5">{TYPE_ICONS[n.notification_type] || '[Info]'}</span>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <p className={`text-xs font-semibold leading-snug ${n.is_read ? 'text-slate-300' : 'text-white'}`}>
-                        {n.title}
-                      </p>
-                      {!n.is_read && <span className="w-2 h-2 rounded-full bg-indigo-500 flex-shrink-0 mt-1" />}
-                    </div>
-                    <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{n.message}</p>
-                    <p className="text-[10px] text-slate-600 mt-1">{formatTime(n.created_at)}</p>
-                  </div>
+                  Open →
+                </Link>
+              </div>
+            </>
+          ) : (
+            /* ── List view ── */
+            <>
+              <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700/50">
+                <div className="flex items-center gap-2">
+                  <span className="text-white font-semibold text-sm">Notifications</span>
+                  {unreadCount > 0 && (
+                    <span className="bg-indigo-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{unreadCount}</span>
+                  )}
                 </div>
-              ))
-            )}
-          </div>
+                {unreadCount > 0 && (
+                  <button onClick={markAllRead} className="text-xs text-indigo-400 hover:text-indigo-300 transition">
+                    Mark all read
+                  </button>
+                )}
+              </div>
 
-          <div className="px-4 py-2.5 border-t border-slate-700/50 text-center">
-            <button
-              onClick={() => { setOpen(false); navigate(notifPath) }}
-              className="text-xs text-indigo-400 hover:text-indigo-300 transition"
-            >
-              View all notifications
-              {notifications.length > 8 && ` (${notifications.length})`}
-            </button>
-          </div>
+              <div className="max-h-80 overflow-y-auto divide-y divide-slate-700/30">
+                {recent.length === 0 ? (
+                  <div className="py-10 text-center">
+                    <svg className="w-8 h-8 text-slate-600 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                    </svg>
+                    <p className="text-slate-500 text-sm">No notifications yet</p>
+                  </div>
+                ) : (
+                  recent.map(n => (
+                    <div
+                      key={n.id}
+                      onClick={() => handleNotifClick(n)}
+                      className={`flex items-start gap-3 px-4 py-3 transition cursor-pointer ${
+                        n.is_read ? 'hover:bg-slate-700/20' : 'bg-indigo-600/5 hover:bg-indigo-600/10'
+                      }`}
+                    >
+                      <span className="text-base flex-shrink-0 mt-0.5">{TYPE_ICONS[n.notification_type] || '[Info]'}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className={`text-xs font-semibold leading-snug ${n.is_read ? 'text-slate-300' : 'text-white'}`}>
+                            {n.title}
+                          </p>
+                          {!n.is_read && <span className="w-2 h-2 rounded-full bg-indigo-500 flex-shrink-0 mt-1" />}
+                        </div>
+                        <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{n.message}</p>
+                        <p className="text-[10px] text-slate-600 mt-1">{formatTime(n.created_at)}</p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="px-4 py-2.5 border-t border-slate-700/50 text-center">
+                <Link
+                  to={notifPath}
+                  onClick={() => { setOpen(false); setSelected(null); }}
+                  className="text-xs text-indigo-400 hover:text-indigo-300 transition"
+                >
+                  View all notifications
+                  {notifications.length > 8 && ` (${notifications.length})`}
+                </Link>
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>
