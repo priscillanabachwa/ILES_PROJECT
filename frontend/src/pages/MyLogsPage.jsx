@@ -86,10 +86,9 @@ function WorkflowTracker({ status }) {
         <div key={step} className="flex items-center flex-1">
           <div className="flex flex-col items-center gap-1 flex-1">
             <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 transition
-              ${i < idx  ? 'bg-indigo-600 border-indigo-600 text-white' :
-                i === idx ? 'bg-slate-800 border-indigo-500 text-indigo-400' :
-                            'bg-slate-800 border-slate-600'}`}>
-              {i < idx && (
+              ${i <= idx ? 'bg-indigo-600 border-indigo-600 text-white' :
+                           'bg-slate-800 border-slate-600'}`}>
+              {i <= idx && (
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
                 </svg>

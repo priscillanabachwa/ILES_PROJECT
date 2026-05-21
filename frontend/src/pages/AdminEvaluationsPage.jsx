@@ -1,6 +1,7 @@
 ﻿import { useState, useEffect } from 'react'
 import { toast } from 'react-toastify'
 import { fetchWithAuth } from '../services/authService'
+import { capName } from '../services/dashboardService'
 
 const API = '/api'
 
@@ -117,7 +118,7 @@ export default function AdminEvaluationsPage() {
         setEvaluations(
           (Array.isArray(evalsData) ? evalsData : []).map(e => ({
             ...e,
-            student_name: pm[e.placement]?.student_name || `Placement #${e.placement}`,
+            student_name: capName(pm[e.placement]?.student_name || `Placement #${e.placement}`),
             company:      pm[e.placement]?.company_name || '—',
           }))
         )

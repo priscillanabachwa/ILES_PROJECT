@@ -1,6 +1,7 @@
 ﻿import { useState, useEffect } from 'react'
 import { toast } from 'react-toastify'
 import { fetchWithAuth } from '../services/authService'
+import { capName } from '../services/dashboardService'
 
 const API = '/api'
 
@@ -238,7 +239,7 @@ export default function AcademicLogsPage() {
         setLogs(
           (Array.isArray(logsData) ? logsData : []).map(l => ({
             ...l,
-            student_name: pm[l.placement]?.student_name || `Placement #${l.placement}`,
+            student_name: capName(pm[l.placement]?.student_name || `Placement #${l.placement}`),
             company: pm[l.placement]?.company_name || '—',
           }))
         )

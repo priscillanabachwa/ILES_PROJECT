@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { toast } from 'react-toastify'
 import { fetchWithAuth } from '../services/authService'
+import { capName } from '../services/dashboardService'
 
 const API = '/api'
 
@@ -308,7 +309,7 @@ export default function AcademicEvaluationsPage() {
         setRows(placements.map(p => ({
           placement:    p,
           evaluation:   evalByPlacement[p.id] || null,
-          student_name: p.student_name || `Student #${p.id}`,
+          student_name: capName(p.student_name || `Student #${p.id}`),
           company:      p.company_name || '—',
         })))
 

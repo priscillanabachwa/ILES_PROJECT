@@ -9,6 +9,12 @@ const USERS = `${BASE}/accounts/users/`;
 
 // ????????? helpers ????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
 
+/** Capitalise every word in a name string */
+export function capName(s) {
+  if (!s) return s
+  return String(s).replace(/\b\w/g, c => c.toUpperCase())
+}
+
 function weeksBetween(start, end) {
   if (!start || !end) return null;
   return Math.max(1, Math.ceil((new Date(end) - new Date(start)) / (7 * 86400000)));
@@ -170,7 +176,7 @@ async function getWorkplacePlacements() {
   return {
     data: placements.map(p => ({
       id: p.id,
-      student_name: p.student_name || String(p.student || ''),
+      student_name: capName(p.student_name || String(p.student || '')),
       student_id: String(p.student || ''),
       department: '',
       status: p.status,
@@ -188,7 +194,7 @@ async function getWorkplacePendingReviews() {
     .filter(l => l.status === 'submitted')
     .map(l => ({
       ...l,
-      student_name: pm[l.placement]?.student_name || 'Unknown Student',
+      student_name: capName(pm[l.placement]?.student_name || 'Unknown Student'),
       activities_preview: (l.activities || '').slice(0, 80),
     }));
   return { data: pending };
@@ -228,7 +234,7 @@ async function getWorkplaceActivity() {
   return {
     data: logbooks.slice(0, 10).map(l => ({
       id: l.id,
-      student_name: pm[l.placement]?.student_name || 'Unknown Student',
+      student_name: capName(pm[l.placement]?.student_name || 'Unknown Student'),
       activity: `Weekly Log — Week ${l.week_number}`,
       date: l.submitted_at || l.deadline,
       status: l.status,
@@ -267,7 +273,7 @@ async function getAcademicPlacements() {
   return {
     data: placements.map(p => ({
       id: p.id,
-      student_name: p.student_name || String(p.student || ''),
+      student_name: capName(p.student_name || String(p.student || '')),
       student_id: String(p.student || ''),
       company: p.company_name || String(p.company || ''),
       status: p.status,
@@ -286,7 +292,7 @@ async function getPendingReviews() {
       .filter(l => ['workplace_reviewed', 'reviewed'].includes(l.status))
       .map(l => ({
         ...l,
-        student_name: pm[l.placement]?.student_name || 'Unknown Student',
+        student_name: capName(pm[l.placement]?.student_name || 'Unknown Student'),
       })),
   };
 }
@@ -300,7 +306,7 @@ async function getRecentActivity() {
   return {
     data: logbooks.slice(0, 10).map(l => ({
       id: l.id,
-      student_name: pm[l.placement]?.student_name || 'Unknown Student',
+      student_name: capName(pm[l.placement]?.student_name || 'Unknown Student'),
       activity: `Weekly Log — Week ${l.week_number}`,
       date: l.submitted_at || l.deadline,
       status: l.status,
@@ -371,7 +377,7 @@ async function getAdminPlacements() {
   return {
     data: placements.map(p => ({
       id: p.id,
-      student_name: p.student_name || String(p.student || ''),
+      student_name: capName(p.student_name || String(p.student || '')),
       student_id: String(p.student || ''),
       company: p.company_name || String(p.company || ''),
       academic_supervisor: p.academic_supervisor_name || '',
@@ -404,17 +410,56 @@ async function getAdminEvaluations() {
     fetchWithAuth(PLACEMENTS),
   ]);
   const pm = buildPlacementMap(placements);
+
+  // Group by placement → one row per student
+  const byPlacement = {};
+  for (const e of (Array.isArray(evals) ? evals : [])) {
+    if (!byPlacement[e.placement]) byPlacement[e.placement] = { academic: null, workplace: null };
+    if (e.evaluator_role === 'academic_supervisor')  byPlacement[e.placement].academic  = e;
+    else if (e.evaluator_role === 'workplace_supervisor') byPlacement[e.placement].workplace = e;
+  }
+
+  const gradeFromScore = (s) => {
+    if (s == null) return null;
+    if (s >= 80) return 'A';
+    if (s >= 70) return 'B';
+    if (s >= 60) return 'C';
+    if (s >= 50) return 'D';
+    return 'F';
+  };
+
   return {
-    data: (Array.isArray(evals) ? evals : []).map(e => ({
-      id: e.id,
-      student_name: pm[e.placement]?.student_name || `Placement #${e.placement}`,
-      final_score: e.total_score != null ? Number(e.total_score) : null,
-      grade: e.grade || null,
-      status: e.status,
-      workplace_score: null,
-      academic_score: null,
-      logbook_score: null,
-    })),
+    data: Object.entries(byPlacement).map(([placementId, { academic, workplace }]) => {
+      const aScore = academic?.total_score  != null ? Number(academic.total_score)  : null;
+      const wScore = workplace?.total_score != null ? Number(workplace.total_score) : null;
+
+      // Logbook score = the logbook criteria item inside the academic eval
+      const logbookItem  = academic?.items?.find(i => i.criteria_name?.toLowerCase().includes('logbook'));
+      const logbookScore = logbookItem ? Number(logbookItem.score) : null;
+
+      let finalScore = null;
+      if (aScore != null && wScore != null)      finalScore = Number(((aScore * 0.6) + (wScore * 0.4)).toFixed(1));
+      else if (aScore != null)                   finalScore = aScore;
+      else if (wScore != null)                   finalScore = wScore;
+
+      const status = (academic?.status === 'SUBMITTED' || workplace?.status === 'SUBMITTED')
+        ? 'SUBMITTED' : 'PENDING';
+
+      return {
+        id: Number(placementId),
+        placement: Number(placementId),
+        student_name: capName(pm[placementId]?.student_name || `Placement #${placementId}`),
+        company:      pm[placementId]?.company_name || '—',
+        academic_score:  aScore,
+        workplace_score: wScore,
+        logbook_score:   logbookScore,
+        final_score:     finalScore,
+        total_score:     finalScore,
+        grade:           gradeFromScore(finalScore),
+        status,
+        items: [...(academic?.items || []), ...(workplace?.items || [])],
+      };
+    }),
   };
 }
 
