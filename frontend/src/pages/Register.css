@@ -9,7 +9,7 @@
 .reg-root {
   font-family: 'Segoe UI', 'Inter', sans-serif;
   min-height: 100vh;
-  background: #0a1628;
+  background: #1e3a5f;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -119,7 +119,7 @@
 
 .form-group input:focus,
 .form-group select:focus {
-  border-color: #0a1628;
+  border-color: #1e3a5f;
   box-shadow: 0 0 0 3px rgba(10, 22, 40, 0.12);
 }
 
@@ -173,7 +173,7 @@
 }
 
 .pw-toggle:hover {
-  color: #0a1628;
+  color: #1e3a5f;
 }
 
 .pw-toggle:disabled {
@@ -196,7 +196,7 @@
 .reg-btn {
   width: 100%;
   padding: 12px;
-  background: #0a1628;
+  background: #1e3a5f;
   color: #ffffff;
   border: none;
   border-radius: 8px;
@@ -209,7 +209,7 @@
 }
 
 .reg-btn:hover {
-  background: #1a3a6e;
+  background: #2a5490;
   box-shadow: 0 4px 16px rgba(10, 22, 40, 0.25);
 }
 

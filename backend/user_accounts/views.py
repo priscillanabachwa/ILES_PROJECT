@@ -38,6 +38,18 @@ class CustomUserViewSet(viewsets.ModelViewSet):
         instance.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+    @action(detail=True, methods=['post'], url_path='toggle-active')
+    def toggle_active(self, request, pk=None):
+        if getattr(request.user, 'role', None) != 'admin':
+            return Response({'detail': 'Only administrators can activate or deactivate users.'}, status=status.HTTP_403_FORBIDDEN)
+        instance = self.get_object()
+        if instance.id == request.user.id:
+            return Response({'detail': 'You cannot deactivate your own account.'}, status=status.HTTP_400_BAD_REQUEST)
+        instance.is_active = not instance.is_active
+        instance.save(update_fields=['is_active'])
+        state = 'activated' if instance.is_active else 'deactivated'
+        return Response({'detail': f'User {state} successfully.', 'is_active': instance.is_active})
+
 
 class NotificationViewSet(viewsets.GenericViewSet):
     """List, mark-read, delete, and filter notifications for the logged-in user."""

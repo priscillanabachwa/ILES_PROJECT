@@ -311,10 +311,10 @@ export default function AppLayout() {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#0f172a] text-[#e4e1ed]">
+    <div className="flex min-h-screen bg-[#1e3a5f] text-[#e4e1ed]">
 
       {/* "" Sidebar "" */}
-      <aside className="w-64 h-screen sticky left-0 top-0 border-r border-white/10 bg-[#1e3a5f] backdrop-blur-xl flex flex-col py-6 overflow-hidden">
+      <aside className="w-64 h-screen sticky left-0 top-0 border-r border-white/10 bg-[#2a5490] backdrop-blur-xl flex flex-col py-6 overflow-hidden">
 
         {/* Logo */}
         <div className="px-4 mb-6 flex flex-col items-center gap-3 text-center">
@@ -362,8 +362,8 @@ export default function AppLayout() {
       </aside>
 
       {/* "" Main content "" */}
-      <main className="flex-1 flex flex-col min-w-0 bg-[#0f172a]">
-        <header className="h-16 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md flex items-center px-8 justify-between sticky top-0 z-40">
+      <main className="flex-1 flex flex-col min-w-0 bg-[#1e3a5f]">
+        <header className="h-16 border-b border-white/10 bg-[#172e4d]/90 backdrop-blur-md flex items-center px-8 justify-between sticky top-0 z-40">
           <span className="text-white font-bold text-lg">Internship Management System</span>
           <div className="flex items-center gap-3">
             <NotificationBell />

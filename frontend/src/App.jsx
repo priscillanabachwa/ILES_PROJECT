@@ -37,7 +37,7 @@ const ProtectedRoute = ({children, allowedRoles}) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0f172a] text-white">
+      <div className="min-h-screen flex items-center justify-center bg-[#1e3a5f] text-white">
         <p>Loading ILES...</p>
       </div>
     );
@@ -72,7 +72,7 @@ class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-[#0f172a] text-white">
+        <div className="min-h-screen flex items-center justify-center bg-[#1e3a5f] text-white">
           <div className="text-center">
             <h1 className="text-4xl font-bold mb-4">Oops! Something went wrong</h1>
             <p className="text-slate-400 mb-6">{this.state.error?.message}</p>
@@ -93,7 +93,7 @@ class ErrorBoundary extends React.Component {
 // 404 Not Found Component
 function NotFound() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#0f172a] text-white p-6">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[#1e3a5f] text-white p-6">
         <h1 className="text-6xl font-bold mb-4">Page Not Found</h1>
         <p className="text-xl text-slate-400 mb-8">The page you are looking for does not exist.</p>
         <a href="/login" className="text-indigo-400 underline hover:text-indigo-300 text-lg">Return to Login</a>

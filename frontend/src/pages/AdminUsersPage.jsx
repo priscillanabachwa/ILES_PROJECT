@@ -445,6 +445,18 @@ export default function AdminUsersPage() {
     }
   }
 
+  const handleToggleActive = async (u) => {
+    const action = u.is_active !== false ? 'deactivate' : 'activate'
+    try {
+      const res = await fetchWithAuth(`${API}/accounts/users/${u.id}/toggle-active/`, { method: 'POST' })
+      setUsers(prev => prev.map(usr => usr.id === u.id ? { ...usr, is_active: res.is_active } : usr))
+      const name = `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email
+      toast.success(`${name} has been ${res.is_active ? 'activated' : 'deactivated'}.`)
+    } catch (err) {
+      toast.error(err.message || `Failed to ${action} user.`)
+    }
+  }
+
   const handleDeleteConfirm = async () => {
     if (!userToDelete) return
     setDeleting(true)
@@ -631,10 +643,20 @@ export default function AdminUsersPage() {
                               View
                             </button>
                             {u.id !== currentUser?.id && (
-                              <button onClick={() => setUserToDelete(u)}
-                                className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/25 text-red-400 border border-red-500/30 rounded-lg text-xs font-medium transition">
-                                Delete
-                              </button>
+                              <>
+                                <button onClick={() => handleToggleActive(u)}
+                                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition border ${
+                                    u.is_active !== false
+                                      ? 'bg-amber-500/10 hover:bg-amber-500/25 text-amber-400 border-amber-500/30'
+                                      : 'bg-emerald-500/10 hover:bg-emerald-500/25 text-emerald-400 border-emerald-500/30'
+                                  }`}>
+                                  {u.is_active !== false ? 'Deactivate' : 'Activate'}
+                                </button>
+                                <button onClick={() => setUserToDelete(u)}
+                                  className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/25 text-red-400 border border-red-500/30 rounded-lg text-xs font-medium transition">
+                                  Delete
+                                </button>
+                              </>
                             )}
                           </div>
                         </td>

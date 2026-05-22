@@ -571,7 +571,7 @@ export default function MyLogsPage() {
                     <span>
                       {log.status === 'approved'            && <span className="text-emerald-400 font-medium">Approved by supervisor</span>}
                       {log.status === 'reviewed'            && <span className="text-blue-400 font-medium">Reviewed – awaiting approval</span>}
-                      {log.status === 'submitted'           && <span className="text-amber-400 font-medium">Awaiting workplace supervisor review</span>}
+                      {log.status === 'submitted'           && <span className="text-amber-400 font-medium">Submitted for Grading</span>}
                       {log.status === 'draft'               && <span className="text-slate-500">Draft – not yet submitted</span>}
                     </span>
                     {log.status === 'draft' && (

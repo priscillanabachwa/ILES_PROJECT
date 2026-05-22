@@ -9,12 +9,12 @@ const ROLE_CONFIG = {
     badge: 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30',
     subtitle: 'Your details are visible to your assigned supervisors',
     fields: [
-      { key: 'first_name',   label: 'First Name',  type: 'text', maxLength: 150 },
-      { key: 'last_name',    label: 'Last Name',   type: 'text', maxLength: 150 },
-      { key: 'phone_number', label: 'Phone',        type: 'tel',  hint: 'e.g. +256 700 000 000' },
-      { key: 'institution',  label: 'Institution',  type: 'text' },
-      { key: 'department',   label: 'Department',   type: 'text' },
-      { key: 'student_id',   label: 'Student ID',   type: 'text' },
+      { key: 'first_name',   label: 'First Name',   type: 'text', maxLength: 150 },
+      { key: 'last_name',    label: 'Last Name',    type: 'text', maxLength: 150 },
+      { key: 'phone_number', label: 'Phone',         type: 'tel'  },
+      { key: 'institution',  label: 'Institution',   type: 'text' },
+      { key: 'department',   label: 'Course Name',   type: 'text' },
+      { key: 'student_id',   label: 'Student ID',    type: 'text' },
     ],
   },
   workplace_supervisor: {
@@ -24,7 +24,7 @@ const ROLE_CONFIG = {
     fields: [
       { key: 'first_name',   label: 'First Name',   type: 'text', maxLength: 150 },
       { key: 'last_name',    label: 'Last Name',    type: 'text', maxLength: 150 },
-      { key: 'phone_number', label: 'Phone',         type: 'tel',  hint: 'e.g. +256 700 000 000' },
+      { key: 'phone_number', label: 'Phone',         type: 'tel'  },
       { key: 'organisation', label: 'Organisation',  type: 'text' },
       { key: 'department',   label: 'Department',    type: 'text' },
       { key: 'job_title',    label: 'Job Title',     type: 'text' },
@@ -37,7 +37,7 @@ const ROLE_CONFIG = {
     fields: [
       { key: 'first_name',   label: 'First Name',  type: 'text', maxLength: 150 },
       { key: 'last_name',    label: 'Last Name',   type: 'text', maxLength: 150 },
-      { key: 'phone_number', label: 'Phone',        type: 'tel',  hint: 'e.g. +256 700 000 000' },
+      { key: 'phone_number', label: 'Phone',        type: 'tel'  },
       { key: 'institution',  label: 'Institution',  type: 'text' },
       { key: 'faculty',      label: 'Faculty',      type: 'text' },
       { key: 'staff_id',     label: 'Staff ID',     type: 'text' },
@@ -50,13 +50,18 @@ const ROLE_CONFIG = {
     fields: [
       { key: 'first_name',   label: 'First Name',  type: 'text', maxLength: 150 },
       { key: 'last_name',    label: 'Last Name',   type: 'text', maxLength: 150 },
-      { key: 'phone_number', label: 'Phone',        type: 'tel',  hint: 'e.g. +256 700 000 000' },
+      { key: 'phone_number', label: 'Phone',        type: 'tel'  },
     ],
   },
 }
 
 const validators = {
-  phone_number: (v) => v && !/^\+?[0-9\s]{7,15}$/.test(v) ? 'Enter a valid phone number' : '',
+  phone_number: (v) => {
+    if (!v) return ''
+    const digits = v.replace(/^\+256/, '')
+    if (!/^[0-9]{9}$/.test(digits)) return 'Enter exactly 9 digits after +256'
+    return ''
+  },
 }
 
 const validateField = (key, value) => validators[key]?.(value) || ''
@@ -253,12 +258,35 @@ export default function ProfilePage() {
         {/* EDIT MODE */}
         {editMode && (
           <div className="space-y-4">
-            {config.fields.map(({ key, label, type, hint, maxLength }) => (
-              <Field key={key} label={label} error={fieldErrors[key]} hint={hint}>
-                <input type={type || 'text'} className={inputCls(fieldErrors[key])}
-                  value={form[key]} onChange={set(key)} maxLength={maxLength} />
-                {maxLength && (
-                  <p className="text-right text-xs text-slate-600 mt-0.5">{(form[key] || '').length}/{maxLength}</p>
+            {config.fields.map(({ key, label, type, maxLength }) => (
+              <Field key={key} label={label} error={fieldErrors[key]}>
+                {key === 'phone_number' ? (
+                  <div className={`flex items-center rounded-lg border overflow-hidden transition
+                    ${fieldErrors[key] ? 'border-red-500/50' : 'border-slate-600 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20'}`}>
+                    <span className="px-3 py-2 text-sm font-semibold text-slate-300 bg-slate-600/60 border-r border-slate-600 select-none whitespace-nowrap">
+                      +256
+                    </span>
+                    <input
+                      type="tel"
+                      inputMode="numeric"
+                      maxLength={9}
+                      placeholder="700 000 000"
+                      className="flex-1 px-3 py-2 text-sm outline-none bg-slate-700/50 text-white placeholder-slate-500"
+                      value={(form.phone_number || '').replace(/^\+256/, '')}
+                      onChange={(e) => {
+                        const digits = e.target.value.replace(/\D/g, '').slice(0, 9)
+                        setForm(f => ({ ...f, phone_number: digits ? `+256${digits}` : '' }))
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <input type={type || 'text'} className={inputCls(fieldErrors[key])}
+                      value={form[key]} onChange={set(key)} maxLength={maxLength} />
+                    {maxLength && (
+                      <p className="text-right text-xs text-slate-600 mt-0.5">{(form[key] || '').length}/{maxLength}</p>
+                    )}
+                  </>
                 )}
               </Field>
             ))}

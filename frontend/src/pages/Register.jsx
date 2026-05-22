@@ -172,15 +172,27 @@ export default function Register() {
           {/* Phone */}
           <div className="form-group">
             <label htmlFor="phone_number">Phone Number</label>
-            <input
-              id="phone_number"
-              type="tel"
-              name="phone_number"
-              value={formData.phone_number}
-              onChange={handleInputChange}
-              placeholder="Enter your phone number"
-              disabled={loading}
-            />
+            <div style={{ display:'flex', border:'1.5px solid #c5d8f0', borderRadius:'8px', overflow:'hidden' }}>
+              <span style={{
+                padding:'10px 12px', background:'#d8eaf7', color:'#1e3a5f',
+                fontWeight:700, fontSize:'14px', whiteSpace:'nowrap', userSelect:'none',
+                borderRight:'1.5px solid #c5d8f0',
+              }}>+256</span>
+              <input
+                id="phone_number"
+                type="tel"
+                inputMode="numeric"
+                maxLength={9}
+                placeholder="700 000 000"
+                value={formData.phone_number.replace(/^\+256/, '')}
+                onChange={(e) => {
+                  const digits = e.target.value.replace(/\D/g, '').slice(0, 9)
+                  setFormData(prev => ({ ...prev, phone_number: digits ? `+256${digits}` : '' }))
+                }}
+                disabled={loading}
+                style={{ flex:1, border:'none', outline:'none', padding:'10px 12px', fontSize:'14px', color:'#000' }}
+              />
+            </div>
           </div>
 
           {/* Password */}
