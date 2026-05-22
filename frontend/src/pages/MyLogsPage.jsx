@@ -165,7 +165,8 @@ export default function MyLogsPage() {
   const [listError,   setListError]   = useState('')
   const [search,      setSearch]      = useState('')
   const [filter,      setFilter]      = useState('all')
-  const [placementId, setPlacementId] = useState(null)
+  const [placementId,  setPlacementId]  = useState(null)
+  const [placement,    setPlacement]    = useState(null)
 
   /* ── form state ─────────────────────────────────────────────────────── */
   const [view,        setView]       = useState(location.state?.openForm ? 'new' : 'history')
@@ -207,6 +208,7 @@ export default function MyLogsPage() {
           ? placements.find(p => p.status === 'ACTIVE') || placements[0]
           : null
         setPlacementId(active?.id ?? null)
+        setPlacement(active ?? null)
       } catch {
         setListError('Failed to load your logbooks. Please refresh.')
       } finally {
@@ -291,6 +293,11 @@ export default function MyLogsPage() {
 
     if (!placementId) {
       toast.error('No active placement found. Ask your administrator to assign you to a placement.')
+      return
+    }
+
+    if (saveAs === 'submitted' && (!placement?.workplace_supervisor || !placement?.academic_supervisor)) {
+      toast.error('You cannot submit a log until both supervisors have been assigned. Please contact your administrator.', { autoClose: 6000 })
       return
     }
 
@@ -621,6 +628,27 @@ export default function MyLogsPage() {
                   d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
               </svg>
               <span>No active placement found. Contact your administrator before submitting logs.</span>
+            </div>
+          )}
+
+          {/* Missing supervisors banner */}
+          {!loading && placementId && (!placement?.workplace_supervisor || !placement?.academic_supervisor) && (
+            <div className="mx-6 mt-4 flex items-start gap-3 bg-red-500/10 border border-red-500/30 text-red-300 text-sm px-4 py-3 rounded-xl">
+              <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+              </svg>
+              <div>
+                <p className="font-semibold">Supervisors not yet assigned</p>
+                <p className="mt-0.5 text-red-400">
+                  {!placement?.workplace_supervisor && !placement?.academic_supervisor
+                    ? 'You have no workplace supervisor or academic supervisor assigned.'
+                    : !placement?.workplace_supervisor
+                      ? 'You have no workplace supervisor assigned.'
+                      : 'You have no academic supervisor assigned.'}
+                  {' '}You can save drafts but <strong>cannot submit</strong> until both are assigned. Please contact your administrator.
+                </p>
+              </div>
             </div>
           )}
 

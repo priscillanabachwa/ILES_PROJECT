@@ -323,9 +323,11 @@ function AssignSupervisorModal({ onClose, placement = null, allPlacements = [], 
             <FormField label="Placement / Student" required>
               <select className={selectCls} value={form.placement_id} onChange={set('placement_id')}>
                 <option value="" className="bg-slate-800">Select placement</option>
-                {allPlacements.map(p => (
-                  <option key={p.id} value={p.id}>{p.student_name} — {p.company}</option>
-                ))}
+                {allPlacements
+                  .filter(p => !p._academic_supervisor_id || !p._workplace_supervisor_id)
+                  .map(p => (
+                    <option key={p.id} value={p.id}>{p.student_name} — {p.company}</option>
+                  ))}
               </select>
             </FormField>
           ) : (
@@ -369,21 +371,147 @@ function AssignSupervisorModal({ onClose, placement = null, allPlacements = [], 
   )
 }
 
-function ReportModal({ onClose }) {
+function ReportModal({ onClose, placements = [], users = [], evaluations = [] }) {
   const [reportType, setReportType] = useState('placements')
-  const [format, setFormat]         = useState('pdf')
+  const [format, setFormat]         = useState('csv')
   const [generating, setGenerating] = useState(false)
 
-  const handleGenerate = async () => {
-    setGenerating(true)
+  // ── helpers ──────────────────────────────────────────────────────────────
+  const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`
+
+  const makeCSV = (headers, rows) =>
+    [headers.join(','), ...rows.map(r => r.map(esc).join(','))].join('\n')
+
+  const downloadFile = (content, filename, mime) => {
+    const blob = new Blob([content], { type: mime })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a')
+    a.href = url; a.download = filename
+    document.body.appendChild(a); a.click()
+    document.body.removeChild(a); URL.revokeObjectURL(url)
+  }
+
+  const openPrint = (title, headers, rows) => {
+    const thead = `<tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>`
+    const tbody = rows.map(r =>
+      `<tr>${r.map(c => `<td>${c ?? '—'}</td>`).join('')}</tr>`
+    ).join('')
+    const w = window.open('', '_blank')
+    if (!w) { toast.error('Pop-up blocked — please allow pop-ups for this site.'); return }
+    w.document.write(`<!DOCTYPE html><html><head><title>ILES – ${title}</title><style>
+      *{box-sizing:border-box}body{font-family:Arial,sans-serif;padding:28px;color:#0f172a}
+      h1{font-size:20px;margin:0 0 4px}p.sub{color:#64748b;font-size:12px;margin:0 0 20px}
+      table{width:100%;border-collapse:collapse;font-size:12px}
+      th{background:#1e293b;color:#fff;padding:8px 10px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+      td{padding:8px 10px;border-bottom:1px solid #e2e8f0}
+      tr:nth-child(even) td{background:#f8fafc}
+      .footer{margin-top:24px;font-size:10px;color:#94a3b8}
+      .hint{display:flex;align-items:center;gap:10px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 16px;margin-bottom:24px;color:#1e40af;font-size:13px}
+      .hint strong{font-weight:700}
+      .hint-btn{margin-left:auto;background:#2563eb;color:#fff;border:none;border-radius:6px;padding:7px 16px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
+      .hint-btn:hover{background:#1d4ed8}
+      @media print{.hint{display:none}}
+    </style></head><body>
+      <div class="hint">
+        💡 To <strong>download as PDF</strong>: in the print dialog change <strong>Destination</strong> to <strong>"Save as PDF"</strong>
+        <button class="hint-btn" onclick="window.print()">⬇ Save as PDF</button>
+      </div>
+      <h1>ILES — ${title}</h1>
+      <p class="sub">Generated on ${new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'})}</p>
+      <table><thead>${thead}</thead><tbody>${tbody}</tbody></table>
+      <div class="footer">ILES – Internship Log &amp; Evaluation System</div>
+    </body></html>`)
+    w.document.close()
+    setTimeout(() => w.print(), 400)
+  }
+
+  // ── data builders ─────────────────────────────────────────────────────────
+  const getReportData = () => {
+    switch (reportType) {
+      case 'placements': {
+        const headers = ['Student','Company','Status','Academic Supervisor','Workplace Supervisor','Start Date','End Date']
+        const rows = placements.map(p => [
+          p.student_name, p.company, p.status,
+          p.academic_supervisor  || 'Not assigned',
+          p.workplace_supervisor || 'Not assigned',
+          p.start_date || '—', p.end_date || '—',
+        ])
+        return { title:'Placement Summary Report', headers, rows }
+      }
+      case 'evaluations': {
+        const headers = ['Student','Academic Score','Workplace Score','Logbook Score','Final Score','Grade']
+        const rows = evaluations.map(e => [
+          e.student_name,
+          e.academic_score  ?? '—', e.workplace_score ?? '—', e.logbook_score ?? '—',
+          e.final_score != null ? `${e.final_score}%` : '—',
+          e.grade || '—',
+        ])
+        return { title:'Evaluation Scores Report', headers, rows }
+      }
+      case 'students': {
+        const headers = ['Name','Email','Company','Placement Status']
+        const pm = Object.fromEntries(placements.map(p => [p.student_id, p]))
+        const rows = users.filter(u => u.role === 'student').map(u => {
+          const pl = pm[String(u.id)] || {}
+          return [u.name, u.email, pl.company || 'No placement', pl.status || '—']
+        })
+        return { title:'Student Progress Report', headers, rows }
+      }
+      case 'supervisors': {
+        const headers = ['Name','Email','Role']
+        const rows = users
+          .filter(u => ['academic_supervisor','workplace_supervisor'].includes(u.role))
+          .map(u => [u.name, u.email, u.role.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())])
+        return { title:'Supervisor Activity Report', headers, rows }
+      }
+      default: { // full
+        const headers = ['Type','Name','Detail','Status / Score']
+        const rows = [
+          ...users.filter(u=>u.role==='student').map(u => ['Student', u.name, u.email, '—']),
+          ...placements.map(p => ['Placement', p.student_name, p.company, p.status]),
+          ...evaluations.map(e => ['Evaluation', e.student_name, `Final: ${e.final_score ?? '—'}%`, e.grade || '—']),
+        ]
+        return { title:'Full System Report', headers, rows }
+      }
+    }
+  }
+
+  // ── print ─────────────────────────────────────────────────────────────────
+  const handlePrint = () => {
     try {
-      setTimeout(() => {
-        toast.success(` ${reportType.charAt(0).toUpperCase() + reportType.slice(1)} report generated as ${format.toUpperCase()}!`)
-        setGenerating(false)
-        onClose()
-      }, 1500)
+      const { title, headers, rows } = getReportData()
+      if (rows.length === 0) { toast.warn('No data available for this report yet.'); return }
+      openPrint(title, headers, rows)
+      toast.success(`${title} opened for printing.`)
+      setTimeout(() => onClose(), 400)
     } catch {
-      toast.error('Failed to generate report. Please try again.')
+      toast.error('Failed to open print preview. Please try again.')
+    }
+  }
+
+  // ── download ──────────────────────────────────────────────────────────────
+  const handleDownload = () => {
+    try {
+      const { title, headers, rows } = getReportData()
+      if (rows.length === 0) { toast.warn('No data available for this report yet.'); return }
+
+      if (format === 'pdf') {
+        openPrint(title, headers, rows)
+        toast.success(`${title} opened for printing / save as PDF.`)
+        setTimeout(() => onClose(), 400)
+        return
+      }
+
+      setGenerating(true)
+      const stamp    = new Date().toISOString().slice(0, 10)
+      const filename = `ILES_${title.replace(/\s+/g, '_')}_${stamp}`
+      const mime     = format === 'excel' ? 'application/vnd.ms-excel' : 'text/csv'
+      const ext      = format === 'excel' ? '.xls' : '.csv'
+      downloadFile(makeCSV(headers, rows), filename + ext, mime)
+      toast.success(`${title} downloaded as ${format.toUpperCase()}.`)
+      setTimeout(() => { setGenerating(false); onClose() }, 400)
+    } catch {
+      toast.error('Failed to download report. Please try again.')
       setGenerating(false)
     }
   }
@@ -391,17 +519,25 @@ function ReportModal({ onClose }) {
   return (
     <Modal title="Generate System Report" onClose={onClose}>
       <FormField label="Report Type">
-        <select className={selectCls} value={reportType} onChange={(e) => setReportType(e.target.value)}>
-          <option value="placements">Placement Summary Report</option>
-          <option value="evaluations">Evaluation Scores Report</option>
-          <option value="students">Student Progress Report</option>
-          <option value="supervisors">Supervisor Activity Report</option>
-          <option value="full">Full System Report</option>
-        </select>
+        <div className="relative">
+          <select className={selectCls + ' pr-8'} value={reportType} onChange={(e) => setReportType(e.target.value)}>
+            <option value="placements">Placement Summary Report</option>
+            <option value="evaluations">Evaluation Scores Report</option>
+            <option value="students">Student Progress Report</option>
+            <option value="supervisors">Supervisor Activity Report</option>
+            <option value="full">Full System Report</option>
+          </select>
+          <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-slate-400">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+        </div>
       </FormField>
-      <FormField label="Export Format">
+
+      <FormField label="Download Format">
         <div className="flex gap-3">
-          {['pdf','excel','csv'].map((f) => (
+          {['pdf','csv','excel'].map((f) => (
             <label key={f} className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border cursor-pointer text-xs font-semibold transition
               ${format === f ? 'border-indigo-500 bg-indigo-600/20 text-indigo-300' : 'border-slate-600 text-slate-400 hover:border-slate-500'}`}>
               <input type="radio" name="format" value={f} checked={format === f} onChange={() => setFormat(f)} className="hidden" />
@@ -410,14 +546,25 @@ function ReportModal({ onClose }) {
           ))}
         </div>
       </FormField>
-      <div className="bg-slate-700/30 border border-slate-700/50 rounded-xl p-3">
-        <p className="text-xs text-slate-400">The report will include data from the current semester. Generated reports support institutional decision-making as per US20.</p>
-      </div>
+
       <div className="flex gap-3 pt-2">
-        <button onClick={onClose} className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-slate-600 text-slate-400 hover:bg-slate-700/50 transition">Cancel</button>
-        <button onClick={handleGenerate} disabled={generating}
-          className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-rose-600 hover:bg-rose-700 text-white transition">
-          {generating ? 'Generating...' : 'Generate Report'}
+        <button onClick={onClose}
+          className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-slate-600 text-slate-400 hover:bg-slate-700/50 transition">
+          Cancel
+        </button>
+        <button onClick={handlePrint}
+          className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-slate-600 hover:bg-slate-500 text-white transition flex items-center justify-center gap-2">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+          </svg>
+          Print
+        </button>
+        <button onClick={handleDownload} disabled={generating}
+          className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-rose-600 hover:bg-rose-700 text-white transition disabled:opacity-50 flex items-center justify-center gap-2">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+          </svg>
+          {generating ? 'Downloading...' : 'Download'}
         </button>
       </div>
     </Modal>
@@ -555,10 +702,20 @@ export default function InternshipAdministratorDashboard() {
           onClose={() => { setModal(null); setSelectedPlacement(null) }}
           placement={selectedPlacement}
           allPlacements={placements}
-          onSuccess={() => dashboardService.getAdminPlacements().then(r => setPlacements(r.data)).catch(() => {})}
+          onSuccess={() => {
+            dashboardService.getAdminPlacements().then(r => setPlacements(r.data)).catch(() => {})
+            dashboardService.getAdminStats().then(r => setStats(r.data)).catch(() => {})
+          }}
         />
       )}
-      {modal === 'report' && <ReportModal onClose={() => setModal(null)} />}
+      {modal === 'report' && (
+        <ReportModal
+          onClose={() => setModal(null)}
+          placements={placements}
+          users={users}
+          evaluations={evaluations}
+        />
+      )}
 
       {/* Header */}
       <div className="flex items-start justify-between flex-wrap gap-3">
@@ -582,14 +739,17 @@ export default function InternshipAdministratorDashboard() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label:'Pending Placements',   value:stats?.pending_placements,   color:'text-amber-300',   link:'/admin/users?role=placements', linkText:'Assign now'  },
-          { label:'Unassigned Students',  value:stats?.unassigned_students,  color:'text-rose-300',    link:'/admin/users?role=student',    linkText:'Assign now'  },
+          { label:'Unassigned Students',  value:stats?.unassigned_students,  color:'text-rose-300',    onClick:() => { setSelectedPlacement(null); setModal('supervisor') }, linkText:'Assign now'  },
           { label:'Evaluations Complete', value:stats?.evaluations_complete, color:'text-emerald-300', link:'/admin/evaluations',           linkText:'View reports'},
           { label:'Logs Overdue',         value:stats?.logs_overdue ?? 6,    color:'text-red-300',     link:'/admin/logs',                  linkText:'Review now'  },
-        ].map(({ label, value, color, link, linkText }) => (
+        ].map(({ label, value, color, link, linkText, onClick }) => (
           <div key={label} className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-4 text-center">
             <p className="text-xs text-slate-400 uppercase tracking-wide mb-1">{label}</p>
             <p className={`text-2xl font-bold ${color}`}>{value ?? '—'}</p>
-            <Link to={link} className={`text-xs hover:underline mt-1 block ${color}`}>{linkText} </Link>
+            {onClick
+              ? <button onClick={onClick} className={`text-xs hover:underline mt-1 block w-full ${color}`}>{linkText}</button>
+              : <Link to={link} className={`text-xs hover:underline mt-1 block ${color}`}>{linkText} </Link>
+            }
           </div>
         ))}
       </div>
@@ -792,7 +952,6 @@ export default function InternshipAdministratorDashboard() {
           <Card title="Quick Actions">
             <div className="space-y-2">
               {[
-                { label:'Register Student',  sub:'Add a new student account',     icon:Icon.plus,       onClick:() => setModal('register'),                                  color:'text-indigo-400 bg-indigo-600/20'   },
                 { label:'Assign Placement',  sub:'Create a new placement record',  icon:Icon.placements, onClick:() => setModal('placement'),                                color:'text-emerald-400 bg-emerald-500/20' },
                 { label:'Assign Supervisor', sub:'Link supervisor to a student',   icon:Icon.assign,     onClick:() => { setSelectedPlacement(null); setModal('supervisor') },color:'text-amber-400 bg-amber-500/20'     },
                 { label:'View Evaluations',  sub:'All scores across all students', icon:Icon.eval,       to:'/admin/evaluations',                                             color:'text-teal-400 bg-teal-500/20'       },

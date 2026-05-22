@@ -46,8 +46,18 @@ class WeeklyLogbookViewSet(viewsets.ModelViewSet):
             raise PermissionDenied('Only students can create logbooks.')
 
         from datetime import timedelta
+        from rest_framework.exceptions import ValidationError
         placement   = serializer.validated_data.get('placement')
         week_number = serializer.validated_data.get('week_number', 1)
+
+        # Block submission if supervisors are not yet assigned
+        if serializer.validated_data.get('status') == 'submitted' and placement:
+            if not placement.workplace_supervisor or not placement.academic_supervisor:
+                raise ValidationError(
+                    'You cannot submit a log until both a workplace supervisor and an '
+                    'academic supervisor have been assigned to your placement. '
+                    'Please contact your administrator.'
+                )
 
         if placement and placement.start_date:
             deadline = placement.start_date + timedelta(weeks=week_number)

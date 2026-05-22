@@ -263,12 +263,12 @@ function PlacementsTab({ placements, setPlacements, loadingPlacements }) {
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-2 bg-slate-800/50 border border-slate-700/50 rounded-xl px-3 py-2 flex-1 min-w-[200px]">
-          <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <label className="flex items-center gap-2 bg-slate-800/50 border border-slate-700/50 rounded-xl px-3 py-2 flex-1 min-w-[200px] cursor-text">
+          <svg className="w-4 h-4 text-slate-500 flex-shrink-0 pointer-events-none" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
           <input type="text" placeholder="Search student or company..." value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="bg-transparent outline-none text-sm text-slate-300 placeholder-slate-600 w-full" />
-        </div>
+        </label>
       </div>
 
       {/* Table */}
@@ -556,14 +556,14 @@ export default function AdminUsersPage() {
       {!isPlacementsTab && (
         <>
           <div className="flex gap-3 flex-wrap">
-            <div className="flex items-center gap-2 bg-slate-800/50 border border-slate-700/50 rounded-xl px-3 py-2 flex-1 min-w-[200px]">
-              <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <label className="flex items-center gap-2 bg-slate-800/50 border border-slate-700/50 rounded-xl px-3 py-2 flex-1 min-w-[200px] cursor-text">
+              <svg className="w-4 h-4 text-slate-500 flex-shrink-0 pointer-events-none" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
               </svg>
               <input type="text" placeholder="Search by name or email..."
                 value={search} onChange={(e) => setSearch(e.target.value)}
                 className="bg-transparent outline-none text-sm text-slate-300 placeholder-slate-600 w-full" />
-            </div>
+            </label>
             <div className="flex gap-2">
               {['all','active','inactive'].map((s) => (
                 <button key={s} onClick={() => setStatusFilter(s)}
