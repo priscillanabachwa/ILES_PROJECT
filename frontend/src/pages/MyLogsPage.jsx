@@ -555,12 +555,18 @@ export default function MyLogsPage() {
                             Due: {fmt(log.deadline)}
                           </span>
                         )}
-                        <span>Log #{log.id}</span>
+                        <span>Week #{log.week_number}</span>
                       </div>
                       {log.attachment_url && <AttachmentLink url={log.attachment_url} />}
+                      {log.workplace_comment && (
+                        <div className="mt-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-3 py-2">
+                          <p className="text-xs text-slate-500 font-medium mb-0.5">Workplace Supervisor Feedback</p>
+                          <p className="text-xs text-emerald-300 line-clamp-2">{log.workplace_comment}</p>
+                        </div>
+                      )}
                       {log.supervisor_comment && (
                         <div className="mt-2 bg-blue-500/10 border border-blue-500/20 rounded-lg px-3 py-2">
-                          <p className="text-xs text-slate-500 font-medium mb-0.5">Supervisor Feedback</p>
+                          <p className="text-xs text-slate-500 font-medium mb-0.5">Academic Supervisor Feedback</p>
                           <p className="text-xs text-blue-300 line-clamp-2">{log.supervisor_comment}</p>
                         </div>
                       )}

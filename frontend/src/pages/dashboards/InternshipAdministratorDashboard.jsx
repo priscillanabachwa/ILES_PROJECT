@@ -814,7 +814,7 @@ export default function InternshipAdministratorDashboard() {
                             <AvatarCircle name={p.student_name} index={i} size="sm" />
                             <div>
                               <p className="font-semibold text-white">{p.student_name}</p>
-                              {p.student_id && <p className="text-slate-500" style={{fontSize:'10px'}}>{p.student_id}</p>}
+                              {p.start_date && <p className="text-slate-500" style={{fontSize:'10px'}}>From {p.start_date}</p>}
                             </div>
                           </div>
                         </td>

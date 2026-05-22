@@ -17,7 +17,7 @@ function ScoreBadge({ score }) {
                   'bg-red-500/20 text-red-400 border-red-500/30'
   return (
     <span className={`px-2 py-0.5 rounded-full text-xs font-bold border ${color}`}>
-      {Number(score).toFixed(0)}%
+      {Number(score).toFixed(2)}%
     </span>
   )
 }
@@ -153,7 +153,7 @@ function EvaluateModal({ row, criteria, onClose, onSuccess }) {
                           type="number"
                           min={0}
                           max={maxNum}
-                          step="0.5"
+                          step="0.01"
                           value={val}
                           onChange={(e) => {
                             const raw = e.target.value

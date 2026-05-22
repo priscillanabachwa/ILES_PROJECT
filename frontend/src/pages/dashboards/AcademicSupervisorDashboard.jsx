@@ -239,7 +239,7 @@ export default function AcademicDashboard() {
                     <AvatarCircle name={p.student_name} index={i} />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-white truncate capitalize">{p.student_name}</p>
-                      <p className="text-xs text-slate-400">{p.student_id} x {p.company}</p>
+                      <p className="text-xs text-slate-400">{p.company || 'No company assigned'}</p>
                     </div>
                     <Badge status={p.status} />
                   </div>

@@ -72,7 +72,6 @@ class CustomUserSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         password = validated_data.pop("password")
         email = validated_data.pop("email")
-        # Use manager to ensure default fields and proper creation (password stored as plain text)
         user = CustomUser.objects.create_user(email=email, password=password, **validated_data)
         return user
 
@@ -85,8 +84,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
         instance = super().update(instance,validated_data)
         
         if password:
-            # Store password as plain text (no hashing)
-            instance.password = password
+            instance.set_password(password)
             instance.save()
         return instance
 
@@ -111,21 +109,22 @@ class LoginSerializer(serializers.Serializer):
     def validate(self, attrs):
         email = attrs.get('email')
         password = attrs.get('password')
-        
+
         if email and password:
-            # Query user by email and compare plain text password
             try:
                 user = CustomUser.objects.get(email=email)
-                # Compare plain text passwords
-                if user.password != password:
-                    msg = 'Unable to log in with provided credentials.'
-                    raise serializers.ValidationError(msg, code='authorization')
+                if not user.check_password(password):
+                    raise serializers.ValidationError(
+                        'Unable to log in with provided credentials.', code='authorization'
+                    )
             except CustomUser.DoesNotExist:
-                msg = 'Unable to log in with provided credentials.'
-                raise serializers.ValidationError(msg, code='authorization')
+                raise serializers.ValidationError(
+                    'Unable to log in with provided credentials.', code='authorization'
+                )
         else:
-            msg = 'Must include "email" and "password".'
-            raise serializers.ValidationError(msg, code='authorization')
+            raise serializers.ValidationError(
+                'Must include "email" and "password".', code='authorization'
+            )
 
         attrs['user'] = user
         return attrs

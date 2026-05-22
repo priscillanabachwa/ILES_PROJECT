@@ -161,10 +161,10 @@ export default function WorkplaceSupervisorDashboard() {
       {error && <div className="bg-red-500/10 border border-red-500/30 text-red-300 text-sm px-4 py-3 rounded-xl">{error}</div>}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Assigned Students"   value={stats?.assigned_students}  sub="View all students"       subLink="/supervisor/scores" accent="indigo"  icon={Icon.students} />
-        <StatCard label="Scores Submitted"    value={stats?.approved_logs}      sub="Go to scores"            subLink="/supervisor/scores" accent="emerald" icon={Icon.score}    />
-        <StatCard label="Approved Logs"       value={stats?.approved_logs}      sub="Logs approved"           subLink="/supervisor/scores" accent="amber"   icon={Icon.approved} />
-        <StatCard label="Avg. Workplace Score" value={stats ? `${Number(stats.average_score).toFixed(0)}%` : null} sub="Contributes 40% to final" accent="rose" icon={Icon.report} />
+        <StatCard label="Assigned Students"    value={stats?.assigned_students}  sub="View all students"        subLink="/supervisor/scores" accent="indigo"  icon={Icon.students} />
+        <StatCard label="Pending Reviews"     value={stats?.pending_reviews}    sub="Logs awaiting your review" subLink="/supervisor/logs"   accent="amber"   icon={Icon.logbook}  />
+        <StatCard label="Approved Logs"       value={stats?.approved_logs}      sub="Logs approved"             subLink="/supervisor/scores" accent="emerald" icon={Icon.approved} />
+        <StatCard label="Avg. Workplace Score" value={stats?.average_score != null ? `${Number(stats.average_score).toFixed(0)}%` : '—'} sub="Contributes 40% to final" accent="rose" icon={Icon.report} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
@@ -232,7 +232,7 @@ export default function WorkplaceSupervisorDashboard() {
                     <AvatarCircle name={p.student_name} index={i} />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-white truncate capitalize">{p.student_name}</p>
-                      <p className="text-xs text-slate-400 truncate">{p.student_id} x {p.department}</p>
+                      <p className="text-xs text-slate-400 truncate">{p.company || 'No company assigned'}</p>
                     </div>
                     <Badge status={p.status} />
                   </div>

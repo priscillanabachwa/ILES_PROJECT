@@ -108,9 +108,10 @@ function Card({ title, actionLabel, actionLink, children }) {
 
 function ScoreBreakdown({ scores }) {
   const segments = [
-    { label: 'Workplace Supervisor', weight: 40, score: scores?.workplace_score, color: 'bg-indigo-500' },
-    { label: 'Academic Supervisor',  weight: 30, score: scores?.academic_score,  color: 'bg-emerald-500' },
-    { label: 'Logbook',              weight: 30, score: scores?.logbook_score,   color: 'bg-amber-500' },
+    { label: 'Workplace Supervisor', weight: 40, score: scores?.workplace_score,      color: 'bg-indigo-500' },
+    { label: 'Logbook',              weight: 30, score: scores?.logbook_score,         color: 'bg-amber-500' },
+    { label: 'Report',               weight: 20, score: scores?.report_score,          color: 'bg-emerald-500' },
+    { label: 'Other Academic',       weight: 10, score: scores?.other_academic_score,  color: 'bg-rose-500' },
   ]
   return (
     <div className="space-y-3">
@@ -242,7 +243,7 @@ export default function StudentDashboard() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="Logs Submitted"  value={stats?.logs_submitted}  sub="View all logs"    subLink="/student/logs"       accent="indigo"  icon={Icon.logbook}  />
         <StatCard label="Pending / Draft" value={stats?.pending_logs}    sub="Continue writing" subLink="/student/logs"       accent="amber"   icon={Icon.pending}  />
-        <StatCard label="Unread Feedback" value={stats?.unread_feedback} sub="View feedback"    subLink="/student/feedback"   accent="rose"    icon={Icon.feedback} />
+        <StatCard label="Feedback Received" value={stats?.unread_feedback} sub="View feedback"    subLink="/student/feedback"   accent="rose"    icon={Icon.feedback} />
         <StatCard label="Current Score"   value={stats?.current_score != null ? `${Number(stats.current_score).toFixed(1)}%` : null} sub="View breakdown" subLink="/student/evaluation" accent="emerald" icon={Icon.score} />
       </div>
 
@@ -356,7 +357,7 @@ export default function StudentDashboard() {
                 </div>
                 <div className="mt-3 bg-slate-700/30 border border-slate-700/50 rounded-xl p-3">
                   <p className="text-xs text-slate-400 font-medium mb-1">Scoring formula</p>
-                  <p className="text-xs text-slate-500">40% Workplace + 30% Academic + 30% Logbook</p>
+                  <p className="text-xs text-slate-500">40% Workplace + 30% Logbook + 20% Report + 10% Other Academic</p>
                 </div>
               </>
             )}

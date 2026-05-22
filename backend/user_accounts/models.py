@@ -14,8 +14,7 @@ class CustomUserManager(BaseUserManager):
         email = self.normalize_email(email)
         extra_fields.setdefault('role', 'student')
         user = self.model(email=email, **extra_fields)
-        # Store password as plain text (no hashing)
-        user.password = password
+        user.set_password(password)   # always hash — never store plain text
         user.save(using=self._db)
         return user
 
