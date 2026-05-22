@@ -27,7 +27,7 @@ const NAV = {
     { to: '/academic/dashboard',       label: 'Dashboard'       },
     { to: '/academic/logs',            label: 'Internship Logs' },
     { to: '/academic/evaluations',     label: 'Evaluations'     },
-{ to: '/academic/notifications',   label: 'Notifications'   },
+    { to: '/academic/notifications',   label: 'Notifications'   },
     { to: '/academic/profile',         label: 'Profile'         },
   ],
   workplace_supervisor: [

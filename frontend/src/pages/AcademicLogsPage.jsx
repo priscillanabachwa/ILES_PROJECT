@@ -92,12 +92,6 @@ function ReviewModal({ log, onClose, onSuccess }) {
               </svg>
             </a>
           )}
-          {log.workplace_comment && (
-            <div className="bg-purple-500/10 border border-purple-500/20 rounded-xl p-3">
-              <p className="text-xs text-purple-400 mb-1">Workplace Supervisor Comment</p>
-              <p className="text-slate-300 text-sm">{log.workplace_comment}</p>
-            </div>
-          )}
           <div>
             <label className="text-xs text-slate-500 uppercase tracking-wider mb-2 block">
               Supervisor Comment <span className="text-red-400">*</span>
@@ -162,12 +156,6 @@ function LogDetailModal({ log, onClose }) {
               </div>
             )}
           </div>
-          {log.workplace_comment && (
-            <div className="bg-purple-500/10 border border-purple-500/20 rounded-xl p-4">
-              <p className="text-xs text-purple-400 mb-1">Workplace Supervisor Comment</p>
-              <p className="text-slate-300 text-sm">{log.workplace_comment}</p>
-            </div>
-          )}
           {log.supervisor_comment && (
             <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
               <p className="text-xs text-blue-400 mb-1">Academic Supervisor Comment</p>

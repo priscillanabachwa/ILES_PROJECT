@@ -15,10 +15,10 @@ class WeeklyLogbookSerializer(serializers.ModelSerializer):
         model = WeeklyLogbook
         fields = [
             'id', 'placement', 'week_number', 'activities',
-            'challenges', 'lesson', 'status', 'workplace_comment',
+            'challenges', 'lesson', 'status',
             'supervisor_comment', 'deadline', 'submitted_at', 'attachment', 'attachment_url'
         ]
-        read_only_fields = ['id', 'submitted_at', 'workplace_comment', 'supervisor_comment', 'deadline', 'attachment_url']
+        read_only_fields = ['id', 'submitted_at', 'supervisor_comment', 'deadline', 'attachment_url']
 
     def get_attachment_url(self, obj):
         if not obj.attachment:

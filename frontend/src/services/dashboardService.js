@@ -547,13 +547,6 @@ async function reviewLog(logId, comment) {
   });
 }
 
-async function reviewLogWorkplace(logId, comment) {
-  return fetchWithAuth(`${LOGBOOKS}${logId}/review/`, {
-    method: 'POST',
-    body: JSON.stringify({ workplace_comment: comment }),
-  });
-}
-
 async function approveLog(logId) {
   return fetchWithAuth(`${LOGBOOKS}${logId}/approve/`, { method: 'POST' });
 }
@@ -643,7 +636,6 @@ const dashboardService = {
 
   // Actions
   reviewLog,
-  reviewLogWorkplace,
   approveLog,
   rejectLog,
   markPlacementCompleted,

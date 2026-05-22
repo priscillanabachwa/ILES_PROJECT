@@ -5,10 +5,9 @@ from django.core.validators import MinValueValidator
 from django.conf import settings
 
 class WeeklyLogbook(models.Model):
-    STATUS_CHOICE =[
+    STATUS_CHOICE = [
         ('draft', 'Draft'),
         ('submitted', 'Submitted'),
-        ('workplace_reviewed', 'Workplace Reviewed'),
         ('reviewed', 'Reviewed'),
         ('approved', 'Approved'),
     ]
@@ -27,7 +26,6 @@ class WeeklyLogbook(models.Model):
         choices=STATUS_CHOICE,
         default = 'draft'
         )
-    workplace_comment = models.TextField(blank=True, null=True)
     supervisor_comment = models.TextField(blank=True, null=True)
     deadline = models.DateField()
     submitted_at = models.DateTimeField(null=True, blank=True)

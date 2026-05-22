@@ -24,7 +24,6 @@ import AdminLogsPage from './pages/AdminLogsPage.jsx'
 import AdminEvaluationsPage from './pages/AdminEvaluationsPage.jsx'
 import AcademicLogsPage from './pages/AcademicLogsPage.jsx'
 import AcademicEvaluationsPage from './pages/AcademicEvaluationsPage.jsx'
-import WorkplaceReviewsPage from './pages/WorkplaceReviewsPage.jsx'
 import WorkplaceScoresPage from './pages/WorkplaceScoresPage.jsx'
 import WorkplaceLogsPage from './pages/WorkplaceLogsPage.jsx'
 import WorkplaceReportsPage from './pages/WorkplaceReportsPage.jsx'
@@ -110,9 +109,6 @@ function App() {
           <ScrollToTop />
           <Routes>
             {/* Default route - redirect to login */}
-            <Route path="/" element={<Navigate to="/login" replace />} />
-
-            {/* Login Route */}
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} /> 

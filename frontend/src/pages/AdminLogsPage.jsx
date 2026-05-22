@@ -163,15 +163,6 @@ function LogDetailModal({ log, onClose, onStatusChange }) {
             </div>
           )}
 
-          {log.workplace_comment && (
-            <div className="space-y-1.5">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Workplace Supervisor Comment</p>
-              <div className="bg-purple-500/10 border border-purple-500/20 rounded-xl p-4">
-                <p className="text-sm text-slate-300">{log.workplace_comment}</p>
-              </div>
-            </div>
-          )}
-
           {log.status !== 'approved' && (
             <div className="space-y-1.5">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
