@@ -54,11 +54,7 @@ async function getStudentStats() {
   ]);
   const submitted = logbooks.filter(l => ['submitted', 'reviewed', 'approved'].includes(l.status));
   const pending = logbooks.filter(l => l.status === 'draft');
-  // Count all feedback: evaluation overall_comments + logbook supervisor comments
   const evalsArr = Array.isArray(evals) ? evals : [];
-  const evalFeedbackCount = evalsArr.filter(e => e.overall_comment && e.status === 'SUBMITTED').length;
-  const logbookFeedbackCount = logbooks.filter(l => l.supervisor_comment && l.status !== 'draft').length;
-  const totalFeedback = evalFeedbackCount + logbookFeedbackCount;
   const academicEval  = evalsArr.find(e => e.evaluator_role === 'academic_supervisor');
   const workplaceEval = evalsArr.find(e => e.evaluator_role === 'workplace_supervisor');
   const wScore      = workplaceEval?.total_score != null ? Number(workplaceEval.total_score) : null;
@@ -86,9 +82,8 @@ async function getStudentStats() {
   return {
     data: {
       logs_submitted: submitted.length,
-      pending_logs: pending.length,
-      unread_feedback: totalFeedback,
-      current_score: currentScore,
+      pending_logs:   pending.length,
+      current_score:  currentScore,
     },
   };
 }
@@ -114,10 +109,7 @@ async function getNextDeadline() {
 }
 
 async function getStudentScores() {
-  const [evals, logbooks] = await Promise.all([
-    fetchWithAuth(EVALUATIONS).catch(() => []),
-    fetchWithAuth(LOGBOOKS),
-  ]);
+  const evals = await fetchWithAuth(EVALUATIONS).catch(() => []);
   if (!Array.isArray(evals) || !evals.length) return { data: null };
 
   const academicEval   = evals.find(e => e.evaluator_role === 'academic_supervisor')
@@ -164,39 +156,6 @@ async function getStudentScores() {
     return 'F'
   }
 
-  // Collect all feedback — evaluation overall_comments + logbook comments
-  const feedback = []
-
-  // Evaluation overall comments (the comment a supervisor writes when scoring)
-  if (workplaceEval?.overall_comment) {
-    feedback.push({
-      from:    'Workplace Supervisor',
-      date:    workplaceEval.submitted_at || workplaceEval.created_at,
-      comment: workplaceEval.overall_comment,
-    })
-  }
-  if (academicEval?.overall_comment) {
-    feedback.push({
-      from:    'Academic Supervisor',
-      date:    academicEval.submitted_at || academicEval.created_at,
-      comment: academicEval.overall_comment,
-    })
-  }
-
-  // Logbook-level comments (academic supervisor only — workplace supervisors only view logs)
-  logbooks
-    .filter(l => l.supervisor_comment)
-    .forEach(l => {
-      feedback.push({
-        from:    'Academic Supervisor',
-        date:    l.submitted_at || l.deadline,
-        comment: l.supervisor_comment,
-        week:    l.week_number,
-      })
-    })
-
-  const recentFeedback = feedback.slice(0, 3)
-
   return {
     data: {
       final_score:          finalScore != null ? Number(finalScore.toFixed(1)) : null,
@@ -206,7 +165,6 @@ async function getStudentScores() {
       report_score:         reportScore,
       other_academic_score: otherAcademicScore,
       academic_total:       academicTotal,
-      recent_feedback:      recentFeedback,
     },
   };
 }

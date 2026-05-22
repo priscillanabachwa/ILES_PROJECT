@@ -29,19 +29,17 @@ const fmtSize = (b) =>
 const isOverdue = (d) => (d ? new Date(d) < new Date() : false)
 
 const STATUS = {
-  draft:               'bg-slate-500/20 text-slate-400 border-slate-500/30',
-  submitted:           'bg-amber-500/20 text-amber-300 border-amber-500/30',
-  workplace_reviewed:  'bg-purple-500/20 text-purple-300 border-purple-500/30',
-  reviewed:            'bg-blue-500/20 text-blue-300 border-blue-500/30',
-  approved:            'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+  draft:     'bg-slate-500/20 text-slate-400 border-slate-500/30',
+  submitted: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+  reviewed:  'bg-blue-500/20 text-blue-300 border-blue-500/30',
+  approved:  'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
 }
 
 const STATUS_LABEL = {
-  draft:               'Draft',
-  submitted:           'Submitted',
-  workplace_reviewed:  'Workplace Reviewed',
-  reviewed:            'Reviewed',
-  approved:            'Approved',
+  draft:     'Draft',
+  submitted: 'Submitted',
+  reviewed:  'Reviewed',
+  approved:  'Approved',
 }
 
 // ── small shared components ────────────────────────────────────────────────
@@ -578,11 +576,10 @@ export default function MyLogsPage() {
                   </div>
                   <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-700/50 text-xs">
                     <span>
-                      {log.status === 'approved'            && <span className="text-emerald-400 font-medium">Approved by supervisor</span>}
-                      {log.status === 'reviewed'            && <span className="text-blue-400 font-medium">Reviewed – awaiting approval</span>}
-                      {log.status === 'workplace_reviewed'  && <span className="text-purple-400 font-medium">Reviewed by workplace supervisor</span>}
-                      {log.status === 'submitted'           && <span className="text-amber-400 font-medium">Submitted for Grading</span>}
-                      {log.status === 'draft'               && <span className="text-slate-500">Draft – not yet submitted</span>}
+                      {log.status === 'approved'  && <span className="text-emerald-400 font-medium">Approved by supervisor</span>}
+                      {log.status === 'reviewed'  && <span className="text-blue-400 font-medium">Reviewed — awaiting approval</span>}
+                      {log.status === 'submitted' && <span className="text-amber-400 font-medium">Submitted for grading</span>}
+                      {log.status === 'draft'     && <span className="text-slate-500">Draft — not yet submitted</span>}
                     </span>
                     {log.status === 'draft' && (
                       <button

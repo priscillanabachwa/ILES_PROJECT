@@ -89,7 +89,9 @@ function EvaluationSection({ title, subtitle, evaluation, emptyMessage }) {
                         pct >= 60 ? 'text-amber-400' :
                                     'text-red-400'
                       }`}>
-                        {Number(item.score).toFixed(0)}
+                        {Number(item.score) % 1 === 0
+                          ? Number(item.score).toFixed(0)
+                          : Number(item.score).toFixed(2)}
                       </span>
                     </td>
                   </tr>
@@ -103,12 +105,14 @@ function EvaluationSection({ title, subtitle, evaluation, emptyMessage }) {
                 </td>
                 <td className="px-6 py-3.5">
                   <span className={`text-sm font-black ${
-                    score == null    ? 'text-slate-500' :
-                    score >= 80      ? 'text-emerald-400' :
-                    score >= 60      ? 'text-amber-400' :
-                                       'text-red-400'
+                    score == null ? 'text-slate-500' :
+                    score >= 80   ? 'text-emerald-400' :
+                    score >= 60   ? 'text-amber-400' :
+                                    'text-red-400'
                   }`}>
-                    {score != null ? `${score.toFixed(0)} / 100` : '—'}
+                    {score != null
+                      ? `${score % 1 === 0 ? score.toFixed(0) : score.toFixed(2)} / 100`
+                      : '—'}
                   </span>
                 </td>
               </tr>
@@ -198,7 +202,7 @@ export default function StudentEvaluationPage() {
             </p>
             <p className="text-xs text-slate-600 mt-2">
               {academicScore != null && workplaceScore != null
-                ? '60% Academic + 40% Workplace'
+                ? 'Combined from both evaluations'
                 : 'Awaiting both evaluations'}
             </p>
           </div>
@@ -218,13 +222,17 @@ export default function StudentEvaluationPage() {
             <div className="flex items-center justify-between">
               <span className="text-xs text-slate-400">Academic (60%)</span>
               <span className={`text-sm font-bold ${academicScore != null ? 'text-indigo-400' : 'text-slate-600'}`}>
-                {academicScore != null ? `${academicScore.toFixed(0)}%` : '—'}
+                {academicScore != null
+                  ? `${academicScore % 1 === 0 ? academicScore.toFixed(0) : academicScore.toFixed(2)}%`
+                  : '—'}
               </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-xs text-slate-400">Workplace (40%)</span>
               <span className={`text-sm font-bold ${workplaceScore != null ? 'text-emerald-400' : 'text-slate-600'}`}>
-                {workplaceScore != null ? `${workplaceScore.toFixed(0)}%` : '—'}
+                {workplaceScore != null
+                  ? `${workplaceScore % 1 === 0 ? workplaceScore.toFixed(0) : workplaceScore.toFixed(2)}%`
+                  : '—'}
               </span>
             </div>
           </div>
@@ -237,7 +245,7 @@ export default function StudentEvaluationPage() {
       ) : (
         <EvaluationSection
           title="Academic Supervisor Evaluation"
-          subtitle="Contributes 60% of your final grade"
+          subtitle="Scores submitted by your academic supervisor"
           evaluation={academicEval}
           emptyMessage="Your academic supervisor has not submitted an evaluation yet."
         />
@@ -249,7 +257,7 @@ export default function StudentEvaluationPage() {
       ) : (
         <EvaluationSection
           title="Workplace Supervisor Evaluation"
-          subtitle="Contributes 40% of your final grade"
+          subtitle="Scores submitted by your workplace supervisor"
           evaluation={workplaceEval}
           emptyMessage="Your workplace supervisor has not submitted an evaluation yet."
         />

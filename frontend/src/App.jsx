@@ -28,7 +28,6 @@ import WorkplaceScoresPage from './pages/WorkplaceScoresPage.jsx'
 import WorkplaceLogsPage from './pages/WorkplaceLogsPage.jsx'
 import WorkplaceReportsPage from './pages/WorkplaceReportsPage.jsx'
 import StudentEvaluationPage from './pages/StudentEvaluationPage.jsx'
-import StudentFeedbackPage from './pages/StudentFeedbackPage.jsx'
 import NotificationsPage from './pages/NotificationsPage.jsx'
 import { AuthProvider, useAuth } from './Context/AuthContext.jsx'
 
@@ -139,7 +138,6 @@ function App() {
               <Route path="/student/notifications" element={<NotificationsPage />} />
               <Route path="/student/profile" element={<ProfilePage />} />
               <Route path="/student/evaluation" element={<StudentEvaluationPage />} />
-              <Route path="/student/feedback" element={<StudentFeedbackPage />} />
 
             </Route>
 

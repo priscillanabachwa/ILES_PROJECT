@@ -18,7 +18,6 @@ const NAV = {
   student: [
     { to: '/student/dashboard',     label: 'Dashboard'     },
     { to: '/student/logs',          label: 'My Logs'       },
-    { to: '/student/feedback',      label: 'Feedback'      },
     { to: '/student/evaluation',    label: 'Evaluations'   },
     { to: '/student/notifications', label: 'Notifications' },
     { to: '/student/profile',       label: 'Profile'       },
@@ -46,22 +45,15 @@ const NOTIF_PATH = {
   workplace_supervisor: '/supervisor/notifications',
 }
 
-const PORTAL_LABELS = {
-  admin:                'Admin Portal',
-  student:              'Student Portal',
-  academic_supervisor:  'Academic Supervisor Portal',
-  workplace_supervisor: 'Workplace Supervisor Portal',
-}
-
 const TYPE_ICONS = {
-  log_submitted: '[Log]',
-  log_reviewed:  '[Rev]',
-  log_approved:  '[OK]',
-  log_rejected:  '[!]',
-  evaluation:    '[Eval]',
-  placement:     '[Place]',
-  welcome:       '[Hi]',
-  general:       '[Info]',
+  log_submitted: '📋',
+  log_reviewed:  '🔍',
+  log_approved:  '✅',
+  log_rejected:  '❌',
+  evaluation:    '📊',
+  placement:     '🏢',
+  welcome:       '👋',
+  general:       'ℹ️',
 }
 
 // Where each notification type should navigate, keyed by role
@@ -327,21 +319,27 @@ export default function AppLayout() {
 
         {/* Nav links */}
         <nav className="flex-1 space-y-1">
-          {items.map(({ to, label }) => (
-            <NavLink
-              key={to}
-              to={to}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-3 transition-all duration-200 text-sm font-medium ${
-                  isActive
-                    ? 'text-white bg-white/20 border-r-2 border-white shadow-md'
-                    : 'text-[#93c5fd] hover:text-white hover:bg-white/10'
-                }`
-              }
-            >
-              {label}
-            </NavLink>
-          ))}
+          {items.map((item) =>
+            item.section ? (
+              <div key={item.section} className="px-4 pt-4 pb-1">
+                <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest">{item.section}</p>
+              </div>
+            ) : (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-4 py-3 transition-all duration-200 text-sm font-medium ${
+                    isActive
+                      ? 'text-white bg-white/20 border-r-2 border-white shadow-md'
+                      : 'text-[#93c5fd] hover:text-white hover:bg-white/10'
+                  }`
+                }
+              >
+                {item.label}
+              </NavLink>
+            )
+          )}
         </nav>
 
         {/* User info + logout */}
