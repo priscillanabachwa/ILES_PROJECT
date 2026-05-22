@@ -151,12 +151,15 @@ export default function WorkplaceLogsPage() {
     fetchAll()
   }, [])
 
-  const total     = logs.length
-  const submitted = logs.filter(l => l.status === 'submitted').length
-  const reviewed  = logs.filter(l => l.status === 'reviewed').length
-  const approved  = logs.filter(l => l.status === 'approved').length
+  // Exclude draft logs — workplace supervisor only sees submitted/reviewed/approved
+  const visibleLogs = logs.filter(l => l.status !== 'draft')
 
-  const filtered = logs.filter((l) => {
+  const total     = visibleLogs.length
+  const submitted = visibleLogs.filter(l => l.status === 'submitted').length
+  const reviewed  = visibleLogs.filter(l => l.status === 'reviewed').length
+  const approved  = visibleLogs.filter(l => l.status === 'approved').length
+
+  const filtered = visibleLogs.filter((l) => {
     const matchStatus = statusFilter === 'all' || l.status === statusFilter
     const matchSearch = search === '' ||
       l.student_name.toLowerCase().includes(search.toLowerCase()) ||
@@ -206,7 +209,6 @@ export default function WorkplaceLogsPage() {
             { key: 'submitted', label: 'Submitted' },
             { key: 'reviewed',  label: 'Reviewed'  },
             { key: 'approved',  label: 'Approved'  },
-            { key: 'draft',     label: 'Draft'     },
           ].map(({ key, label }) => (
             <button key={key} onClick={() => setStatusFilter(key)}
               className={`px-4 py-2.5 rounded-xl text-sm font-medium transition ${
@@ -278,7 +280,7 @@ export default function WorkplaceLogsPage() {
           </div>
         )}
         <div className="px-5 py-3 border-t border-slate-700/50 flex items-center justify-between">
-          <p className="text-slate-500 text-xs">Showing {filtered.length} of {total} logs</p>
+          <p className="text-slate-500 text-xs">Showing {filtered.length} of {visibleLogs.length} logs</p>
           <p className="text-slate-500 text-xs">{submitted} submitted · {approved} approved</p>
         </div>
       </div>

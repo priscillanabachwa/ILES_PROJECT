@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { toast } from 'react-toastify'
 import { fetchWithAuth } from '../services/authService'
 
@@ -20,113 +20,20 @@ const STATUS_STYLES = {
   rejected:            'bg-red-500/15 text-red-400 border-red-500/25',
 }
 
-function ReviewModal({ log, onClose, onSuccess }) {
-  const [comment, setComment] = useState('')
-  const [submitting, setSubmitting] = useState(false)
-
-  const handleSubmit = async () => {
-    if (!comment.trim()) { toast.error('A supervisor comment is required to submit a review.'); return }
-    setSubmitting(true)
-    try {
-      await fetchWithAuth(`${API}/weeklylogs/logbooks/${log.id}/review/`, {
-        method: 'POST',
-        body: JSON.stringify({ workplace_comment: comment.trim() }),
-      })
-      toast.success('Workplace review submitted successfully.')
-      onSuccess(log.id, 'workplace_reviewed', comment.trim())
-      onClose()
-    } catch {
-      toast.error('Failed to submit review.')
-    } finally { setSubmitting(false) }
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-slate-800 border border-slate-700/50 rounded-2xl w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh]">
-        <div className="flex items-start justify-between p-6 border-b border-slate-700/50 flex-shrink-0">
-          <div>
-            <h2 className="text-lg font-bold text-white">Submit Review — Week {log.week_number}</h2>
-            <p className="text-slate-400 text-sm mt-0.5 capitalize">{log.student_name} x {log.company}</p>
-          </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-white transition p-1">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-          </button>
-        </div>
-        <div className="p-6 space-y-4 overflow-y-auto flex-1">
-          <div className="bg-slate-700/30 rounded-xl p-4 border border-slate-700/50 space-y-3 max-h-52 overflow-y-auto">
-            <div>
-              <p className="text-xs text-slate-500 mb-1">Activities</p>
-              <p className="text-slate-300 text-sm">{log.activities || '—'}</p>
-            </div>
-            {log.challenges && (
-              <div>
-                <p className="text-xs text-slate-500 mb-1">Challenges</p>
-                <p className="text-slate-300 text-sm">{log.challenges}</p>
-              </div>
-            )}
-            {log.lesson && (
-              <div>
-                <p className="text-xs text-slate-500 mb-1">Lessons Learned</p>
-                <p className="text-slate-300 text-sm">{log.lesson}</p>
-              </div>
-            )}
-          </div>
-          {log.attachment_url && (
-            <a
-              href={log.attachment_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-3 px-4 py-3 bg-indigo-600/10 border border-indigo-500/20 rounded-xl hover:bg-indigo-600/20 transition group"
-            >
-              <svg className="w-5 h-5 text-indigo-400 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
-              </svg>
-              <span className="text-sm text-indigo-300 group-hover:text-indigo-200 flex-1 truncate">
-                {decodeURIComponent(log.attachment_url.split('/').pop())}
-              </span>
-              <svg className="w-4 h-4 text-indigo-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
-              </svg>
-            </a>
-          )}
-          <div>
-            <label className="text-xs text-slate-500 uppercase tracking-wider mb-2 block">
-              Your Feedback <span className="text-red-400">*</span>
-            </label>
-            <textarea
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              rows={4}
-              placeholder="Provide detailed feedback on the intern's performance this week..."
-              className="w-full bg-slate-700/50 border border-slate-600 rounded-xl px-4 py-3 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 resize-none"
-            />
-            <p className="text-xs text-slate-600 mt-1">{comment.length} characters</p>
-          </div>
-        </div>
-        <div className="flex gap-3 p-6 pt-4 border-t border-slate-700/50 flex-shrink-0">
-          <button onClick={onClose}
-            className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-slate-600 text-slate-400 hover:bg-slate-700/50 transition">
-            Cancel
-          </button>
-          <button onClick={handleSubmit} disabled={submitting || !comment.trim()}
-            className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition disabled:opacity-50">
-            {submitting ? 'Submitting...' : 'Submit Review'}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
+const STATUS_LABEL = {
+  draft:              'Draft',
+  submitted:          'Submitted',
+  workplace_reviewed: 'Reviewed',
+  reviewed:           'Academically Reviewed',
+  approved:           'Approved',
+  rejected:           'Rejected',
 }
 
 export default function WorkplaceReviewsPage() {
   const [logs,    setLogs]    = useState([])
   const [loading, setLoading] = useState(true)
   const [search,  setSearch]  = useState('')
-  const [tab,     setTab]     = useState('submitted')
-  const [reviewLog, setReviewLog] = useState(null)
+  const [filter,  setFilter]  = useState('all')
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -153,39 +60,39 @@ export default function WorkplaceReviewsPage() {
     fetchAll()
   }, [])
 
-  const handleReviewSuccess = (id, newStatus, comment) => {
-    setLogs(prev => prev.map(l =>
-      l.id === id ? { ...l, status: newStatus, workplace_comment: comment } : l
-    ))
-  }
+  const allLogs      = logs.filter(l => l.status !== 'draft')
+  const submitted    = logs.filter(l => l.status === 'submitted').length
+  const reviewed     = logs.filter(l => ['workplace_reviewed', 'reviewed'].includes(l.status)).length
+  const approved     = logs.filter(l => l.status === 'approved').length
 
-  const pendingLogs  = logs.filter(l => l.status === 'submitted')
-  const reviewedLogs = logs.filter(l => ['workplace_reviewed', 'reviewed', 'approved'].includes(l.status))
+  const filtered = allLogs.filter(l => {
+    if (filter !== 'all' && l.status !== filter) return false
+    if (search && !l.student_name.toLowerCase().includes(search.toLowerCase()) &&
+        !l.company.toLowerCase().includes(search.toLowerCase())) return false
+    return true
+  })
 
-  const activeLogs = tab === 'submitted' ? pendingLogs : reviewedLogs
-
-  const filtered = activeLogs.filter(l =>
-    search === '' ||
-    l.student_name.toLowerCase().includes(search.toLowerCase()) ||
-    l.company.toLowerCase().includes(search.toLowerCase())
-  )
+  const FILTERS = [
+    { key: 'all',       label: 'All'       },
+    { key: 'submitted', label: 'Submitted' },
+    { key: 'workplace_reviewed', label: 'Reviewed' },
+    { key: 'approved',  label: 'Approved'  },
+  ]
 
   return (
     <div className="space-y-6">
-      {reviewLog && (
-        <ReviewModal log={reviewLog} onClose={() => setReviewLog(null)} onSuccess={handleReviewSuccess} />
-      )}
 
       <div>
-        <h1 className="text-2xl font-bold text-white">Reviews</h1>
-        <p className="text-sm text-slate-400 mt-1">Review weekly internship logs submitted by your assigned students</p>
+        <h1 className="text-2xl font-bold text-white">Student Logs</h1>
+        <p className="text-sm text-slate-400 mt-1">Weekly internship log entries submitted by your assigned students</p>
       </div>
 
+      {/* Stat cards */}
       <div className="grid grid-cols-3 gap-4">
         {[
-          { label: 'Pending Review',      value: pendingLogs.length, color: 'text-amber-400',   bg: 'bg-amber-500/10 border-amber-500/20'       },
-          { label: 'Workplace Reviewed', value: logs.filter(l => l.status === 'workplace_reviewed').length, color: 'text-purple-400', bg: 'bg-purple-500/10 border-purple-500/20' },
-          { label: 'Approved',           value: logs.filter(l => l.status === 'approved').length, color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
+          { label: 'Submitted',  value: submitted, color: 'text-amber-400',   bg: 'bg-amber-500/10 border-amber-500/20'    },
+          { label: 'Reviewed',   value: reviewed,  color: 'text-blue-400',    bg: 'bg-blue-500/10 border-blue-500/20'      },
+          { label: 'Approved',   value: approved,  color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20'},
         ].map(({ label, value, color, bg }) => (
           <div key={label} className={`rounded-2xl p-5 border ${bg}`}>
             <p className="text-slate-400 text-xs uppercase tracking-wider mb-2">{label}</p>
@@ -194,6 +101,7 @@ export default function WorkplaceReviewsPage() {
         ))}
       </div>
 
+      {/* Search + filter bar */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"
@@ -205,91 +113,103 @@ export default function WorkplaceReviewsPage() {
             className="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl pl-9 pr-4 py-2.5 text-sm text-slate-300 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition"
           />
         </div>
-        <div className="flex gap-2">
-          <button onClick={() => setTab('submitted')}
-            className={`px-4 py-2.5 rounded-xl text-sm font-medium transition ${
-              tab === 'submitted' ? 'bg-indigo-600 text-white' : 'bg-slate-800/50 border border-slate-700/50 text-slate-400 hover:text-white'
-            }`}>
-            Pending {pendingLogs.length > 0 && <span className="ml-1.5 bg-amber-500 text-white text-xs rounded-full px-1.5">{pendingLogs.length}</span>}
-          </button>
-          <button onClick={() => setTab('reviewed')}
-            className={`px-4 py-2.5 rounded-xl text-sm font-medium transition ${
-              tab === 'reviewed' ? 'bg-indigo-600 text-white' : 'bg-slate-800/50 border border-slate-700/50 text-slate-400 hover:text-white'
-            }`}>
-            My Reviews
-          </button>
+        <div className="flex gap-2 flex-wrap">
+          {FILTERS.map(({ key, label }) => (
+            <button key={key} onClick={() => setFilter(key)}
+              className={`px-4 py-2.5 rounded-xl text-sm font-medium transition ${
+                filter === key
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-slate-800/50 border border-slate-700/50 text-slate-400 hover:text-white'
+              }`}>
+              {label}
+            </button>
+          ))}
         </div>
       </div>
 
+      {/* Log list */}
       {loading ? (
         <div className="space-y-3">
-          {[1,2,3].map(i => <Skeleton key={i} className="h-32" />)}
+          {[1, 2, 3].map(i => <Skeleton key={i} className="h-32" />)}
         </div>
       ) : filtered.length === 0 ? (
         <div className="bg-slate-800/30 border border-slate-700/50 rounded-2xl p-12 text-center">
           <div className="w-12 h-12 rounded-full bg-slate-700/50 flex items-center justify-center mx-auto mb-3">
             <svg className="w-6 h-6 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
             </svg>
           </div>
-          <p className="text-slate-400 text-sm font-medium">
-            {tab === 'submitted' ? 'No logs pending review' : 'No reviewed logs yet'}
-          </p>
+          <p className="text-slate-400 text-sm font-medium">No logs found</p>
           <p className="text-slate-600 text-xs mt-1">
-            {tab === 'submitted' ? 'All submitted logs have been reviewed.' : 'Reviewed logs will appear here.'}
+            {search ? 'Try a different search term.' : 'Logs submitted by your students will appear here.'}
           </p>
         </div>
       ) : (
         <div className="space-y-3">
           {filtered.map((log) => (
-            <div key={log.id} className="bg-slate-800/30 border border-slate-700/50 rounded-2xl p-5 hover:border-slate-600/50 transition">
+            <div key={log.id}
+              className="bg-slate-800/30 border border-slate-700/50 rounded-2xl p-5 hover:border-slate-600/50 transition">
               <div className="flex items-start justify-between gap-4">
-                <div className="flex items-start gap-4 min-w-0">
-                  <div className="w-10 h-10 rounded-full bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 font-bold text-sm flex-shrink-0">
-                    {log.student_name?.[0] || '?'}
+                <div className="flex items-start gap-4 min-w-0 flex-1">
+                  {/* Week badge */}
+                  <div className="w-11 h-11 rounded-xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 font-bold text-xs flex-shrink-0">
+                    W{log.week_number}
                   </div>
-                  <div className="min-w-0">
+
+                  <div className="min-w-0 flex-1">
+                    {/* Student + company */}
                     <div className="flex items-center gap-2 flex-wrap mb-1">
                       <p className="text-white font-semibold text-sm capitalize">{log.student_name}</p>
-                      <span className="text-slate-500 text-xs">x</span>
+                      <span className="text-slate-600 text-xs">·</span>
                       <p className="text-slate-400 text-xs">{log.company}</p>
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${STATUS_STYLES[log.status] || STATUS_STYLES.draft}`}>
-                        Week {log.week_number}
-                      </span>
                     </div>
+
+                    {/* Week + date */}
+                    <p className="text-xs text-slate-500 mb-2">
+                      Week {log.week_number}
+                      {log.submitted_at && <span> · Submitted {formatDate(log.submitted_at)}</span>}
+                    </p>
+
+                    {/* Activities preview */}
                     <p className="text-slate-400 text-sm line-clamp-2">{log.activities || '—'}</p>
-                    {log.workplace_comment && (
-                      <div className="mt-2 bg-purple-500/10 border border-purple-500/20 rounded-lg px-3 py-2">
-                        <p className="text-xs text-purple-400 mb-0.5">Your workplace review</p>
-                        <p className="text-slate-300 text-xs">{log.workplace_comment}</p>
-                      </div>
+
+                    {/* Challenges + Lessons (collapsed preview) */}
+                    {log.challenges && (
+                      <p className="text-xs text-slate-500 mt-1 line-clamp-1">
+                        <span className="text-slate-600">Challenges: </span>{log.challenges}
+                      </p>
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <p className="text-slate-600 text-xs hidden sm:block">{formatDate(log.submitted_at)}</p>
-                  {log.status === 'submitted' && (
-                    <button onClick={() => setReviewLog(log)}
-                      className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold transition">
-                      Review
-                    </button>
-                  )}
-                  {['workplace_reviewed', 'reviewed', 'approved'].includes(log.status) && (
-                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border capitalize ${STATUS_STYLES[log.status]}`}>
-                      {log.status === 'workplace_reviewed' ? 'Workplace Reviewed' : log.status}
-                    </span>
-                  )}
-                </div>
+
+                {/* Status badge */}
+                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border flex-shrink-0 ${STATUS_STYLES[log.status] || STATUS_STYLES.draft}`}>
+                  {STATUS_LABEL[log.status] || log.status}
+                </span>
               </div>
+
+              {/* Attachment */}
+              {log.attachment_url && (
+                <div className="mt-3 pt-3 border-t border-slate-700/40">
+                  <a href={log.attachment_url} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs text-indigo-400 hover:text-indigo-300 transition">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round"
+                        d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
+                    </svg>
+                    {decodeURIComponent(log.attachment_url.split('/').pop())}
+                  </a>
+                </div>
+              )}
             </div>
           ))}
         </div>
       )}
 
       <div className="text-slate-600 text-xs text-right">
-        Showing {filtered.length} of {activeLogs.length} logs
+        Showing {filtered.length} of {allLogs.length} logs
       </div>
     </div>
   )
 }
-

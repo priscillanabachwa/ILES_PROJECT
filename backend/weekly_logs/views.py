@@ -115,7 +115,7 @@ class WeeklyLogbookViewSet(viewsets.ModelViewSet):
         role = request.user.role
 
         if role in ('academic_supervisor', 'admin'):
-            if log.status not in ('submitted', 'workplace_reviewed'):
+            if log.status != 'submitted':
                 return Response(
                     {'detail': 'Only submitted logs can be reviewed.'},
                     status=400
@@ -135,21 +135,6 @@ class WeeklyLogbookViewSet(viewsets.ModelViewSet):
                 comment=comment,
                 status_at_review='reviewed'
             )
-        elif role == 'workplace_supervisor':
-            if log.status not in ('submitted', 'workplace_reviewed'):
-                return Response(
-                    {'detail': 'You can only leave feedback on submitted logs.'},
-                    status=400
-                )
-            comment = request.data.get('workplace_comment', '').strip()
-            if not comment:
-                return Response(
-                    {'detail': 'A comment is required to leave workplace feedback.'},
-                    status=400
-                )
-            log.workplace_comment = comment
-            log.status = 'workplace_reviewed'
-            log.save()
         else:
             return Response(
                 {'detail': 'You do not have permission to review logs.'},

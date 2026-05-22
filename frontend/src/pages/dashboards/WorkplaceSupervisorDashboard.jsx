@@ -161,10 +161,10 @@ export default function WorkplaceSupervisorDashboard() {
       {error && <div className="bg-red-500/10 border border-red-500/30 text-red-300 text-sm px-4 py-3 rounded-xl">{error}</div>}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Assigned Students"    value={stats?.assigned_students}  sub="View all students"        subLink="/supervisor/scores" accent="indigo"  icon={Icon.students} />
-        <StatCard label="Pending Reviews"     value={stats?.pending_reviews}    sub="Logs awaiting your review" subLink="/supervisor/logs"   accent="amber"   icon={Icon.logbook}  />
-        <StatCard label="Approved Logs"       value={stats?.approved_logs}      sub="Logs approved"             subLink="/supervisor/scores" accent="emerald" icon={Icon.approved} />
-        <StatCard label="Avg. Workplace Score" value={stats?.average_score != null ? `${Number(stats.average_score).toFixed(0)}%` : '—'} sub="Contributes 40% to final" accent="rose" icon={Icon.report} />
+        <StatCard label="Assigned Students"   value={stats?.assigned_students} sub="View all students"          subLink="/supervisor/scores" accent="indigo"  icon={Icon.students} />
+        <StatCard label="Submitted Logs"      value={stats?.submitted_logs}    sub="Logs from your students"    subLink="/supervisor/logs"   accent="amber"   icon={Icon.logbook}  />
+        <StatCard label="Scores Submitted"    value={stats?.evaluated_count}   sub="Evaluations you've scored"  subLink="/supervisor/scores" accent="emerald" icon={Icon.approved} />
+        <StatCard label="Avg. Workplace Score" value={stats?.average_score != null ? `${Number(stats.average_score).toFixed(1)}%` : '—'} sub="Contributes 40% to final" accent="rose" icon={Icon.report} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
@@ -247,9 +247,10 @@ export default function WorkplaceSupervisorDashboard() {
           <Card title="Quick Actions">
             <div className="space-y-2">
               {[
-                { label:'View My Students', sub:'All assigned interns',      icon:Icon.students, to:'/supervisor/scores',  color:'text-indigo-400 bg-indigo-600/20'   },
-                { label:'Score Performance', sub:'Submit workplace scores',   icon:Icon.score,    to:'/supervisor/scores',  color:'text-emerald-400 bg-emerald-500/20' },
-                { label:'Generate Report',  sub:'Download student reports',  icon:Icon.report,   to:'/supervisor/reports', color:'text-rose-400 bg-rose-500/20'       },
+                { label:'View My Students',  sub:'All assigned interns',     icon:Icon.students, to:'/supervisor/scores',  color:'text-indigo-400 bg-indigo-600/20'   },
+                { label:'Score Performance', sub:'Submit workplace scores',  icon:Icon.score,    to:'/supervisor/scores',  color:'text-emerald-400 bg-emerald-500/20' },
+                { label:'View Student Logs', sub:'Browse submitted logs',    icon:Icon.logbook,  to:'/supervisor/logs',    color:'text-amber-400 bg-amber-500/20'     },
+                { label:'Generate Report',   sub:'Download student reports', icon:Icon.report,   to:'/supervisor/reports', color:'text-rose-400 bg-rose-500/20'       },
               ].map(({ label, sub, icon, to, color }) => (
                 <Link key={label} to={to} className="flex items-center gap-3 p-3 rounded-xl border border-slate-700/50 hover:border-indigo-500/40 hover:bg-indigo-600/10 transition group">
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${color}`}>{icon}</div>

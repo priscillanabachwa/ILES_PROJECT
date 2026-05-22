@@ -52,12 +52,13 @@ async function getStudentStats() {
     fetchWithAuth(LOGBOOKS),
     fetchWithAuth(EVALUATIONS).catch(() => []),
   ]);
-  const submitted = logbooks.filter(l => ['submitted', 'workplace_reviewed', 'reviewed', 'approved'].includes(l.status));
+  const submitted = logbooks.filter(l => ['submitted', 'reviewed', 'approved'].includes(l.status));
   const pending = logbooks.filter(l => l.status === 'draft');
-  const withFeedback = logbooks.filter(l =>
-    (l.supervisor_comment || l.workplace_comment) && l.status !== 'draft'
-  );
+  // Count all feedback: evaluation overall_comments + logbook supervisor comments
   const evalsArr = Array.isArray(evals) ? evals : [];
+  const evalFeedbackCount = evalsArr.filter(e => e.overall_comment && e.status === 'SUBMITTED').length;
+  const logbookFeedbackCount = logbooks.filter(l => l.supervisor_comment && l.status !== 'draft').length;
+  const totalFeedback = evalFeedbackCount + logbookFeedbackCount;
   const academicEval  = evalsArr.find(e => e.evaluator_role === 'academic_supervisor');
   const workplaceEval = evalsArr.find(e => e.evaluator_role === 'workplace_supervisor');
   const wScore      = workplaceEval?.total_score != null ? Number(workplaceEval.total_score) : null;
@@ -86,7 +87,7 @@ async function getStudentStats() {
     data: {
       logs_submitted: submitted.length,
       pending_logs: pending.length,
-      unread_feedback: withFeedback.length,
+      unread_feedback: totalFeedback,
       current_score: currentScore,
     },
   };
@@ -163,14 +164,38 @@ async function getStudentScores() {
     return 'F'
   }
 
-  const feedback = logbooks
+  // Collect all feedback — evaluation overall_comments + logbook comments
+  const feedback = []
+
+  // Evaluation overall comments (the comment a supervisor writes when scoring)
+  if (workplaceEval?.overall_comment) {
+    feedback.push({
+      from:    'Workplace Supervisor',
+      date:    workplaceEval.submitted_at || workplaceEval.created_at,
+      comment: workplaceEval.overall_comment,
+    })
+  }
+  if (academicEval?.overall_comment) {
+    feedback.push({
+      from:    'Academic Supervisor',
+      date:    academicEval.submitted_at || academicEval.created_at,
+      comment: academicEval.overall_comment,
+    })
+  }
+
+  // Logbook-level comments (academic supervisor only — workplace supervisors only view logs)
+  logbooks
     .filter(l => l.supervisor_comment)
-    .slice(0, 3)
-    .map(l => ({
-      from: 'Supervisor',
-      date: l.submitted_at || l.deadline,
-      comment: l.supervisor_comment,
-    }));
+    .forEach(l => {
+      feedback.push({
+        from:    'Academic Supervisor',
+        date:    l.submitted_at || l.deadline,
+        comment: l.supervisor_comment,
+        week:    l.week_number,
+      })
+    })
+
+  const recentFeedback = feedback.slice(0, 3)
 
   return {
     data: {
@@ -181,7 +206,7 @@ async function getStudentScores() {
       report_score:         reportScore,
       other_academic_score: otherAcademicScore,
       academic_total:       academicTotal,
-      recent_feedback:      feedback,
+      recent_feedback:      recentFeedback,
     },
   };
 }
@@ -189,18 +214,22 @@ async function getStudentScores() {
 // ????????? workplace supervisor dashboard ???????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
 
 async function getWorkplaceStats() {
-  const [placements, logbooks] = await Promise.all([
+  const [placements, logbooks, evals] = await Promise.all([
     fetchWithAuth(PLACEMENTS),
     fetchWithAuth(LOGBOOKS),
+    fetchWithAuth(EVALUATIONS).catch(() => []),
   ]);
-  // Backend already filters placements/logbooks to this supervisor's students only
+  const evalsArr = Array.isArray(evals) ? evals : [];
+  const submittedEvals = evalsArr.filter(e => e.status === 'SUBMITTED');
+  const avgScore = submittedEvals.length
+    ? Number((submittedEvals.reduce((s, e) => s + Number(e.total_score || 0), 0) / submittedEvals.length).toFixed(1))
+    : null;
   return {
     data: {
       assigned_students: placements.length,
-      pending_reviews:   logbooks.filter(l => l.status === 'submitted').length,   // awaiting workplace review
-      reviewed_by_me:    logbooks.filter(l => l.status === 'workplace_reviewed').length,
-      approved_logs:     logbooks.filter(l => l.status === 'approved').length,
-      average_score:     null,
+      submitted_logs:    logbooks.filter(l => l.status !== 'draft').length,
+      evaluated_count:   submittedEvals.length,
+      average_score:     avgScore,
     },
   };
 }
@@ -293,7 +322,7 @@ async function getAcademicStats() {
   return {
     data: {
       assigned_students: placements.length,
-      pending_reviews: logbooks.filter(l => ['submitted', 'workplace_reviewed'].includes(l.status)).length,
+      pending_reviews: logbooks.filter(l => l.status === 'submitted').length,
       awaiting_approval: logbooks.filter(l => l.status === 'reviewed').length,
       completed_evaluations: completedEvals.length,
       average_score: avgScore,
@@ -322,7 +351,7 @@ async function getPendingReviews() {
   const pm = buildPlacementMap(placements);
   return {
     data: logbooks
-      .filter(l => ['submitted', 'workplace_reviewed', 'reviewed'].includes(l.status))
+      .filter(l => ['submitted', 'reviewed'].includes(l.status))
       .map(l => ({
         ...l,
         student_name: capName(pm[l.placement]?.student_name || 'Unknown Student'),

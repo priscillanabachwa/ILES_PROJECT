@@ -27,6 +27,7 @@ import AcademicEvaluationsPage from './pages/AcademicEvaluationsPage.jsx'
 import WorkplaceReviewsPage from './pages/WorkplaceReviewsPage.jsx'
 import WorkplaceScoresPage from './pages/WorkplaceScoresPage.jsx'
 import WorkplaceLogsPage from './pages/WorkplaceLogsPage.jsx'
+import WorkplaceReportsPage from './pages/WorkplaceReportsPage.jsx'
 import StudentEvaluationPage from './pages/StudentEvaluationPage.jsx'
 import StudentFeedbackPage from './pages/StudentFeedbackPage.jsx'
 import NotificationsPage from './pages/NotificationsPage.jsx'
@@ -159,7 +160,7 @@ function App() {
               <Route path="/supervisor/profile" element={<ProfilePage />} />
               <Route path="/supervisor/students" element={<Navigate to="/supervisor/scores" replace />} />
               <Route path="/supervisor/activity" element={<Navigate to="/supervisor/scores" replace />} />
-              <Route path="/supervisor/reports" element={<Navigate to="/supervisor/scores" replace />} />
+              <Route path="/supervisor/reports" element={<WorkplaceReportsPage />} />
               <Route path="/supervisor/reviews" element={<Navigate to="/supervisor/scores" replace />} />
             </Route>
 

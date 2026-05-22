@@ -29,19 +29,28 @@ const fmtSize = (b) =>
 const isOverdue = (d) => (d ? new Date(d) < new Date() : false)
 
 const STATUS = {
-  draft:     'bg-slate-500/20 text-slate-400 border-slate-500/30',
-  submitted: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
-  reviewed:  'bg-blue-500/20 text-blue-300 border-blue-500/30',
-  approved:  'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+  draft:               'bg-slate-500/20 text-slate-400 border-slate-500/30',
+  submitted:           'bg-amber-500/20 text-amber-300 border-amber-500/30',
+  workplace_reviewed:  'bg-purple-500/20 text-purple-300 border-purple-500/30',
+  reviewed:            'bg-blue-500/20 text-blue-300 border-blue-500/30',
+  approved:            'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+}
+
+const STATUS_LABEL = {
+  draft:               'Draft',
+  submitted:           'Submitted',
+  workplace_reviewed:  'Workplace Reviewed',
+  reviewed:            'Reviewed',
+  approved:            'Approved',
 }
 
 // ── small shared components ────────────────────────────────────────────────
 
 function Badge({ status }) {
   return (
-    <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold capitalize border whitespace-nowrap
+    <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold border whitespace-nowrap
       ${STATUS[status] || 'bg-slate-500/20 text-slate-400 border-slate-500/30'}`}>
-      {status || 'unknown'}
+      {STATUS_LABEL[status] || status || 'unknown'}
     </span>
   )
 }
@@ -558,15 +567,9 @@ export default function MyLogsPage() {
                         <span>Week #{log.week_number}</span>
                       </div>
                       {log.attachment_url && <AttachmentLink url={log.attachment_url} />}
-                      {log.workplace_comment && (
-                        <div className="mt-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-3 py-2">
-                          <p className="text-xs text-slate-500 font-medium mb-0.5">Workplace Supervisor Feedback</p>
-                          <p className="text-xs text-emerald-300 line-clamp-2">{log.workplace_comment}</p>
-                        </div>
-                      )}
                       {log.supervisor_comment && (
                         <div className="mt-2 bg-blue-500/10 border border-blue-500/20 rounded-lg px-3 py-2">
-                          <p className="text-xs text-slate-500 font-medium mb-0.5">Academic Supervisor Feedback</p>
+                          <p className="text-xs text-slate-500 font-medium mb-0.5">Supervisor Feedback</p>
                           <p className="text-xs text-blue-300 line-clamp-2">{log.supervisor_comment}</p>
                         </div>
                       )}
@@ -577,6 +580,7 @@ export default function MyLogsPage() {
                     <span>
                       {log.status === 'approved'            && <span className="text-emerald-400 font-medium">Approved by supervisor</span>}
                       {log.status === 'reviewed'            && <span className="text-blue-400 font-medium">Reviewed – awaiting approval</span>}
+                      {log.status === 'workplace_reviewed'  && <span className="text-purple-400 font-medium">Reviewed by workplace supervisor</span>}
                       {log.status === 'submitted'           && <span className="text-amber-400 font-medium">Submitted for Grading</span>}
                       {log.status === 'draft'               && <span className="text-slate-500">Draft – not yet submitted</span>}
                     </span>

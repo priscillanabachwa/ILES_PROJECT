@@ -18,6 +18,7 @@ const NAV = {
   student: [
     { to: '/student/dashboard',     label: 'Dashboard'     },
     { to: '/student/logs',          label: 'My Logs'       },
+    { to: '/student/feedback',      label: 'Feedback'      },
     { to: '/student/evaluation',    label: 'Evaluations'   },
     { to: '/student/notifications', label: 'Notifications' },
     { to: '/student/profile',       label: 'Profile'       },
@@ -30,11 +31,11 @@ const NAV = {
     { to: '/academic/profile',         label: 'Profile'         },
   ],
   workplace_supervisor: [
-    { to: '/supervisor/dashboard',     label: 'Dashboard'       },
-    { to: '/supervisor/logs',          label: 'Internship Logs' },
-    { to: '/supervisor/scores',        label: 'Scores'          },
-    { to: '/supervisor/notifications', label: 'Notifications'   },
-    { to: '/supervisor/profile',       label: 'Profile'         },
+    { to: '/supervisor/dashboard',     label: 'Dashboard'    },
+    { to: '/supervisor/logs',          label: 'Student Logs' },
+    { to: '/supervisor/scores',        label: 'Scores'       },
+    { to: '/supervisor/notifications', label: 'Notifications'},
+    { to: '/supervisor/profile',       label: 'Profile'      },
   ],
 }
 
