@@ -26,11 +26,13 @@ const STATUS_STYLES = {
   draft:              'bg-slate-500/20 text-slate-400 border border-slate-500/30',
 }
 
+const capWord = s => s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : s
+
 function Badge({ status, overdue = false }) {
   const s = overdue ? 'Overdue' : status
   return (
     <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold whitespace-nowrap ${STATUS_STYLES[s] || 'bg-slate-500/20 text-slate-400'}`}>
-      {overdue ? 'Overdue' : status}
+      {overdue ? 'Overdue' : capWord(status)}
     </span>
   )
 }
@@ -79,6 +81,60 @@ const Icon = {
   report:   <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>,
   search:   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>,
   chevron:  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>,
+}
+
+function DisapproveModal({ log, onClose, onConfirm, loading }) {
+  const [comment, setComment] = useState('')
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-slate-800 border border-slate-700/50 rounded-2xl w-full max-w-md shadow-2xl">
+        <div className="flex items-start justify-between p-6 border-b border-slate-700/50">
+          <div>
+            <h2 className="text-lg font-bold text-white">Disapprove Log</h2>
+            <p className="text-slate-400 text-sm mt-0.5">Week {log.week_number} — {log.student_name}</p>
+          </div>
+          <button onClick={onClose} className="text-slate-400 hover:text-white transition p-1">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+        <div className="p-6 space-y-4">
+          <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+            <p className="text-red-300 text-sm">The log will be sent back to the student as a draft for revision.</p>
+          </div>
+          <div>
+            <label className="text-xs text-slate-500 uppercase tracking-wider mb-2 block">
+              Reason for disapproval <span className="text-red-400">*</span>
+            </label>
+            <textarea
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              rows={3}
+              placeholder="Explain what needs to be corrected..."
+              className="w-full bg-slate-700/50 border border-slate-600 rounded-xl px-4 py-3 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 resize-none"
+            />
+          </div>
+        </div>
+        <div className="flex gap-3 px-6 pb-6">
+          <button onClick={onClose}
+            className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-slate-600 text-slate-400 hover:bg-slate-700/50 transition">
+            Cancel
+          </button>
+          <button
+            onClick={() => {
+              if (!comment.trim()) { toast.error('A reason is required.'); return }
+              onConfirm(log.id, comment.trim())
+            }}
+            disabled={loading}
+            className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-red-600 hover:bg-red-700 text-white transition disabled:opacity-50">
+            {loading ? 'Disapproving...' : 'Disapprove'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 function StatCard({ label, value, sub, subLink, icon, accent }) {
@@ -133,7 +189,9 @@ export default function AcademicDashboard() {
   const [loading,    setLoading]        = useState(true)
   const [error,      setError]          = useState('')
   const [search,     setSearch]         = useState('')
-  const [approvingId,   setApprovingId]   = useState(null)
+  const [approvingId,    setApprovingId]    = useState(null)
+  const [disapproveTarget, setDisapproveTarget] = useState(null)
+  const [disapproving,   setDisapproving]   = useState(false)
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -170,10 +228,34 @@ export default function AcademicDashboard() {
       await dashboardService.approveLog(logId)
       toast.success('Log approved successfully.')
       setLogbooks(prev => prev.filter(l => l.id !== logId))
-      setStats(prev => prev ? { ...prev, pending_reviews: Math.max(0, prev.pending_reviews - 1) } : prev)
+      setStats(prev => prev ? {
+        ...prev,
+        awaiting_approval: Math.max(0, (prev.awaiting_approval ?? 0) - 1),
+      } : prev)
     } catch (err) {
       toast.error(err.message || 'Failed to approve log.')
     } finally { setApprovingId(null) }
+  }
+
+  const handleDisapprove = async (logId, comment) => {
+    setDisapproving(true)
+    try {
+      await dashboardService.rejectLog(logId, comment)
+      toast.success('Log sent back to student for revision.')
+      setLogbooks(prev => prev.filter(l => l.id !== logId))
+      setStats(prev => {
+        if (!prev) return prev
+        const wasReviewed = disapproveTarget?.status === 'reviewed'
+        return {
+          ...prev,
+          pending_reviews:   wasReviewed ? prev.pending_reviews : Math.max(0, (prev.pending_reviews ?? 0) - 1),
+          awaiting_approval: wasReviewed ? Math.max(0, (prev.awaiting_approval ?? 0) - 1) : prev.awaiting_approval,
+        }
+      })
+      setDisapproveTarget(null)
+    } catch (err) {
+      toast.error(err.message || 'Failed to disapprove log.')
+    } finally { setDisapproving(false) }
   }
 
   const filtered = placements.filter((p) =>
@@ -182,6 +264,15 @@ export default function AcademicDashboard() {
   )
   return (
     <div className="space-y-6">
+
+      {disapproveTarget && (
+        <DisapproveModal
+          log={disapproveTarget}
+          onClose={() => setDisapproveTarget(null)}
+          onConfirm={handleDisapprove}
+          loading={disapproving}
+        />
+      )}
 
       {/*  Header  */}
       <div className="flex items-start justify-between flex-wrap gap-3">
@@ -200,10 +291,10 @@ export default function AcademicDashboard() {
 
       {/*  Stat cards  */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Assigned Students"    value={stats?.assigned_students}     sub="View all students" subLink="/academic/students"    accent="indigo"  icon={Icon.students} />
-        <StatCard label="Pending Reviews"       value={stats?.pending_reviews}       sub="Review now"        subLink="/academic/logs"         accent="amber"   icon={Icon.logbook}  />
-        <StatCard label="Completed Evaluations" value={stats?.completed_evaluations} sub="View summaries"    subLink="/academic/evaluations"  accent="emerald" icon={Icon.eval}     />
-        <StatCard label="Average Score"         value={stats ? `${Number(stats.average_score).toFixed(0)}%` : null} sub="Across all students" accent="rose" icon={Icon.report} />
+        <StatCard label="Assigned Students"    value={stats?.assigned_students}     sub="View all students"          subLink="/academic/logs"         accent="indigo"  icon={Icon.students} />
+        <StatCard label="Action Required"       value={stats ? (stats.pending_reviews ?? 0) + (stats.awaiting_approval ?? 0) : null} sub="Pending review or approval" subLink="/academic/logs" accent="amber" icon={Icon.logbook} />
+        <StatCard label="Completed Evaluations" value={stats?.completed_evaluations} sub="View summaries"             subLink="/academic/evaluations"  accent="emerald" icon={Icon.eval}     />
+        <StatCard label="Average Score"         value={stats?.average_score != null ? `${Number(stats.average_score) % 1 === 0 ? Number(stats.average_score).toFixed(0) : Number(stats.average_score).toFixed(1)}%` : null} sub="Across all students" accent="rose" icon={Icon.report} />
       </div>
 
       {/*  Main content  */}
@@ -215,7 +306,7 @@ export default function AcademicDashboard() {
           <Card
             title="Assigned Students"
             actionLabel="View All"
-            actionLink="/academic/students"
+            actionLink="/academic/logs"
             headerRight={
               <div className="flex items-center gap-2 bg-slate-700/50 border border-slate-600 rounded-lg px-3 py-1.5">
                 <span className="text-slate-400">{Icon.search}</span>
@@ -253,7 +344,7 @@ export default function AcademicDashboard() {
             )}
           </Card>
 
-          <Card title="Recent Activity" actionLabel="View All" actionLink="/academic/activity">
+          <Card title="Recent Activity" actionLabel="View All" actionLink="/academic/logs">
             {loading ? <ListSkeleton /> : (
               activity.length === 0
                 ? <p className="text-xs text-slate-500">No recent activity.</p>
@@ -317,21 +408,37 @@ export default function AcademicDashboard() {
                       <Badge status={l.status} overdue={isOverdue(l.deadline)} />
                     </div>
                     {l.status === 'submitted' && (
-                      <Link
-                        to="/academic/logs"
-                        className="mt-2 w-full py-1.5 rounded-lg text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/30 hover:bg-amber-500/20 transition flex items-center justify-center gap-1"
-                      >
-                        Review Log
-                      </Link>
+                      <div className="mt-2 grid grid-cols-2 gap-1.5">
+                        <Link
+                          to="/academic/logs"
+                          className="py-1.5 rounded-lg text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/30 hover:bg-amber-500/20 transition flex items-center justify-center"
+                        >
+                          Review
+                        </Link>
+                        <button
+                          onClick={() => setDisapproveTarget(l)}
+                          className="py-1.5 rounded-lg text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20 transition"
+                        >
+                          Disapprove
+                        </button>
+                      </div>
                     )}
                     {l.status === 'reviewed' && (
-                      <button
-                        onClick={() => handleApprove(l.id)}
-                        disabled={approvingId === l.id}
-                        className="mt-2 w-full py-1.5 rounded-lg text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 transition disabled:opacity-50"
-                      >
-                        {approvingId === l.id ? 'Approving...' : 'Approve Log'}
-                      </button>
+                      <div className="mt-2 grid grid-cols-2 gap-1.5">
+                        <button
+                          onClick={() => handleApprove(l.id)}
+                          disabled={approvingId === l.id}
+                          className="py-1.5 rounded-lg text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 transition disabled:opacity-50"
+                        >
+                          {approvingId === l.id ? 'Approving...' : 'Approve'}
+                        </button>
+                        <button
+                          onClick={() => setDisapproveTarget(l)}
+                          className="py-1.5 rounded-lg text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20 transition"
+                        >
+                          Disapprove
+                        </button>
+                      </div>
                     )}
                   </div>
                 ))}
@@ -375,7 +482,7 @@ export default function AcademicDashboard() {
                     <p className="text-xs text-slate-500 mt-0.5">Across all submitted evaluations</p>
                   </div>
                   <p className="text-2xl font-black text-indigo-300">
-                    {stats?.average_score != null ? `${Number(stats.average_score).toFixed(0)}%` : '—'}
+                    {stats?.average_score != null ? `${Number(stats.average_score) % 1 === 0 ? Number(stats.average_score).toFixed(0) : Number(stats.average_score).toFixed(1)}%` : '—'}
                   </p>
                 </div>
 
@@ -398,7 +505,7 @@ export default function AcademicDashboard() {
           <Card title="Quick Actions">
             <div className="space-y-2">
               {[
-                { label: 'View My Students',  sub: 'All assigned students',         icon: Icon.students, to: '/academic/students',   color: 'text-indigo-400 bg-indigo-600/20' },
+                { label: 'View My Students',  sub: 'All assigned students',         icon: Icon.students, to: '/academic/logs',        color: 'text-indigo-400 bg-indigo-600/20' },
                 { label: 'Review Submissions', sub: 'Pending internship logs',       icon: Icon.logbook,  to: '/academic/logs',        color: 'text-amber-400 bg-amber-500/20'   },
                 { label: 'Submit Evaluation',  sub: 'Complete a student evaluation', icon: Icon.eval,     to: '/academic/evaluations', color: 'text-teal-400 bg-teal-500/20'     },
               ].map(({ label, sub, icon, to, color }) => (

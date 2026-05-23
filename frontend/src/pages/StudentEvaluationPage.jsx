@@ -33,7 +33,7 @@ function computeGrade(score) {
   return 'F'
 }
 
-function EvaluationSection({ title, subtitle, evaluation, emptyMessage }) {
+function EvaluationSection({ title, subtitle, evaluation, emptyMessage, logFeedback = [] }) {
   const items = Array.isArray(evaluation?.items) ? evaluation.items : []
   const score = evaluation?.total_score != null ? Number(evaluation.total_score) : null
 
@@ -121,10 +121,40 @@ function EvaluationSection({ title, subtitle, evaluation, emptyMessage }) {
         </div>
       )}
 
-      {evaluation?.overall_comment && (
-        <div className="px-6 py-4 border-t border-slate-700/50">
-          <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Supervisor Comment</p>
-          <p className="text-slate-300 text-sm">{evaluation.overall_comment}</p>
+      {evaluation?.status === 'SUBMITTED' && (
+        <div className="px-6 py-4 border-t border-slate-700/50 space-y-3">
+          <p className="text-xs text-slate-500 uppercase tracking-wider">Supervisor Comment</p>
+
+          {/* Evaluation overall comment */}
+          {evaluation.overall_comment && (
+            <p className="text-slate-300 text-sm">{evaluation.overall_comment}</p>
+          )}
+
+          {/* Per-week log feedback */}
+          {logFeedback.length > 0 && (
+            <div className="space-y-2">
+              {logFeedback.map(log => (
+                <div key={log.id} className="bg-slate-700/30 border border-slate-700/50 rounded-xl px-4 py-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-xs font-semibold text-slate-400">Week {log.week_number}</p>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-semibold border ${
+                      log.status === 'approved'
+                        ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/25'
+                        : 'bg-blue-500/15 text-blue-400 border-blue-500/25'
+                    }`}>
+                      {log.status === 'approved' ? 'Approved' : 'Reviewed'}
+                    </span>
+                  </div>
+                  <p className="text-slate-300 text-sm">{log.supervisor_comment}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Fallback only when truly nothing to show */}
+          {!evaluation.overall_comment && logFeedback.length === 0 && (
+            <p className="text-slate-500 text-sm italic">No comment left by your supervisor.</p>
+          )}
         </div>
       )}
     </div>
@@ -132,24 +162,29 @@ function EvaluationSection({ title, subtitle, evaluation, emptyMessage }) {
 }
 
 export default function StudentEvaluationPage() {
-  const [evals,   setEvals]   = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error,   setError]   = useState('')
+  const [evals,    setEvals]    = useState([])
+  const [logbooks, setLogbooks] = useState([])
+  const [loading,  setLoading]  = useState(true)
+  const [error,    setError]    = useState('')
 
   useEffect(() => {
-    const fetchEvals = async () => {
+    const fetchAll = async () => {
       setLoading(true)
       setError('')
       try {
-        const data = await fetchWithAuth(`${API}/evaluations/evaluations/`)
-        setEvals(Array.isArray(data) ? data : [])
+        const [evalsData, logsData] = await Promise.all([
+          fetchWithAuth(`${API}/evaluations/evaluations/`).catch(() => []),
+          fetchWithAuth(`${API}/weeklylogs/logbooks/`).catch(() => []),
+        ])
+        setEvals(Array.isArray(evalsData) ? evalsData : [])
+        setLogbooks(Array.isArray(logsData) ? logsData : [])
       } catch {
         setError('Failed to load your evaluation. Please refresh.')
       } finally {
         setLoading(false)
       }
     }
-    fetchEvals()
+    fetchAll()
   }, [])
 
   const academicEval  = evals.find(e => e.evaluator_role === 'academic_supervisor')
@@ -248,6 +283,10 @@ export default function StudentEvaluationPage() {
           subtitle="Scores submitted by your academic supervisor"
           evaluation={academicEval}
           emptyMessage="Your academic supervisor has not submitted an evaluation yet."
+          logFeedback={logbooks
+            .filter(l => l.supervisor_comment && ['reviewed', 'approved'].includes(l.status))
+            .sort((a, b) => a.week_number - b.week_number)
+          }
         />
       )}
 

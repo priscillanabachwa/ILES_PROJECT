@@ -17,7 +17,7 @@ function ScoreBadge({ score }) {
                   'bg-red-500/20 text-red-400 border-red-500/30'
   return (
     <span className={`px-2 py-0.5 rounded-full text-xs font-bold border ${color}`}>
-      {Number(score).toFixed(2)}%
+      {Number(score) % 1 === 0 ? Number(score).toFixed(0) : Number(score).toFixed(1)}%
     </span>
   )
 }
@@ -97,7 +97,7 @@ function EvaluateModal({ row, criteria, onClose, onSuccess }) {
       if (submit) {
         await fetchWithAuth(`${API}/evaluations/evaluations/${evalId}/`, {
           method: 'PATCH',
-          body: JSON.stringify({ status: 'SUBMITTED' }),
+          body: JSON.stringify({ overall_comment: comment, status: 'SUBMITTED' }),
         })
         toast.success('Evaluation submitted successfully.')
       } else {
@@ -133,6 +133,11 @@ function EvaluateModal({ row, criteria, onClose, onSuccess }) {
         <div className="p-6 space-y-4 overflow-y-auto flex-1">
           <div>
             <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Evaluation Criteria</p>
+            {criteria.length === 0 ? (
+              <p className="text-slate-500 text-sm text-center py-6 bg-slate-700/20 rounded-xl border border-slate-700/40">
+                No evaluation criteria available. Please contact an administrator.
+              </p>
+            ) : null}
             <div className="space-y-3">
               {criteria.map((c) => {
                 const val = scores[c.id] !== undefined ? scores[c.id] : ''
@@ -233,7 +238,9 @@ function ViewModal({ row, onClose }) {
             <div>
               <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Total Score</p>
               <p className="text-3xl font-black text-white">
-                {ev.total_score != null ? `${Number(ev.total_score).toFixed(0)}%` : '—'}
+                {ev.total_score != null
+                  ? `${Number(ev.total_score) % 1 === 0 ? Number(ev.total_score).toFixed(0) : Number(ev.total_score).toFixed(1)}%`
+                  : '—'}
               </p>
             </div>
             <div className="text-right">
@@ -263,12 +270,13 @@ function ViewModal({ row, onClose }) {
             </div>
           )}
 
-          {ev.overall_comment && (
-            <div className="bg-slate-700/30 rounded-xl p-4 border border-slate-700/50">
-              <p className="text-xs text-slate-500 mb-2">Overall Comment</p>
-              <p className="text-slate-300 text-sm">{ev.overall_comment}</p>
-            </div>
-          )}
+          <div className="bg-slate-700/30 rounded-xl p-4 border border-slate-700/50">
+            <p className="text-xs text-slate-500 mb-2">Overall Comment</p>
+            {ev.overall_comment
+              ? <p className="text-slate-300 text-sm">{ev.overall_comment}</p>
+              : <p className="text-slate-500 text-sm italic">No comment was left for this evaluation.</p>
+            }
+          </div>
         </div>
         <div className="p-6 pt-4 border-t border-slate-700/50 flex-shrink-0">
           <button onClick={onClose}
@@ -331,8 +339,11 @@ export default function AcademicEvaluationsPage() {
   const submitted = rows.filter(r => r.evaluation?.status === 'SUBMITTED').length
   const pending   = rows.filter(r => !r.evaluation || r.evaluation.status !== 'SUBMITTED').length
   const scored    = rows.filter(r => r.evaluation?.total_score != null)
-  const avgScore  = scored.length
-    ? Math.round(scored.reduce((acc, r) => acc + Number(r.evaluation.total_score), 0) / scored.length)
+  const avgScoreRaw = scored.length
+    ? scored.reduce((acc, r) => acc + Number(r.evaluation.total_score), 0) / scored.length
+    : null
+  const avgScore = avgScoreRaw != null
+    ? (avgScoreRaw % 1 === 0 ? avgScoreRaw.toFixed(0) : avgScoreRaw.toFixed(1))
     : null
 
   const filtered = rows.filter((r) => {
@@ -367,7 +378,7 @@ export default function AcademicEvaluationsPage() {
           { label: 'Total Interns', value: total,                                  color: 'text-white',       bg: 'bg-slate-800/50 border-slate-700/50'    },
           { label: 'Evaluated',     value: submitted,                              color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
           { label: 'Pending',       value: pending,                                color: 'text-amber-400',   bg: 'bg-amber-500/10 border-amber-500/20'    },
-          { label: 'Avg. Score',    value: avgScore != null ? `${avgScore}%` : '—', color: 'text-indigo-400',  bg: 'bg-indigo-600/10 border-indigo-500/20'  },
+          { label: 'Avg. Score',    value: avgScore != null ? `${avgScore}%` : '—',  color: 'text-indigo-400',  bg: 'bg-indigo-600/10 border-indigo-500/20'  },
         ].map(({ label, value, color, bg }) => (
           <div key={label} className={`rounded-2xl p-5 border ${bg}`}>
             <p className="text-slate-400 text-xs uppercase tracking-wider mb-2">{label}</p>

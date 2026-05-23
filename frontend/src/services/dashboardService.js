@@ -289,15 +289,37 @@ async function getAcademicStats() {
 }
 
 async function getAcademicPlacements() {
-  const placements = await fetchWithAuth(PLACEMENTS);
+  const [placements, logbooks] = await Promise.all([
+    fetchWithAuth(PLACEMENTS),
+    fetchWithAuth(LOGBOOKS).catch(() => []),
+  ]);
+
+  // Group logs by placement ID
+  const logsByPlacement = {};
+  for (const l of (Array.isArray(logbooks) ? logbooks : [])) {
+    if (!logsByPlacement[l.placement]) logsByPlacement[l.placement] = [];
+    logsByPlacement[l.placement].push(l);
+  }
+
   return {
-    data: placements.map(p => ({
-      id: p.id,
-      student_name: capName(p.student_name || String(p.student || '')),
-      student_id: String(p.student || ''),
-      company: p.company_name || String(p.company || ''),
-      status: p.status,
-    })),
+    data: placements.map(p => {
+      const logs = logsByPlacement[p.id] || [];
+      // Derive a meaningful activity status from log data
+      // Priority: submitted (needs action) > reviewed (needs approval) > approved (all good)
+      // Falls back to placement status only if no logs exist yet
+      let status = p.status;
+      if (logs.some(l => l.status === 'submitted'))      status = 'submitted';
+      else if (logs.some(l => l.status === 'reviewed'))  status = 'reviewed';
+      else if (logs.some(l => l.status === 'approved'))  status = 'approved';
+
+      return {
+        id: p.id,
+        student_name: capName(p.student_name || String(p.student || '')),
+        student_id: String(p.student || ''),
+        company: p.company_name || String(p.company || ''),
+        status,
+      };
+    }),
   };
 }
 

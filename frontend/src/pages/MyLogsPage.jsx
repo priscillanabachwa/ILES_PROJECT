@@ -450,7 +450,7 @@ export default function MyLogsPage() {
             {[
               { key: 'all',       label: 'Total',     color: 'text-white'       },
               { key: 'draft',     label: 'Draft',     color: 'text-slate-400'   },
-              { key: 'submitted', label: 'Submitted', color: 'text-amber-300'   },
+              { key: 'submitted', label: 'Awaiting Review', color: 'text-amber-300'   },
               { key: 'reviewed',  label: 'Reviewed',  color: 'text-blue-300'    },
               { key: 'approved',  label: 'Approved',  color: 'text-emerald-300' },
             ].map(({ key, label, color }) => (

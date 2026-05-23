@@ -45,20 +45,20 @@ def notify_on_log_status_change(sender, instance, created, **kwargs):
     elif prev == 'submitted' and curr == 'reviewed':
         title = f'Your Week {week} Log Has Been Reviewed'
         msg   = (f'Hello {student.first_name},\n\n'
-                 f'Your Week {week} logbook has been reviewed.\n\n'
-                 f'Supervisor comment: {instance.supervisor_comment}')
+                 f'Your Week {week} logbook has been reviewed by your Academic Supervisor.\n\n'
+                 f'Academic Supervisor comment: {instance.supervisor_comment}')
         notify_user(student, title, msg, 'log_reviewed', send_email=True, send_sms_alert=True)
 
     elif prev == 'reviewed' and curr == 'approved':
         title = f'Your Week {week} Log Has Been Approved'
         msg   = (f'Hello {student.first_name},\n\n'
-                 f'Your Week {week} logbook has been approved. Well done!')
+                 f'Your Week {week} logbook has been approved by your Academic Supervisor. Well done!')
         notify_user(student, title, msg, 'log_approved', send_email=True, send_sms_alert=True)
 
-    elif prev == 'submitted' and curr == 'draft':
-        # Rejected — returned to draft for revision
+    elif (prev == 'submitted' or prev == 'reviewed') and curr == 'draft':
+        # Disapproved — returned to draft for revision
         title = f'Your Week {week} Log Requires Revision'
         msg   = (f'Hello {student.first_name},\n\n'
-                 f'Your Week {week} logbook has been returned for revision.\n\n'
-                 f'Supervisor feedback: {instance.supervisor_comment}')
+                 f'Your Week {week} logbook has been returned for revision by your Academic Supervisor.\n\n'
+                 f'Academic Supervisor feedback: {instance.supervisor_comment}')
         notify_user(student, title, msg, 'log_rejected', send_email=True, send_sms_alert=True)
