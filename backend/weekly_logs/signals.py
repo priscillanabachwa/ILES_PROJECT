@@ -49,7 +49,7 @@ def notify_on_log_status_change(sender, instance, created, **kwargs):
                  f'Academic Supervisor comment: {instance.supervisor_comment}')
         notify_user(student, title, msg, 'log_reviewed', send_email=True, send_sms_alert=True)
 
-    elif prev == 'reviewed' and curr == 'approved':
+    elif prev in ('reviewed', 'submitted') and curr == 'approved':
         title = f'Your Week {week} Log Has Been Approved'
         msg   = (f'Hello {student.first_name},\n\n'
                  f'Your Week {week} logbook has been approved by your Academic Supervisor. Well done!')

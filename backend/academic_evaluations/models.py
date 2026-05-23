@@ -8,13 +8,15 @@ from django.core.exceptions import ValidationError
 
 class EvaluationCriteria(models.Model):
     EVALUATOR_TYPE_CHOICES = [('academic', 'Academic'), ('workplace', 'Workplace')]
+    STAGE_CHOICES = [('any', 'Any Time'), ('final', 'End of Internship')]
 
-    name           = models.CharField(max_length=100, unique=True)
-    description    = models.TextField(blank=True, null=True)
-    max_score      = models.DecimalField(max_digits=5, decimal_places=2, default=0)
-    weight         = models.DecimalField(max_digits=5, decimal_places=2, default=0)
-    is_active      = models.BooleanField(default=True)
-    evaluator_type = models.CharField(max_length=20, choices=EVALUATOR_TYPE_CHOICES, default='academic')
+    name              = models.CharField(max_length=100, unique=True)
+    description       = models.TextField(blank=True, null=True)
+    max_score         = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    weight            = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    is_active         = models.BooleanField(default=True)
+    evaluator_type    = models.CharField(max_length=20, choices=EVALUATOR_TYPE_CHOICES, default='academic')
+    evaluation_stage  = models.CharField(max_length=10, choices=STAGE_CHOICES, default='any')
 
     def __str__(self):
         return f'{self.name} (weight:{self.weight})'

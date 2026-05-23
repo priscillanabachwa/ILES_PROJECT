@@ -84,32 +84,60 @@ function ListSkeleton() {
   )
 }
 
-function WorkflowTracker({ status }) {
-  const steps = ['draft', 'submitted', 'reviewed', 'approved']
-  const idx   = steps.indexOf(status?.toLowerCase() ?? '')
+function WorkflowTracker({ status, returned = false }) {
+  const steps     = ['draft', 'submitted', 'reviewed', 'approved']
+  const approvedI = steps.indexOf('reviewed') + 1  // index 3 — the red X circle when disapproved
+  const idx       = returned ? steps.indexOf('reviewed') : steps.indexOf(status?.toLowerCase() ?? '')
+
   return (
     <div className="flex items-start mt-3 pt-3 border-t border-slate-700/50">
-      {steps.map((step, i) => (
-        <div key={step} className="flex items-center flex-1">
-          <div className="flex flex-col items-center gap-1 flex-1">
-            <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 transition
-              ${i <= idx ? 'bg-indigo-600 border-indigo-600 text-white' :
-                           'bg-slate-800 border-slate-600'}`}>
-              {i <= idx && (
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
-                </svg>
-              )}
+      {steps.map((step, i) => {
+        // When returned: Draft/Submitted/Reviewed show ✓ indigo; Approved shows ✗ red
+        const isRedX      = returned && i === approvedI
+        const isCompleted = returned ? i <= idx : i <= idx
+        const isFuture    = !isRedX && !isCompleted
+
+        const circleClass = isRedX
+          ? 'bg-red-600 border-red-600 text-white'
+          : isCompleted
+          ? 'bg-indigo-600 border-indigo-600 text-white'
+          : 'bg-slate-800 border-slate-600'
+
+        const labelClass = isRedX
+          ? 'text-red-400'
+          : isCompleted
+          ? 'text-slate-300'
+          : 'text-slate-600'
+
+        // Connector line after this step (between i and i+1)
+        const connectorClass = returned
+          ? (i < idx ? 'bg-indigo-600' : 'bg-slate-700')
+          : (i < idx ? 'bg-indigo-600' : 'bg-slate-700')
+
+        return (
+          <div key={step} className="flex items-center flex-1">
+            <div className="flex flex-col items-center gap-1 flex-1">
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 transition ${circleClass}`}>
+                {isRedX ? (
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                  </svg>
+                ) : isCompleted ? (
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
+                  </svg>
+                ) : null}
+              </div>
+              <p className={`text-xs text-center ${labelClass}`}>
+                {step.charAt(0).toUpperCase() + step.slice(1)}
+              </p>
             </div>
-            <p className={`text-xs text-center ${i <= idx ? 'text-slate-300' : 'text-slate-600'}`}>
-              {step.charAt(0).toUpperCase() + step.slice(1)}
-            </p>
+            {i < steps.length - 1 && (
+              <div className={`h-0.5 flex-1 -mt-3 ${connectorClass}`} />
+            )}
           </div>
-          {i < steps.length - 1 && (
-            <div className={`h-0.5 flex-1 -mt-3 ${i < idx ? 'bg-indigo-600' : 'bg-slate-700'}`} />
-          )}
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 }
@@ -571,7 +599,10 @@ export default function MyLogsPage() {
                           <p className="text-xs text-blue-300 line-clamp-2">{log.supervisor_comment}</p>
                         </div>
                       )}
-                      <WorkflowTracker status={log.status} />
+                      <WorkflowTracker
+                        status={log.status}
+                        returned={log.status === 'draft' && !!log.supervisor_comment}
+                      />
                     </div>
                   </div>
                   <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-700/50 text-xs">

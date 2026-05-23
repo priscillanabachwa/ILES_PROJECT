@@ -43,11 +43,11 @@ class AcademicEvaluationSerializer(serializers.ModelSerializer):
         fields =[
             'id', 'placement', 'items',
             'total_score', 'grade', 'status', 'overall_comment',
-            'submitted_at', 'created_at', 'activity_choices',
+            'submitted_at', 'updated_at', 'created_at', 'activity_choices',
             'evaluator_role',
         ]
         read_only_fields = [
-            'submitted_at','activity_choices', 'total_score','grade', 'created_at','submitted_at'
+            'submitted_at', 'updated_at', 'activity_choices', 'total_score', 'grade', 'created_at',
         ]
 
     def get_total_score(self, obj):
@@ -58,8 +58,8 @@ class AcademicEvaluationSerializer(serializers.ModelSerializer):
 
 
     def update(self, instance, validated_data):
-        if instance.status == 'SUBMITTED':
-            raise serializers.ValidationError("Cannot edit a submitted evaluation")
+        # Allow updating submitted evaluations so supervisors can refresh marks
+        # after approving new weekly logs during an ongoing internship.
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()

@@ -1,4 +1,5 @@
 ﻿import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { fetchWithAuth } from '../services/authService'
 import { capName } from '../services/dashboardService'
@@ -33,22 +34,34 @@ const effectiveStatus = (log) =>
   log.status === 'draft' && log.supervisor_comment ? 'returned' : log.status
 
 function ReviewModal({ log, onClose, onSuccess }) {
-  const [comment, setComment] = useState('')
+  const [comment,    setComment]    = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  const handleSubmit = async () => {
-    if (!comment.trim()) { toast.error('Supervisor comment is required.'); return }
+  const handleAction = async (action) => {
+    if ((action === 'review' || action === 'disapprove') && !comment.trim()) {
+      toast.error(action === 'review' ? 'A comment is required to review.' : 'A reason is required to disapprove.')
+      return
+    }
     setSubmitting(true)
     try {
-      await fetchWithAuth(`${API}/weeklylogs/logbooks/${log.id}/review/`, {
-        method: 'POST',
-        body: JSON.stringify({ supervisor_comment: comment.trim() }),
-      })
-      toast.success('Log marked as reviewed.')
-      onSuccess(log.id, 'reviewed', comment.trim())
+      const body = { supervisor_comment: comment.trim() }
+      if (action === 'review') {
+        await fetchWithAuth(`${API}/weeklylogs/logbooks/${log.id}/review/`, { method: 'POST', body: JSON.stringify(body) })
+        toast.success('Log marked as reviewed.')
+        onSuccess(log.id, 'reviewed', comment.trim())
+      } else if (action === 'approve') {
+        await fetchWithAuth(`${API}/weeklylogs/logbooks/${log.id}/approve/`, { method: 'POST', body: JSON.stringify(body) })
+        toast.success('Log approved.')
+        onSuccess(log.id, 'approved', comment.trim())
+      } else if (action === 'disapprove') {
+        await fetchWithAuth(`${API}/weeklylogs/logbooks/${log.id}/reject/`, { method: 'POST', body: JSON.stringify(body) })
+        toast.success('Log sent back for revision.')
+        onSuccess(log.id, 'draft', comment.trim())
+      }
       onClose()
-    } catch {
-      toast.error('Failed to review log.')
+    } catch (err) {
+      const msg = err?.detail || err?.message || `Failed to ${action} log.`
+      toast.error(msg)
     } finally { setSubmitting(false) }
   }
 
@@ -105,26 +118,29 @@ function ReviewModal({ log, onClose, onSuccess }) {
             </a>
           )}
           <div>
-            <label className="text-xs text-slate-500 uppercase tracking-wider mb-2 block">
-              Supervisor Comment <span className="text-red-400">*</span>
-            </label>
+            <label className="text-xs text-slate-500 uppercase tracking-wider mb-1 block">Supervisor Comment</label>
+            <p className="text-slate-600 text-xs mb-2">Required when disapproving · Optional when approving</p>
             <textarea
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               rows={4}
-              placeholder="Enter your review comment..."
+              placeholder="Enter your comment or feedback..."
               className="w-full bg-slate-700/50 border border-slate-600 rounded-xl px-4 py-3 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 resize-none"
             />
           </div>
         </div>
-        <div className="flex gap-3 p-6 pt-4 border-t border-slate-700/50 flex-shrink-0">
-          <button onClick={onClose}
-            className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-slate-600 text-slate-400 hover:bg-slate-700/50 transition">
+        <div className="flex gap-2 p-6 pt-4 border-t border-slate-700/50 flex-shrink-0">
+          <button onClick={onClose} disabled={submitting}
+            className="py-2.5 px-4 rounded-xl text-sm font-semibold border border-slate-600 text-slate-400 hover:bg-slate-700/50 transition disabled:opacity-50">
             Cancel
           </button>
-          <button onClick={handleSubmit} disabled={submitting}
-            className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white transition disabled:opacity-50">
-            {submitting ? 'Submitting...' : 'Submit Review'}
+          <button onClick={() => handleAction('approve')} disabled={submitting}
+            className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition disabled:opacity-50">
+            {submitting ? '…' : 'Approve'}
+          </button>
+          <button onClick={() => handleAction('disapprove')} disabled={submitting}
+            className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-red-600 hover:bg-red-700 text-white transition disabled:opacity-50">
+            {submitting ? '…' : 'Disapprove'}
           </button>
         </div>
       </div>
@@ -281,7 +297,20 @@ function LogDetailModal({ log, onClose }) {
   )
 }
 
+const EvalReminder = ({ name, navigate }) => (
+  <div>
+    <p className="font-semibold text-sm">Log approved!</p>
+    <p className="text-xs mt-0.5 mb-2">Remember to award marks for <span className="font-semibold">{name}</span>.</p>
+    <button
+      onClick={() => navigate('/academic/evaluations')}
+      className="text-xs font-bold underline">
+      Go to Evaluations →
+    </button>
+  </div>
+)
+
 export default function AcademicLogsPage() {
+  const navigate = useNavigate()
   const [logs, setLogs] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -323,27 +352,35 @@ export default function AcademicLogsPage() {
     fetchAll()
   }, [])
 
+  const showEvalReminder = (studentName) => {
+    toast.info(<EvalReminder name={studentName} navigate={navigate} />, { autoClose: 6000 })
+  }
+
   const handleStatusUpdate = (id, newStatus, comment) => {
+    const log = logs.find(l => l.id === id)
     setLogs(prev => prev.map(l =>
       l.id === id ? { ...l, status: newStatus, supervisor_comment: comment || l.supervisor_comment } : l
     ))
+    if (newStatus === 'approved') {
+      showEvalReminder(log?.student_name || 'this student')
+    }
   }
 
   const handleApprove = async (log) => {
     try {
       await fetchWithAuth(`${API}/weeklylogs/logbooks/${log.id}/approve/`, { method: 'POST' })
-      toast.success('Log approved.')
       handleStatusUpdate(log.id, 'approved', '')
     } catch {
       toast.error('Failed to approve log.')
     }
   }
 
-  const total       = logs.length
-  const submitted   = logs.filter(l => l.status === 'submitted').length
-  const reviewed    = logs.filter(l => l.status === 'reviewed').length
-  const approved    = logs.filter(l => l.status === 'approved').length
-  const disapproved = logs.filter(l => l.status === 'draft' && l.supervisor_comment).length
+  const total            = logs.length
+  const submitted        = logs.filter(l => l.status === 'submitted').length
+  const awaitingApproval = logs.filter(l => l.status === 'reviewed').length
+  const approved         = logs.filter(l => l.status === 'approved').length
+  const reviewed         = awaitingApproval + approved   // approved implies reviewed
+  const disapproved      = logs.filter(l => l.status === 'draft' && l.supervisor_comment).length
 
   const filtered = logs.filter((l) => {
     const matchStatus =
@@ -471,16 +508,10 @@ export default function AcademicLogsPage() {
                           View
                         </button>
                         {log.status === 'submitted' && (
-                          <>
-                            <button onClick={() => setReviewLog(log)}
-                              className="px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 border border-blue-500/30 rounded-lg text-xs font-medium transition">
-                              Review
-                            </button>
-                            <button onClick={() => setDisapproveLog(log)}
-                              className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg text-xs font-medium transition">
-                              Disapprove
-                            </button>
-                          </>
+                          <button onClick={() => setReviewLog(log)}
+                            className="px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 border border-blue-500/30 rounded-lg text-xs font-medium transition">
+                            Review
+                          </button>
                         )}
                         {log.status === 'reviewed' && (() => {
                           const canApprove = evaluatedPlacements.has(log.placement)
@@ -520,7 +551,7 @@ export default function AcademicLogsPage() {
         )}
         <div className="px-5 py-3 border-t border-slate-700/50 flex items-center justify-between">
           <p className="text-slate-500 text-xs">Showing {filtered.length} of {total} logs</p>
-          <p className="text-slate-500 text-xs">{submitted} awaiting review · {reviewed} awaiting approval</p>
+          <p className="text-slate-500 text-xs">{submitted} awaiting review · {awaitingApproval} awaiting approval</p>
         </div>
       </div>
     </div>

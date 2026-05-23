@@ -193,14 +193,31 @@ async function getWorkplaceStats() {
 }
 
 async function getWorkplacePlacements() {
-  const placements = await fetchWithAuth(PLACEMENTS);
+  const [placements, logbooks] = await Promise.all([
+    fetchWithAuth(PLACEMENTS),
+    fetchWithAuth(LOGBOOKS).catch(() => []),
+  ]);
+
+  const logsByPlacement = {};
+  for (const l of (Array.isArray(logbooks) ? logbooks : [])) {
+    if (!logsByPlacement[l.placement]) logsByPlacement[l.placement] = [];
+    logsByPlacement[l.placement].push(l);
+  }
+
   return {
-    data: placements.map(p => ({
-      id: p.id,
-      student_name: capName(p.student_name || String(p.student || '')),
-      company: p.company_name || '',
-      status: p.status,
-    })),
+    data: placements.map(p => {
+      const logs = logsByPlacement[p.id] || [];
+      let status = p.status;
+      if (logs.some(l => l.status === 'submitted'))     status = 'submitted';
+      else if (logs.some(l => l.status === 'reviewed')) status = 'reviewed';
+      else if (logs.some(l => l.status === 'approved')) status = 'approved';
+      return {
+        id: p.id,
+        student_name: capName(p.student_name || String(p.student || '')),
+        company: p.company_name || '',
+        status,
+      };
+    }),
   };
 }
 
@@ -277,13 +294,45 @@ async function getAcademicStats() {
   const avgScore = completedEvals.length
     ? completedEvals.reduce((s, e) => s + Number(e.total_score || 0), 0) / completedEvals.length
     : null;
+
+  const evalByPlacement = {}
+  completedEvals.forEach(e => { evalByPlacement[e.placement] = e })
+
+  const logbooks_arr = Array.isArray(logbooks) ? logbooks : []
+
+  // Group logs by placement
+  const logsByPlacement = {}
+  logbooks_arr.forEach(l => {
+    if (!logsByPlacement[l.placement]) logsByPlacement[l.placement] = []
+    logsByPlacement[l.placement].push(l)
+  })
+
+  // Pending evaluation = student has an approved log AND either:
+  //   (a) no formal evaluation has been submitted yet, OR
+  //   (b) the most recently approved log was approved AFTER the evaluation was last updated
+  // This ensures each new log approval triggers a "pending" reminder to update marks.
+  const pendingEvals = placements.filter(p => {
+    const pLogs = logsByPlacement[p.id] || []
+    const approvedLogs = pLogs.filter(l => l.status === 'approved')
+    if (approvedLogs.length === 0) return false           // no approved logs → nothing to evaluate yet
+
+    const ev = evalByPlacement[p.id]
+    if (!ev) return true                                   // approved logs but no evaluation at all
+
+    // Check whether any approved log was approved after the evaluation was last updated
+    const latestApproval = Math.max(...approvedLogs.map(l => +new Date(l.updated_at || l.submitted_at)))
+    const evalUpdated    = +new Date(ev.updated_at || ev.submitted_at)
+    return latestApproval > evalUpdated
+  }).length
+
   return {
     data: {
-      assigned_students: placements.length,
-      pending_reviews: logbooks.filter(l => l.status === 'submitted').length,
-      awaiting_approval: logbooks.filter(l => l.status === 'reviewed').length,
+      assigned_students:     placements.length,
+      pending_reviews:       logbooks_arr.filter(l => l.status === 'submitted').length,
+      awaiting_approval:     logbooks_arr.filter(l => l.status === 'reviewed').length,
+      pending_evaluations:   pendingEvals,
       completed_evaluations: completedEvals.length,
-      average_score: avgScore,
+      average_score:         avgScore,
     },
   };
 }

@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect } from 'react'
 import { useAuth } from "../../Context/AuthContext"
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import dashboardService from "../../services/dashboardService"
 
@@ -182,6 +182,7 @@ export default function AcademicDashboard() {
   const { user } = useAuth()
 
   const [stats,      setStats]          = useState(null)
+  const navigate = useNavigate()
   const [placements, setPlacements]     = useState([])
   const [logbooks,   setLogbooks]       = useState([])
   const [activity,   setRecentActivity] = useState([])
@@ -225,13 +226,25 @@ export default function AcademicDashboard() {
   const handleApprove = async (logId) => {
     setApprovingId(logId)
     try {
+      const log = logbooks.find(l => l.id === logId)
       await dashboardService.approveLog(logId)
-      toast.success('Log approved successfully.')
       setLogbooks(prev => prev.filter(l => l.id !== logId))
       setStats(prev => prev ? {
         ...prev,
         awaiting_approval: Math.max(0, (prev.awaiting_approval ?? 0) - 1),
       } : prev)
+      toast.info(
+        <div>
+          <p className="font-semibold text-sm">Log approved!</p>
+          <p className="text-xs mt-0.5 mb-2">
+            Remember to award marks for <span className="font-semibold">{log?.student_name || 'this student'}</span>.
+          </p>
+          <button onClick={() => navigate('/academic/evaluations')} className="text-xs font-bold underline">
+            Go to Evaluations →
+          </button>
+        </div>,
+        { autoClose: 6000 }
+      )
     } catch (err) {
       toast.error(err.message || 'Failed to approve log.')
     } finally { setApprovingId(null) }
@@ -291,10 +304,10 @@ export default function AcademicDashboard() {
 
       {/*  Stat cards  */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Assigned Students"    value={stats?.assigned_students}     sub="View all students"          subLink="/academic/logs"         accent="indigo"  icon={Icon.students} />
-        <StatCard label="Action Required"       value={stats ? (stats.pending_reviews ?? 0) + (stats.awaiting_approval ?? 0) : null} sub="Pending review or approval" subLink="/academic/logs" accent="amber" icon={Icon.logbook} />
-        <StatCard label="Completed Evaluations" value={stats?.completed_evaluations} sub="View summaries"             subLink="/academic/evaluations"  accent="emerald" icon={Icon.eval}     />
-        <StatCard label="Average Score"         value={stats?.average_score != null ? `${Number(stats.average_score) % 1 === 0 ? Number(stats.average_score).toFixed(0) : Number(stats.average_score).toFixed(1)}%` : null} sub="Across all students" accent="rose" icon={Icon.report} />
+        <StatCard label="Assigned Students"     value={stats?.assigned_students}          sub="View all students"            subLink="/academic/logs"         accent="indigo"  icon={Icon.students} />
+        <StatCard label="Action Required"        value={stats ? (stats.pending_reviews ?? 0) + (stats.awaiting_approval ?? 0) : null} sub="Pending review or approval"  subLink="/academic/logs"         accent="amber"   icon={Icon.logbook} />
+        <StatCard label="Pending Evaluations"    value={stats?.pending_evaluations}        sub="Students not yet evaluated"   subLink="/academic/evaluations"  accent="rose"    icon={Icon.eval}     />
+        <StatCard label="Completed Evaluations"  value={stats?.completed_evaluations}      sub="View summaries"               subLink="/academic/evaluations"  accent="emerald" icon={Icon.report}   />
       </div>
 
       {/*  Main content  */}
@@ -408,35 +421,23 @@ export default function AcademicDashboard() {
                       <Badge status={l.status} overdue={isOverdue(l.deadline)} />
                     </div>
                     {l.status === 'submitted' && (
-                      <div className="mt-2 grid grid-cols-2 gap-1.5">
+                      <div className="mt-2">
                         <Link
                           to="/academic/logs"
-                          className="py-1.5 rounded-lg text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/30 hover:bg-amber-500/20 transition flex items-center justify-center"
+                          className="w-full py-1.5 rounded-lg text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/30 hover:bg-amber-500/20 transition flex items-center justify-center"
                         >
                           Review
                         </Link>
-                        <button
-                          onClick={() => setDisapproveTarget(l)}
-                          className="py-1.5 rounded-lg text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20 transition"
-                        >
-                          Disapprove
-                        </button>
                       </div>
                     )}
                     {l.status === 'reviewed' && (
-                      <div className="mt-2 grid grid-cols-2 gap-1.5">
+                      <div className="mt-2">
                         <button
                           onClick={() => handleApprove(l.id)}
                           disabled={approvingId === l.id}
-                          className="py-1.5 rounded-lg text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 transition disabled:opacity-50"
+                          className="w-full py-1.5 rounded-lg text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 transition disabled:opacity-50"
                         >
                           {approvingId === l.id ? 'Approving...' : 'Approve'}
-                        </button>
-                        <button
-                          onClick={() => setDisapproveTarget(l)}
-                          className="py-1.5 rounded-lg text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20 transition"
-                        >
-                          Disapprove
                         </button>
                       </div>
                     )}

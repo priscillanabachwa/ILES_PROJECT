@@ -297,8 +297,9 @@ export default function AdminLogsPage() {
     all:       logs.length,
     draft:     logs.filter((l) => l.status === 'draft').length,
     submitted: logs.filter((l) => l.status === 'submitted').length,
-    reviewed:  logs.filter((l) => l.status === 'reviewed').length,
     approved:  logs.filter((l) => l.status === 'approved').length,
+    reviewed:  logs.filter((l) => l.status === 'reviewed').length +
+               logs.filter((l) => l.status === 'approved').length,  // approved implies reviewed
     overdue:   logs.filter((l) => isOverdue(l.deadline) && l.status === 'submitted').length,
   }
 
