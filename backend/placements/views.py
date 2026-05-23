@@ -7,7 +7,6 @@ from .serializers import PlacementSerializer, CompanySerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import filters
 
-
 class CompanyViewSet(viewsets.ModelViewSet):
     queryset = Company.objects.all().order_by('company_name')
     serializer_class = CompanySerializer

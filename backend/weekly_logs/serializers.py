@@ -2,7 +2,6 @@ from rest_framework import serializers
 from datetime import date
 from .models import WeeklyLogbook, LogBookReview
 
-
 class LogbookReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = LogBookReview

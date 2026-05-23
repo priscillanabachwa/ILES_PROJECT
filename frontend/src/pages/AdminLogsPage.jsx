@@ -249,7 +249,6 @@ export default function AdminLogsPage() {
     setLogs((prev) => prev.map((l) =>
       l.id === id ? { ...l, status: newStatus, supervisor_comment: feedback || l.supervisor_comment } : l
     ))
-    // Update modal log if open
     if (selectedLog?.id === id) {
       setSelectedLog(prev => ({ ...prev, status: newStatus, supervisor_comment: feedback || prev.supervisor_comment }))
     }
@@ -299,7 +298,7 @@ export default function AdminLogsPage() {
     submitted: logs.filter((l) => l.status === 'submitted').length,
     approved:  logs.filter((l) => l.status === 'approved').length,
     reviewed:  logs.filter((l) => l.status === 'reviewed').length +
-               logs.filter((l) => l.status === 'approved').length,  // approved implies reviewed
+               logs.filter((l) => l.status === 'approved').length,  
     overdue:   logs.filter((l) => isOverdue(l.deadline) && l.status === 'submitted').length,
   }
 
@@ -339,7 +338,6 @@ export default function AdminLogsPage() {
         )}
       </div>
 
-      {/* Stat pills */}
       <div className="grid grid-cols-3 lg:grid-cols-6 gap-3">
         {[
           { key:'all',       label:'Total',   color:'text-white'       },
@@ -356,7 +354,6 @@ export default function AdminLogsPage() {
         ))}
       </div>
 
-      {/* Filters */}
       <div className="space-y-3">
         <div className="flex items-center gap-1 bg-slate-800/50 border border-slate-700/50 rounded-xl p-1 flex-wrap">
           {FILTERS.map(({ key, label }) => (

@@ -182,7 +182,7 @@ function AssignPlacementModal({ onClose, onSuccess }) {
         ])
         setStudents(Array.isArray(studs) ? studs : [])
         setCompanies(Array.isArray(comps) ? comps : [])
-      } catch { /* ignore */ } finally { setLoadingOpts(false) }
+      } catch {  } finally { setLoadingOpts(false) }
     }
     load()
   }, [])
@@ -195,7 +195,6 @@ function AssignPlacementModal({ onClose, onSuccess }) {
     setSaving(true)
     try {
       const payload = { student: form.student, start_date: form.start_date, end_date: form.end_date }
-      // Match typed name against existing companies (case-insensitive)
       const match = companies.find(c => c.company_name.toLowerCase() === form.company_name.trim().toLowerCase())
       if (match) { payload.company = match.id } else { payload.company_name_input = form.company_name.trim() }
       await dashboardService.createPlacement(payload)
@@ -284,7 +283,7 @@ function AssignSupervisorModal({ onClose, placement = null, allPlacements = [], 
         ])
         setAcademicSups(Array.isArray(acad) ? acad : [])
         setWorkplaceSups(Array.isArray(work) ? work : [])
-      } catch { /* ignore */ } finally { setLoadingOpts(false) }
+      } catch {  } finally { setLoadingOpts(false) }
     }
     load()
   }, [])
@@ -376,7 +375,6 @@ function ReportModal({ onClose, placements = [], users = [], evaluations = [] })
   const [format, setFormat]         = useState('csv')
   const [generating, setGenerating] = useState(false)
 
-  // ── helpers ──────────────────────────────────────────────────────────────
   const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`
 
   const makeCSV = (headers, rows) =>
@@ -425,7 +423,6 @@ function ReportModal({ onClose, placements = [], users = [], evaluations = [] })
     setTimeout(() => w.print(), 400)
   }
 
-  // ── data builders ─────────────────────────────────────────────────────────
   const getReportData = () => {
     switch (reportType) {
       case 'placements': {
@@ -464,7 +461,7 @@ function ReportModal({ onClose, placements = [], users = [], evaluations = [] })
           .map(u => [u.name, u.email, u.role.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())])
         return { title:'Supervisor Activity Report', headers, rows }
       }
-      default: { // full
+      default: { 
         const headers = ['Type','Name','Detail','Status / Score']
         const rows = [
           ...users.filter(u=>u.role==='student').map(u => ['Student', u.name, u.email, '—']),
@@ -476,7 +473,6 @@ function ReportModal({ onClose, placements = [], users = [], evaluations = [] })
     }
   }
 
-  // ── print ─────────────────────────────────────────────────────────────────
   const handlePrint = () => {
     try {
       const { title, headers, rows } = getReportData()
@@ -489,7 +485,6 @@ function ReportModal({ onClose, placements = [], users = [], evaluations = [] })
     }
   }
 
-  // ── download ──────────────────────────────────────────────────────────────
   const handleDownload = () => {
     try {
       const { title, headers, rows } = getReportData()
@@ -717,7 +712,6 @@ export default function InternshipAdministratorDashboard() {
         />
       )}
 
-      {/* Header */}
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-white">Welcome, {fullName} </h1>
@@ -727,7 +721,6 @@ export default function InternshipAdministratorDashboard() {
 
       {error && <div className="bg-red-500/10 border border-red-500/30 text-red-300 text-sm px-4 py-3 rounded-xl">{error}</div>}
 
-      {/* Stat cards row 1 */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="Total Students"    value={stats?.total_students}    sub="View all students"    subLink="/admin/users?role=student"              accent="indigo"  icon={Icon.students}   />
         <StatCard label="Active Placements" value={stats?.active_placements} sub="View all placements"  subLink="/admin/users?role=placements"           accent="emerald" icon={Icon.placements} />
@@ -735,7 +728,6 @@ export default function InternshipAdministratorDashboard() {
         <StatCard label="Average Score"     value={stats ? `${Number(stats.average_score).toFixed(1)}%` : null} sub="View all evaluations" subLink="/admin/evaluations" accent="rose" icon={Icon.score} />
       </div>
 
-      {/* Stat cards row 2 */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label:'Pending Placements',   value:stats?.pending_placements,   color:'text-amber-300',   link:'/admin/users?role=placements', linkText:'Assign now'  },
@@ -754,16 +746,12 @@ export default function InternshipAdministratorDashboard() {
         ))}
       </div>
 
-      {/* Main content */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
 
-        {/* Left col N/A 3/5 */}
         <div className="lg:col-span-3 space-y-5">
 
-          {/* Recent Placements */}
           <Card title="Recent Placements" actionLabel="View All" actionLink="/admin/users?role=placements">
             <div className="space-y-3 mb-4">
-              {/* Status filter */}
               <div className="flex items-center gap-1 bg-slate-700/30 border border-slate-700/50 rounded-xl p-1">
                 {['all','ACTIVE','PENDING','COMPLETED'].map((s) => (
                   <button key={s} onClick={() => setStatusFilter(s)}
@@ -773,7 +761,6 @@ export default function InternshipAdministratorDashboard() {
                   </button>
                 ))}
               </div>
-              {/* Search + Student ID */}
               <div className="flex gap-2">
                 <div className="flex items-center gap-2 bg-slate-700/30 border border-slate-700/50 rounded-xl px-3 py-1.5 flex-1">
                   {Icon.search}
@@ -808,7 +795,6 @@ export default function InternshipAdministratorDashboard() {
                     {filteredPlacements.map((p, i) => (
                       <tr key={p.id} className="hover:bg-slate-700/20 transition">
 
-                        {/* Student */}
                         <td className="py-3 pr-2">
                           <div className="flex items-center gap-2">
                             <AvatarCircle name={p.student_name} index={i} size="sm" />
@@ -819,10 +805,8 @@ export default function InternshipAdministratorDashboard() {
                           </div>
                         </td>
 
-                        {/* Company */}
                         <td className="py-3 pr-2 text-slate-400">{p.company}</td>
 
-                        {/* Supervisors */}
                         <td className="py-3 pr-2">
                           {p.academic_supervisor
                             ? <p className="text-slate-400 truncate max-w-[100px]">{p.academic_supervisor}</p>
@@ -834,20 +818,16 @@ export default function InternshipAdministratorDashboard() {
                           }
                         </td>
 
-                        {/* Status */}
                         <td className="py-3 pr-2"><Badge status={p.status} /></td>
 
-                        {/* Actions */}
                         <td className="py-3">
                           <div className="flex items-center gap-1">
-                            {/* Assign N/A only when supervisors missing and not completed */}
                             {(!p.academic_supervisor || !p.workplace_supervisor) && p.status !== 'COMPLETED' && (
                               <button onClick={() => handleInlineAssign(p)}
                                 className="text-xs font-semibold text-amber-400 hover:text-amber-300 border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 px-2 py-1 rounded-lg transition whitespace-nowrap">
                                 Assign
                               </button>
                             )}
-                            {/* Done N/A only for ACTIVE placements */}
                             {p.status === 'ACTIVE' && (
                               <button onClick={() => handleMarkCompleted(p)}
                                 className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-1 rounded-lg transition whitespace-nowrap">
@@ -865,7 +845,6 @@ export default function InternshipAdministratorDashboard() {
             )}
           </Card>
 
-          {/* Evaluation Overview */}
           <Card title="Evaluation Overview" actionLabel="View All" actionLink="/admin/evaluations">
             {loading ? <ListSkeleton /> : (
               <div className="overflow-x-auto">
@@ -912,10 +891,8 @@ export default function InternshipAdministratorDashboard() {
           </Card>
         </div>
 
-        {/* Right col N/A 2/5 */}
         <div className="lg:col-span-2 space-y-5">
 
-          {/* User Overview */}
           <Card title="User Overview" actionLabel="Manage Users" actionLink="/admin/users">
             {loading ? <ListSkeleton /> : (
               <div className="space-y-4">
@@ -948,7 +925,6 @@ export default function InternshipAdministratorDashboard() {
             )}
           </Card>
 
-          {/* Quick Actions */}
           <Card title="Quick Actions">
             <div className="space-y-2">
               {[

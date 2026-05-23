@@ -73,7 +73,6 @@ function ListSkeleton() {
   )
 }
 
-
 const Icon = {
   students: <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-5-3.87M9 20H4v-2a4 4 0 015-3.87m6-4a4 4 0 11-8 0 4 4 0 018 0zm6 0a3 3 0 11-6 0 3 3 0 016 0z"/></svg>,
   logbook:  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>,
@@ -287,7 +286,6 @@ export default function AcademicDashboard() {
         />
       )}
 
-      {/*  Header  */}
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-white">Welcome, {fullName} </h1>
@@ -297,12 +295,10 @@ export default function AcademicDashboard() {
         </div>
       </div>
 
-      {/*  Error  */}
       {error && (
         <div className="bg-red-500/10 border border-red-500/30 text-red-300 text-sm px-4 py-3 rounded-xl">{error}</div>
       )}
 
-      {/*  Stat cards  */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="Assigned Students"     value={stats?.assigned_students}          sub="View all students"            subLink="/academic/logs"         accent="indigo"  icon={Icon.students} />
         <StatCard label="Action Required"        value={stats ? (stats.pending_reviews ?? 0) + (stats.awaiting_approval ?? 0) : null} sub="Pending review or approval"  subLink="/academic/logs"         accent="amber"   icon={Icon.logbook} />
@@ -310,10 +306,8 @@ export default function AcademicDashboard() {
         <StatCard label="Completed Evaluations"  value={stats?.completed_evaluations}      sub="View summaries"               subLink="/academic/evaluations"  accent="emerald" icon={Icon.report}   />
       </div>
 
-      {/*  Main content  */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
 
-        {/* Left col N/A 3/5 */}
         <div className="lg:col-span-3 space-y-5">
 
           <Card
@@ -394,7 +388,6 @@ export default function AcademicDashboard() {
           </Card>
         </div>
 
-        {/* Right col N/A 2/5 */}
         <div className="lg:col-span-2 space-y-5">
 
           <Card title="Pending Reviews" actionLabel="Review All" actionLink="/academic/logs">
@@ -455,7 +448,6 @@ export default function AcademicDashboard() {
           <Card title="Evaluation Overview" actionLabel="Go to Evaluations" actionLink="/academic/evaluations">
             {loading ? <ListSkeleton /> : (
               <div className="space-y-3">
-                {/* Top 3 stat tiles */}
                 <div className="grid grid-cols-3 gap-2">
                   <div className="bg-slate-700/30 border border-slate-700/50 rounded-xl p-3 text-center">
                     <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-1">Total</p>
@@ -476,7 +468,6 @@ export default function AcademicDashboard() {
                   </div>
                 </div>
 
-                {/* Average score */}
                 <div className="flex items-center justify-between bg-indigo-600/10 border border-indigo-500/20 rounded-xl px-4 py-3">
                   <div>
                     <p className="text-xs text-indigo-400 font-medium">Average Score</p>
@@ -487,7 +478,6 @@ export default function AcademicDashboard() {
                   </p>
                 </div>
 
-                {/* CTA if there are pending evaluations */}
                 {stats && stats.assigned_students > stats.completed_evaluations && (
                   <Link
                     to="/academic/evaluations"

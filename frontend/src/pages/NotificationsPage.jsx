@@ -124,7 +124,6 @@ export default function NotificationsPage() {
         setUnreadCount(data.unread_count ?? 0)
       }
     } catch {
-      // silent
     } finally {
       setLoading(false)
     }
@@ -143,7 +142,7 @@ export default function NotificationsPage() {
       })
       setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: isRead } : n))
       setUnreadCount(prev => isRead ? Math.max(0, prev - 1) : prev + 1)
-    } catch { /* silent */ }
+    } catch {  }
   }
 
   const deleteNotif = async (id) => {
@@ -159,7 +158,7 @@ export default function NotificationsPage() {
         setNotifications(prev => prev.filter(n => n.id !== id))
         if (removed && !removed.is_read) setUnreadCount(c => Math.max(0, c - 1))
       }
-    } catch { /* silent */ } finally {
+    } catch {  } finally {
       setDeletingId(null)
     }
   }
@@ -169,7 +168,7 @@ export default function NotificationsPage() {
       await fetchWithAuth(`${API}/accounts/notifications/mark-all-read/`, { method: 'POST' })
       setNotifications(prev => prev.map(n => ({ ...n, is_read: true })))
       setUnreadCount(0)
-    } catch { /* silent */ }
+    } catch {  }
   }
 
   const clearAll = async () => {
@@ -185,7 +184,7 @@ export default function NotificationsPage() {
         setNotifications([])
         setUnreadCount(0)
       }
-    } catch { /* silent */ } finally {
+    } catch {  } finally {
       setClearingAll(false)
     }
   }
@@ -204,7 +203,6 @@ export default function NotificationsPage() {
   return (
     <div className="max-w-3xl mx-auto">
 
-      {/* Page header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold text-white">Notifications</h1>
@@ -235,9 +233,7 @@ export default function NotificationsPage() {
         </div>
       </div>
 
-      {/* Filters row */}
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
-        {/* Tabs */}
         <div className="flex bg-slate-800/60 rounded-xl p-1 gap-1 flex-shrink-0">
           {[
             { id: 'all',    label: 'All'    },
@@ -258,7 +254,6 @@ export default function NotificationsPage() {
           ))}
         </div>
 
-        {/* Search */}
         <div className="flex-1 relative">
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -282,7 +277,6 @@ export default function NotificationsPage() {
           )}
         </div>
 
-        {/* Type filter */}
         <select
           value={typeFilter}
           onChange={e => setTypeFilter(e.target.value)}
@@ -295,7 +289,6 @@ export default function NotificationsPage() {
         </select>
       </div>
 
-      {/* Content */}
       {loading ? (
         <div className="space-y-3">
           {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
@@ -345,12 +338,10 @@ export default function NotificationsPage() {
                           : 'bg-slate-800/60 border-indigo-500/20 hover:bg-slate-800/80 shadow-sm shadow-indigo-900/10'
                       }`}
                     >
-                      {/* Type icon */}
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${cfg.bg} ${cfg.text}`}>
                         {icon}
                       </div>
 
-                      {/* Body */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2 flex-wrap">
                           <div className="flex items-center gap-2 flex-wrap min-w-0">
@@ -369,7 +360,6 @@ export default function NotificationsPage() {
                         <p className="text-[11px] text-slate-500 mt-1.5">{formatDate(n.created_at)}</p>
                       </div>
 
-                      {/* Hover actions */}
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                         <button
                           onClick={() => markRead(n.id, !n.is_read)}

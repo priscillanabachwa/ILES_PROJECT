@@ -1,11 +1,10 @@
-/* ==================== RESET ==================== */
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-/* ==================== ROOT / PAGE ==================== */
 .login-root {
   font-family: 'Segoe UI', 'Inter', sans-serif;
   min-height: 100vh;
@@ -16,7 +15,6 @@
   padding: 2rem;
 }
 
-/* ==================== CARD ==================== */
 .login-card {
   background: #bce0f7;
   border-radius: 16px;
@@ -26,7 +24,6 @@
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3);
 }
 
-/* ==================== HEADER (centered logo + name) ==================== */
 .login-header {
   display: flex;
   flex-direction: column;
@@ -63,7 +60,6 @@
   max-width: 300px;
 }
 
-/* ==================== FORM GROUPS ==================== */
 .form-group {
   margin-bottom: 1.25rem;
 }
@@ -103,7 +99,6 @@
   opacity: 0.7;
 }
 
-/* ==================== PASSWORD WRAPPER ==================== */
 .password-wrapper {
   position: relative;
   display: flex;
@@ -114,7 +109,6 @@
   padding-right: 46px;
 }
 
-/* Hide browser's built-in password reveal button (Edge / Chrome) */
 .password-wrapper input::-ms-reveal,
 .password-wrapper input::-ms-clear,
 .password-wrapper input::-webkit-contacts-auto-fill-button,
@@ -151,7 +145,6 @@
   opacity: 0.5;
 }
 
-/* ==================== CHECKBOX ==================== */
 .checkbox-group {
   margin-bottom: 0.75rem;
 }
@@ -178,7 +171,6 @@
   font-weight: 400;
 }
 
-/* ==================== BUTTONS ==================== */
 .btn {
   border: none;
   border-radius: 8px;
@@ -207,7 +199,6 @@
   width: 100%;
 }
 
-/* ==================== FORGOT PASSWORD LINK ==================== */
 .forgot-link-wrap {
   text-align: center;
   margin-top: 1rem;
@@ -234,7 +225,6 @@
   cursor: not-allowed;
 }
 
-/* ==================== ALERTS ==================== */
 .alert {
   border-radius: 6px;
   font-size: 13px;
@@ -254,7 +244,6 @@
   color: #2e7d32;
 }
 
-/* ==================== FOOTER ==================== */
 .login-footer {
   text-align: center;
   font-size: 13px;
@@ -272,7 +261,6 @@
   text-decoration: underline;
 }
 
-/* ==================== MODAL OVERLAY ==================== */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -285,7 +273,6 @@
   backdrop-filter: blur(2px);
 }
 
-/* ==================== MODAL CARD ==================== */
 .modal-card {
   background: #bce0f7;
   border-radius: 14px;
@@ -341,12 +328,10 @@
   margin-bottom: 1.1rem;
 }
 
-/* Alerts inside modal */
 .modal-card > .alert {
   margin: 1rem 2rem 0;
 }
 
-/* ==================== PROGRESS STEPS ==================== */
 .modal-progress {
   display: flex;
   justify-content: center;
@@ -376,7 +361,6 @@
   color: #ffffff;
 }
 
-/* ==================== RESPONSIVE ==================== */
 @media (max-width: 480px) {
   .login-root {
     padding: 1rem;
@@ -411,14 +395,13 @@
     padding-right: 1.5rem;
   }
 }
-/* ==================== RESET ==================== */
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-/* ==================== ROOT / PAGE ==================== */
 .login-root {
   font-family: 'Segoe UI', 'Inter', sans-serif;
   min-height: 100vh;
@@ -429,7 +412,6 @@
   padding: 2rem;
 }
 
-/* ==================== CARD ==================== */
 .login-card {
   background: #bce0f7;
   border-radius: 16px;
@@ -439,7 +421,6 @@
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3);
 }
 
-/* ==================== HEADER (centered logo + name) ==================== */
 .login-header {
   display: flex;
   flex-direction: column;
@@ -476,7 +457,6 @@
   max-width: 300px;
 }
 
-/* ==================== FORM GROUPS ==================== */
 .form-group {
   margin-bottom: 1.25rem;
 }
@@ -516,7 +496,6 @@
   opacity: 0.7;
 }
 
-/* ==================== PASSWORD WRAPPER ==================== */
 .password-wrapper {
   position: relative;
   display: flex;
@@ -527,7 +506,6 @@
   padding-right: 46px;
 }
 
-/* Hide browser's built-in password reveal button (Edge / Chrome) */
 .password-wrapper input::-ms-reveal,
 .password-wrapper input::-ms-clear,
 .password-wrapper input::-webkit-contacts-auto-fill-button,
@@ -564,7 +542,6 @@
   opacity: 0.5;
 }
 
-/* ==================== CHECKBOX ==================== */
 .checkbox-group {
   margin-bottom: 0.75rem;
 }
@@ -591,7 +568,6 @@
   font-weight: 400;
 }
 
-/* ==================== BUTTONS ==================== */
 .btn {
   border: none;
   border-radius: 8px;
@@ -620,7 +596,6 @@
   width: 100%;
 }
 
-/* ==================== FORGOT PASSWORD LINK ==================== */
 .forgot-link-wrap {
   text-align: center;
   margin-top: 1rem;
@@ -647,7 +622,6 @@
   cursor: not-allowed;
 }
 
-/* ==================== ALERTS ==================== */
 .alert {
   border-radius: 6px;
   font-size: 13px;
@@ -667,7 +641,6 @@
   color: #2e7d32;
 }
 
-/* ==================== FOOTER ==================== */
 .login-footer {
   text-align: center;
   font-size: 13px;
@@ -685,7 +658,6 @@
   text-decoration: underline;
 }
 
-/* ==================== MODAL OVERLAY ==================== */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -698,7 +670,6 @@
   backdrop-filter: blur(2px);
 }
 
-/* ==================== MODAL CARD ==================== */
 .modal-card {
   background: #bce0f7;
   border-radius: 14px;
@@ -754,12 +725,10 @@
   margin-bottom: 1.1rem;
 }
 
-/* Alerts inside modal */
 .modal-card > .alert {
   margin: 1rem 2rem 0;
 }
 
-/* ==================== PROGRESS STEPS ==================== */
 .modal-progress {
   display: flex;
   justify-content: center;
@@ -789,7 +758,6 @@
   color: #ffffff;
 }
 
-/* ==================== RESPONSIVE ==================== */
 @media (max-width: 480px) {
   .login-root {
     padding: 1rem;

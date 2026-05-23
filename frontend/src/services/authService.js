@@ -1,7 +1,5 @@
 ﻿const API_BASE_URL = '/api';
 
-
-// ==================== AUTHENTICATION ====================
 export const loginUser = async (email, password) => {
   let response;
   try {
@@ -31,7 +29,6 @@ export const loginUser = async (email, password) => {
 export const loginAdmin = async (email, password) => {
   return loginUser(email, password);
 };
-
 
 export const registerUser = async (userData) => {
   let response;
@@ -64,7 +61,6 @@ export const logoutUser = () => {
   localStorage.removeItem('user');
 };
 
-// ==================== TOKEN & USER MANAGEMENT ====================
 export const getAuthToken = () => {
   return localStorage.getItem('authToken');
 };
@@ -78,10 +74,8 @@ export const isAuthenticated = () => {
   return !!getAuthToken();
 };
 
-// ==================== API REQUEST HELPER ====================
 export const fetchWithAuth = async (url, options = {}) => {
   const token = getAuthToken();
-  
   const headers = {
     'Content-Type': 'application/json',
     ...options.headers,
@@ -105,13 +99,11 @@ export const fetchWithAuth = async (url, options = {}) => {
     );
   }
 
-  // 204 No Content (e.g. DELETE) — no body to parse
   if (response.status === 204) return null;
 
   return response.json();
 };
 
-// ==================== PLACEMENTS ====================
 export const getPlacementsByStudent = async (studentId) => {
   return fetchWithAuth(`${API_BASE_URL}/placements/?student=${studentId}`);
 };
@@ -124,7 +116,6 @@ export const getAllPlacements = async () => {
   return fetchWithAuth(`${API_BASE_URL}/placements/`);
 };
 
-// ==================== WEEKLY LOGS ====================
 export const getWeeklyLogs = async (placementId) => {
   return fetchWithAuth(`${API_BASE_URL}/weeklylogs/weekly-logs/?placement=${placementId}`);
 };
@@ -150,7 +141,6 @@ export const submitWeeklyLog = async (logId) => {
   });
 };
 
-// ==================== EVALUATIONS ====================
 export const getEvaluations = async () => {
   return fetchWithAuth(`${API_BASE_URL}/evaluations/`);
 };
@@ -159,7 +149,6 @@ export const getEvaluationsByPlacement = async (placementId) => {
   return fetchWithAuth(`${API_BASE_URL}/evaluations/?placement=${placementId}`);
 };
 
-// ==================== USER PROFILE ====================
 export const updateUserProfile = async (userData) => {
   const user = getUser();
   if (!user || !user.id) {
@@ -176,7 +165,6 @@ export const getUserProfile = async (userId) => {
   return fetchWithAuth(`${API_BASE_URL}/accounts/users/${userId}/`);
 };
 
-// ==================== PASSWORD RECOVERY ====================
 export const requestPasswordReset = async (email) => {
   const response = await fetch(`${API_BASE_URL}/accounts/password-reset-request/`, {
     method: 'POST',
@@ -194,12 +182,10 @@ export const requestPasswordReset = async (email) => {
   }
 
   const data = await response.json();
-  
   if (data.recovery_code) {
     console.log('%c RECOVERY CODE:', 'color: red; font-size: 14px; font-weight: bold;', data.recovery_code);
     console.log('%cCheck the Developer Console above to see your recovery code. Enter it in the modal.', 'color: orange; font-size: 12px;');
   }
-  
   return data;
 };
 

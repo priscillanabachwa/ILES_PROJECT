@@ -2,7 +2,6 @@ from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
 from .models import AcademicEvaluation
 
-
 @receiver(pre_save, sender=AcademicEvaluation)
 def capture_evaluation_status(sender, instance, **kwargs):
     """Track previous status to detect DRAFT → SUBMITTED transition."""
@@ -14,7 +13,6 @@ def capture_evaluation_status(sender, instance, **kwargs):
     else:
         instance._prev_status = None
 
-
 @receiver(post_save, sender=AcademicEvaluation)
 def send_evaluation_notification(sender, instance, created, **kwargs):
     from user_accounts.notifications import notify_user
@@ -22,7 +20,6 @@ def send_evaluation_notification(sender, instance, created, **kwargs):
     prev = getattr(instance, '_prev_status', None)
     curr = instance.status
 
-    # Only notify when transitioning to SUBMITTED (not on every save)
     if curr != 'SUBMITTED' or prev == 'SUBMITTED':
         return
 

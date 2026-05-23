@@ -4,8 +4,6 @@ import random
 from django.utils import timezone
 from datetime import timedelta
 
-# Create your models here
-
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
@@ -14,7 +12,7 @@ class CustomUserManager(BaseUserManager):
         email = self.normalize_email(email)
         extra_fields.setdefault('role', 'student')
         user = self.model(email=email, **extra_fields)
-        user.set_password(password)   # always hash — never store plain text
+        user.set_password(password)
         user.save(using=self._db)
         return user
 
@@ -41,7 +39,6 @@ class CustomUser(AbstractUser):
     username = None
     email = models.EmailField(unique=True)
 
-
     role = models.CharField(
         max_length=30,
         choices=ROLE_CHOICES,
@@ -54,16 +51,13 @@ class CustomUser(AbstractUser):
         null=True
     )
 
-    # Student fields
     institution = models.CharField(max_length=200, blank=True, null=True)
     department  = models.CharField(max_length=200, blank=True, null=True)
     student_id  = models.CharField(max_length=50,  blank=True, null=True)
 
-    # Academic supervisor fields
     faculty  = models.CharField(max_length=200, blank=True, null=True)
     staff_id = models.CharField(max_length=50,  blank=True, null=True)
 
-    # Workplace supervisor fields
     organisation = models.CharField(max_length=200, blank=True, null=True)
     job_title    = models.CharField(max_length=200, blank=True, null=True)
     USERNAME_FIELD = 'email'
@@ -73,7 +67,6 @@ class CustomUser(AbstractUser):
 
     def __str__(self):
         return f'{self.email} ({self.get_role_display()})'
-
 
 class Notification(models.Model):
     TYPE_CHOICES = [

@@ -56,7 +56,6 @@ const TYPE_ICONS = {
   general:       'ℹ️',
 }
 
-// Where each notification type should navigate, keyed by role
 const NOTIF_LINKS = {
   student: {
     log_submitted: '/student/logs',
@@ -126,7 +125,7 @@ function NotificationBell() {
         setNotifs(data.results)
         setUnread(data.unread_count ?? 0)
       }
-    } catch { /* silent */ }
+    } catch {  }
   }, [])
 
   useEffect(() => {
@@ -148,7 +147,7 @@ function NotificationBell() {
       await fetchWithAuth(`${API}/accounts/notifications/${id}/`, { method: 'PATCH' })
       setNotifs(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n))
       setUnread(prev => Math.max(0, prev - 1))
-    } catch { /* silent */ }
+    } catch {  }
   }
 
   const [selected, setSelected] = useState(null)
@@ -167,7 +166,7 @@ function NotificationBell() {
       await fetchWithAuth(`${API}/accounts/notifications/mark-all-read/`, { method: 'POST' })
       setNotifs(prev => prev.map(n => ({ ...n, is_read: true })))
       setUnread(0)
-    } catch { /* silent */ }
+    } catch {  }
   }
 
   const recent = notifications.slice(0, 8)
@@ -194,7 +193,6 @@ function NotificationBell() {
         <div className="absolute right-0 top-11 w-80 bg-slate-800 border border-slate-700/60 rounded-2xl shadow-2xl z-50 overflow-hidden">
 
           {selected ? (
-            /* ── Detail view ── */
             <>
               <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-700/50">
                 <button onClick={() => setSelected(null)} className="text-slate-400 hover:text-white transition p-0.5">
@@ -220,7 +218,6 @@ function NotificationBell() {
               </div>
             </>
           ) : (
-            /* ── List view ── */
             <>
               <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700/50">
                 <div className="flex items-center gap-2">
@@ -306,10 +303,8 @@ export default function AppLayout() {
   return (
     <div className="flex min-h-screen bg-[#1e3a5f] text-[#e4e1ed]">
 
-      {/* "" Sidebar "" */}
       <aside className="w-64 h-screen sticky left-0 top-0 border-r border-white/10 bg-[#2a5490] backdrop-blur-xl flex flex-col py-6 overflow-hidden">
 
-        {/* Logo */}
         <div className="px-4 mb-6 flex flex-col items-center gap-3 text-center">
           <img src={ILESLogo} alt="ILES Logo" className="w-20 h-20 object-contain rounded-xl" />
           <p className="text-white font-extrabold text-[10px] tracking-widest leading-snug uppercase px-2">
@@ -317,7 +312,6 @@ export default function AppLayout() {
           </p>
         </div>
 
-        {/* Nav links */}
         <nav className="flex-1 space-y-1">
           {items.map((item) =>
             item.section ? (
@@ -342,7 +336,6 @@ export default function AppLayout() {
           )}
         </nav>
 
-        {/* User info + logout */}
         <div className="px-4 mt-auto border-t border-white/5 pt-4">
           <div className="px-4 py-2 mb-2">
             <p className="text-sm font-medium truncate text-white">{fullName}</p>
@@ -360,7 +353,6 @@ export default function AppLayout() {
         </div>
       </aside>
 
-      {/* "" Main content "" */}
       <main className="flex-1 flex flex-col min-w-0 bg-[#1e3a5f]">
         <header className="h-16 border-b border-white/10 bg-[#172e4d]/90 backdrop-blur-md flex items-center px-8 justify-between sticky top-0 z-40">
           <span className="text-white font-bold text-lg">Internship Management System</span>

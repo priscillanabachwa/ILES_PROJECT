@@ -6,7 +6,6 @@ import { toast } from 'react-toastify';
 import './Register.css';
 import ILES_LOGO from '../assets/ILES_LOGO.png';
 
-// ==================== EYE ICONS ====================
 const EyeIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
     fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -24,7 +23,6 @@ const EyeOffIcon = () => (
   </svg>
 );
 
-// ==================== MAIN COMPONENT ====================
 export default function Register() {
   const { login } = useAuth();
   const [formData, setFormData] = useState({
@@ -87,7 +85,6 @@ export default function Register() {
         workplace_supervisor: '/supervisor/dashboard',
       };
       navigate(roleRoutes[response.user.role] || '/login');
-          
     } catch (err) {
       setError(err.message || 'Registration failed. Please try again.');
     } finally {
@@ -99,7 +96,6 @@ export default function Register() {
     <div className="reg-root">
       <div className="reg-card">
 
-        {/* Logo + Title */}
         <div className="reg-header">
           <div className="reg-logo-wrap">
             <img src={ILES_LOGO} alt="ILES Logo" className="reg-logo" />
@@ -109,7 +105,6 @@ export default function Register() {
 
         <form onSubmit={handleSubmit} className="reg-form">
 
-          {/* First & Last Name */}
           <div className="form-row">
             <div className="form-group">
               <label htmlFor="first_name">First Name</label>
@@ -137,7 +132,6 @@ export default function Register() {
             </div>
           </div>
 
-          {/* Email */}
           <div className="form-group">
             <label htmlFor="email">Email <span className="req">*</span></label>
             <input
@@ -152,7 +146,6 @@ export default function Register() {
             />
           </div>
 
-          {/* Role */}
           <div className="form-group">
             <label htmlFor="role">Role</label>
             <select
@@ -169,7 +162,6 @@ export default function Register() {
             </select>
           </div>
 
-          {/* Phone */}
           <div className="form-group">
             <label htmlFor="phone_number">Phone Number</label>
             <div style={{ display:'flex', border:'1.5px solid #c5d8f0', borderRadius:'8px', overflow:'hidden' }}>
@@ -195,7 +187,6 @@ export default function Register() {
             </div>
           </div>
 
-          {/* Password */}
           <div className="form-group">
             <label htmlFor="password">Password <span className="req">*</span> <span className="hint">(min. 8 characters)</span></label>
             <div className="pw-wrap">
@@ -221,7 +212,6 @@ export default function Register() {
             </div>
           </div>
 
-          {/* Confirm Password */}
           <div className="form-group">
             <label htmlFor="confirm_password">Confirm Password <span className="req">*</span></label>
             <div className="pw-wrap">

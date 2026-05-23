@@ -35,7 +35,6 @@ export default function WorkplaceReportsPage() {
           evalByPlacement[e.placement] = e
         })
 
-        // Group logs by placement
         const logsByPlacement = {}
         ;(Array.isArray(logbooks) ? logbooks : []).forEach(l => {
           if (!logsByPlacement[l.placement]) logsByPlacement[l.placement] = []
@@ -78,7 +77,6 @@ export default function WorkplaceReportsPage() {
   return (
     <div className="space-y-6">
 
-      {/* Header */}
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-white">Intern Performance Report</h1>

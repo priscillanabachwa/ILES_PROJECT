@@ -29,7 +29,6 @@ const STATUS_LABELS = {
   returned:  'Returned',
 }
 
-// Logs that were disapproved show as 'returned' (draft + has supervisor comment)
 const effectiveStatus = (log) =>
   log.status === 'draft' && log.supervisor_comment ? 'returned' : log.status
 
@@ -379,7 +378,7 @@ export default function AcademicLogsPage() {
   const submitted        = logs.filter(l => l.status === 'submitted').length
   const awaitingApproval = logs.filter(l => l.status === 'reviewed').length
   const approved         = logs.filter(l => l.status === 'approved').length
-  const reviewed         = awaitingApproval + approved   // approved implies reviewed
+  const reviewed         = awaitingApproval + approved   
   const disapproved      = logs.filter(l => l.status === 'draft' && l.supervisor_comment).length
 
   const filtered = logs.filter((l) => {

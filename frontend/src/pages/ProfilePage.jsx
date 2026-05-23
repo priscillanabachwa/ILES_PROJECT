@@ -186,7 +186,6 @@ export default function ProfilePage() {
     if (Object.keys(errs).length) { setFieldErrors(errs); return }
     setSaving(true)
     try {
-      // Only send fields that actually exist in the backend CustomUser model
       const updatedData = Object.fromEntries(
         UPDATABLE_FIELDS.map(key => [key, form[key] || ''])
       )
@@ -224,7 +223,6 @@ export default function ProfilePage() {
 
       <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 space-y-5">
 
-        {/* Identity strip */}
         <div className="flex items-center gap-4 pb-5 border-b border-slate-700/50">
           <Avatar user={user} preview={avatarPreview} onSelect={setAvatar} editMode={editMode} />
           <div className="flex-1 min-w-0">
@@ -244,7 +242,6 @@ export default function ProfilePage() {
 
         <SectionDivider title="Profile Details" subtitle={editMode ? 'Make your changes below then save' : undefined} />
 
-        {/* VIEW MODE */}
         {!editMode && (
           <div className="grid grid-cols-2 gap-x-8 gap-y-5">
             {config.fields.map(({ key, label }) => {
@@ -255,7 +252,6 @@ export default function ProfilePage() {
           </div>
         )}
 
-        {/* EDIT MODE */}
         {editMode && (
           <div className="space-y-4">
             {config.fields.map(({ key, label, type, maxLength }) => (
@@ -291,7 +287,6 @@ export default function ProfilePage() {
               </Field>
             ))}
 
-            {/* Save / Cancel */}
             <div className="flex gap-3 pt-1">
               <button onClick={handleCancelEdit}
                 className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-slate-600 text-slate-400 hover:bg-slate-700/50 transition">

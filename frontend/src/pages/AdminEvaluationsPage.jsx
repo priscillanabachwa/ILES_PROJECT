@@ -159,7 +159,6 @@ export default function AdminEvaluationsPage() {
         <p className="text-sm text-slate-400 mt-1">Monitor evaluations for all interns across the system</p>
       </div>
 
-      {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label:'Total Interns', value:total,                       color:'text-white',       bg:'bg-slate-800/50 border-slate-700/50'      },
@@ -174,7 +173,6 @@ export default function AdminEvaluationsPage() {
         ))}
       </div>
 
-      {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"
@@ -206,7 +204,6 @@ export default function AdminEvaluationsPage() {
         </div>
       </div>
 
-      {/* Table */}
       <div className="bg-slate-800/30 border border-slate-700/50 rounded-2xl overflow-hidden">
         {loading ? (
           <div className="p-6 space-y-3">

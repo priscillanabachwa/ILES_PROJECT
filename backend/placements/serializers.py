@@ -2,13 +2,11 @@ from rest_framework import serializers
 from .models import InternshipPlacement, Company
 from user_accounts.models import CustomUser
 
-
 class CompanySerializer(serializers.ModelSerializer):
     class Meta:
         model = Company
         fields = '__all__'
         read_only_fields = ['created_at']
-
 
 class InternshipPlacementSerializer(serializers.ModelSerializer):
     student_name = serializers.SerializerMethodField()
@@ -32,7 +30,6 @@ class InternshipPlacementSerializer(serializers.ModelSerializer):
 
     def get_company_name(self, obj):
         return obj.company.company_name if obj.company else ''
-
 
 class PlacementSerializer(serializers.ModelSerializer):
     student_name = serializers.SerializerMethodField()

@@ -18,8 +18,6 @@ const ACCEPTED_MIME = new Set([
 ])
 const MAX_MB = 10
 
-// ── utilities ──────────────────────────────────────────────────────────────
-
 const fmt = (iso) =>
   iso ? new Date(iso).toLocaleDateString('en-UG', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
 
@@ -41,8 +39,6 @@ const STATUS_LABEL = {
   reviewed:  'Reviewed',
   approved:  'Approved',
 }
-
-// ── small shared components ────────────────────────────────────────────────
 
 function Badge({ status }) {
   return (
@@ -86,13 +82,12 @@ function ListSkeleton() {
 
 function WorkflowTracker({ status, returned = false }) {
   const steps     = ['draft', 'submitted', 'reviewed', 'approved']
-  const approvedI = steps.indexOf('reviewed') + 1  // index 3 — the red X circle when disapproved
+  const approvedI = steps.indexOf('reviewed') + 1  
   const idx       = returned ? steps.indexOf('reviewed') : steps.indexOf(status?.toLowerCase() ?? '')
 
   return (
     <div className="flex items-start mt-3 pt-3 border-t border-slate-700/50">
       {steps.map((step, i) => {
-        // When returned: Draft/Submitted/Reviewed show ✓ indigo; Approved shows ✗ red
         const isRedX      = returned && i === approvedI
         const isCompleted = returned ? i <= idx : i <= idx
         const isFuture    = !isRedX && !isCompleted
@@ -109,7 +104,6 @@ function WorkflowTracker({ status, returned = false }) {
           ? 'text-slate-300'
           : 'text-slate-600'
 
-        // Connector line after this step (between i and i+1)
         const connectorClass = returned
           ? (i < idx ? 'bg-indigo-600' : 'bg-slate-700')
           : (i < idx ? 'bg-indigo-600' : 'bg-slate-700')
@@ -157,8 +151,6 @@ function AttachmentLink({ url }) {
   )
 }
 
-// ── field wrapper ──────────────────────────────────────────────────────────
-
 function Field({ label, required, error, hint, children }) {
   return (
     <div className="space-y-1.5">
@@ -186,15 +178,10 @@ const inputCls = (hasErr) =>
      ? 'border-red-500/60 focus:border-red-500 focus:ring-red-500/20'
      : 'border-slate-600 focus:border-indigo-500 focus:ring-indigo-500/20'}`
 
-// ══════════════════════════════════════════════════════════════════════════
-//  MAIN PAGE
-// ══════════════════════════════════════════════════════════════════════════
-
 export default function MyLogsPage() {
   const navigate = useNavigate()
   const location = useLocation()
 
-  /* ── list state ─────────────────────────────────────────────────────── */
   const [logs,        setLogs]        = useState([])
   const [loading,     setLoading]     = useState(true)
   const [listError,   setListError]   = useState('')
@@ -203,7 +190,6 @@ export default function MyLogsPage() {
   const [placementId,  setPlacementId]  = useState(null)
   const [placement,    setPlacement]    = useState(null)
 
-  /* ── form state ─────────────────────────────────────────────────────── */
   const [view,        setView]       = useState(location.state?.openForm ? 'new' : 'history')
   const [editingLog,  setEditingLog] = useState(null)
   const [weekNumber,  setWeekNumber] = useState('')
@@ -214,13 +200,11 @@ export default function MyLogsPage() {
   const [attachment,  setAttachment] = useState(null)
   const [submitting,  setSubmitting] = useState(false)
 
-  // inline field errors (only shown after submit attempt)
   const [fieldErrors, setFieldErrors] = useState({})
 
   const fileRef    = useRef(null)
   const formTopRef = useRef(null)
 
-  /* ── data ───────────────────────────────────────────────────────────── */
   const fetchLogs = useCallback(async () => {
     try {
       const data = await fetchWithAuth(`${API}/weeklylogs/logbooks/`)
@@ -252,7 +236,6 @@ export default function MyLogsPage() {
     })()
   }, [])
 
-  /* ── file handling ──────────────────────────────────────────────────── */
   const handleFileChange = (e) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -275,7 +258,6 @@ export default function MyLogsPage() {
     if (fileRef.current) fileRef.current.value = ''
   }
 
-  /* ── form reset ─────────────────────────────────────────────────────── */
   const resetForm = () => {
     setEditingLog(null)
     setWeekNumber('')
@@ -288,7 +270,6 @@ export default function MyLogsPage() {
     if (fileRef.current) fileRef.current.value = ''
   }
 
-  /* ── load draft into form ────────────────────────────────────────────── */
   const handleEditDraft = (log) => {
     setEditingLog(log)
     setWeekNumber(String(log.week_number))
@@ -303,9 +284,7 @@ export default function MyLogsPage() {
     setTimeout(() => formTopRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
   }
 
-  /* ── submit ─────────────────────────────────────────────────────────── */
   const handleSubmit = async () => {
-    // ── validation ──────────────────────────────────────────────────────
     const errs = {}
     if (!weekNumber || isNaN(Number(weekNumber)) || Number(weekNumber) < 1) {
       errs.weekNumber = 'Enter a valid week number.'
@@ -336,7 +315,6 @@ export default function MyLogsPage() {
       return
     }
 
-    // ── send ─────────────────────────────────────────────────────────────
     setSubmitting(true)
     try {
       const body = new FormData()
@@ -381,7 +359,6 @@ export default function MyLogsPage() {
           msg = data.detail
         } else if (data.non_field_errors) {
           const raw = Array.isArray(data.non_field_errors) ? data.non_field_errors[0] : data.non_field_errors
-          // friendlier message for unique-week constraint
           msg = raw.toLowerCase().includes('week_number')
             ? `You already have a log for Week ${weekNumber}. Please choose a different week number.`
             : raw
@@ -407,7 +384,6 @@ export default function MyLogsPage() {
     }
   }
 
-  /* ── derived list values ────────────────────────────────────────────── */
   const safeLogs = Array.isArray(logs) ? logs : []
   const filtered = safeLogs.filter(l =>
     (filter === 'all' || l.status === filter) &&
@@ -431,11 +407,9 @@ export default function MyLogsPage() {
     { key: 'approved',  label: 'Approved'  },
   ]
 
-  /* ── render ─────────────────────────────────────────────────────────── */
   return (
     <div className="space-y-6">
 
-      {/* ── Header ──────────────────────────────────────────────────── */}
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-white">My Weekly Logs</h1>
@@ -470,10 +444,8 @@ export default function MyLogsPage() {
         </div>
       </div>
 
-      {/* ══════════ LOG HISTORY ═════════════════════════════════════ */}
       {view === 'history' && (
         <>
-          {/* Summary cards */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             {[
               { key: 'all',       label: 'Total',     color: 'text-white'       },
@@ -494,7 +466,6 @@ export default function MyLogsPage() {
             ))}
           </div>
 
-          {/* Filter bar + search */}
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-1 bg-slate-800/50 border border-slate-700/50 rounded-xl p-1 flex-wrap">
               {FILTERS.map(({ key, label }) => (
@@ -631,11 +602,9 @@ export default function MyLogsPage() {
         </>
       )}
 
-      {/* ══════════ NEW LOG FORM ════════════════════════════════════ */}
       {view === 'new' && (
         <div ref={formTopRef} className="bg-slate-800/50 border border-slate-700/50 rounded-2xl overflow-hidden">
 
-          {/* Form header */}
           <div className="px-6 py-4 border-b border-slate-700/50 flex items-center gap-3">
             <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${editingLog ? 'bg-amber-500/20 text-amber-400' : 'bg-indigo-600/20 text-indigo-400'}`}>
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -658,7 +627,6 @@ export default function MyLogsPage() {
             </div>
           </div>
 
-          {/* No placement banner */}
           {!loading && !placementId && (
             <div className="mx-6 mt-4 flex items-start gap-2 bg-amber-500/10 border border-amber-500/30 text-amber-300 text-sm px-4 py-3 rounded-xl">
               <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -669,7 +637,6 @@ export default function MyLogsPage() {
             </div>
           )}
 
-          {/* Missing supervisors banner */}
           {!loading && placementId && (!placement?.workplace_supervisor || !placement?.academic_supervisor) && (
             <div className="mx-6 mt-4 flex items-start gap-3 bg-red-500/10 border border-red-500/30 text-red-300 text-sm px-4 py-3 rounded-xl">
               <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -692,7 +659,6 @@ export default function MyLogsPage() {
 
           <div className="p-6 space-y-5">
 
-            {/* Week Number */}
             <Field label="Week Number" required error={fieldErrors.weekNumber}>
               <input
                 type="number"
@@ -705,7 +671,6 @@ export default function MyLogsPage() {
               />
             </Field>
 
-            {/* Activities */}
             <Field label="Activities This Week" required error={fieldErrors.activities}
               hint={!fieldErrors.activities ? `${activities.length} characters` : ''}>
               <textarea
@@ -717,7 +682,6 @@ export default function MyLogsPage() {
               />
             </Field>
 
-            {/* Challenges */}
             <Field label="Challenges Faced">
               <textarea
                 rows={3}
@@ -728,7 +692,6 @@ export default function MyLogsPage() {
               />
             </Field>
 
-            {/* Lessons Learned */}
             <Field
               label="Lessons Learned"
               required={saveAs === 'submitted'}
@@ -744,9 +707,7 @@ export default function MyLogsPage() {
               />
             </Field>
 
-            {/* Supporting Document */}
             <Field label="Supporting Document" hint="PDF, Word, Excel, JPG, PNG — max 10 MB">
-              {/* Existing attachment on edit (when no new file picked yet) */}
               {!attachment && editingLog?.attachment_url && (
                 <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-600 bg-slate-700/30 mb-2">
                   <div className="w-9 h-9 rounded-lg bg-indigo-600/20 text-indigo-400 flex items-center justify-center flex-shrink-0">
@@ -806,7 +767,6 @@ export default function MyLogsPage() {
               )}
             </Field>
 
-            {/* Save As */}
             <div className="space-y-2">
               <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide">
                 Save As <span className="text-red-400">*</span>
@@ -842,7 +802,6 @@ export default function MyLogsPage() {
               </div>
             </div>
 
-            {/* ── Action Buttons ────────────────────────────────────────── */}
             <div className="flex flex-col sm:flex-row gap-3 pt-2 border-t border-slate-700/50">
               <button
                 type="button"
@@ -854,7 +813,6 @@ export default function MyLogsPage() {
                 Back to Logs
               </button>
 
-              {/* THE ONE SUBMIT BUTTON */}
               <button
                 type="button"
                 onClick={handleSubmit}

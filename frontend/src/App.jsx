@@ -53,7 +53,6 @@ const ProtectedRoute = ({children, allowedRoles}) => {
   return children;
 };
 
-
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props)
@@ -89,7 +88,6 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-// 404 Not Found Component
 function NotFound() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#1e3a5f] text-white p-6">
@@ -107,12 +105,10 @@ function App() {
         <BrowserRouter>
           <ScrollToTop />
           <Routes>
-            {/* Default route - redirect to login */}
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} /> 
 
-            {/* Academic Supervisor Routes */}
             <Route element={
               <ProtectedRoute allowedRoles={['academic_supervisor']}>
                 <AppLayout />
@@ -127,7 +123,6 @@ function App() {
               <Route path="/academic/activity" element={<Navigate to="/academic/logs" replace />} />
             </Route>
 
-            {/* Student Routes */}
             <Route element={
               <ProtectedRoute allowedRoles={['student']}>
                 <AppLayout />
@@ -141,7 +136,6 @@ function App() {
 
             </Route>
 
-            {/* Workplace Supervisor Routes */}
             <Route element={
               <ProtectedRoute allowedRoles={['workplace_supervisor']}>
                 <AppLayout />
@@ -158,7 +152,6 @@ function App() {
               <Route path="/supervisor/reviews" element={<Navigate to="/supervisor/scores" replace />} />
             </Route>
 
-            {/* Admin Routes */}
             <Route element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <AppLayout />
@@ -172,7 +165,6 @@ function App() {
               <Route path="/admin/profile" element={<ProfilePage />} />
             </Route>
 
-            {/* 404 - Not Found Route (must be last) */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

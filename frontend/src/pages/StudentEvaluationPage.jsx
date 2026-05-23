@@ -125,12 +125,10 @@ function EvaluationSection({ title, subtitle, evaluation, emptyMessage, logFeedb
         <div className="px-6 py-4 border-t border-slate-700/50 space-y-3">
           <p className="text-xs text-slate-500 uppercase tracking-wider">Supervisor Comment</p>
 
-          {/* Evaluation overall comment */}
           {evaluation.overall_comment && (
             <p className="text-slate-300 text-sm">{evaluation.overall_comment}</p>
           )}
 
-          {/* Per-week log feedback */}
           {logFeedback.length > 0 && (
             <div className="space-y-2">
               {logFeedback.map(log => (
@@ -151,7 +149,6 @@ function EvaluationSection({ title, subtitle, evaluation, emptyMessage, logFeedb
             </div>
           )}
 
-          {/* Fallback only when truly nothing to show */}
           {!evaluation.overall_comment && logFeedback.length === 0 && (
             <p className="text-slate-500 text-sm italic">No comment left by your supervisor.</p>
           )}
@@ -203,7 +200,6 @@ export default function StudentEvaluationPage() {
   return (
     <div className="space-y-6">
 
-      {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-white">My Evaluations</h1>
         <p className="text-sm text-slate-400 mt-1">
@@ -217,14 +213,12 @@ export default function StudentEvaluationPage() {
         </div>
       )}
 
-      {/* Summary cards */}
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[1,2,3].map(i => <Skeleton key={i} className="h-28" />)}
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {/* Final Score */}
           <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6">
             <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Final Score</p>
             <p className={`text-4xl font-black ${
@@ -242,7 +236,6 @@ export default function StudentEvaluationPage() {
             </p>
           </div>
 
-          {/* Grade */}
           <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6">
             <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Grade</p>
             <p className={`text-4xl font-black ${gradeColor(grade)}`}>
@@ -251,7 +244,6 @@ export default function StudentEvaluationPage() {
             <p className="text-xs text-slate-600 mt-2">{gradeLabel(grade)}</p>
           </div>
 
-          {/* Score split */}
           <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 space-y-3">
             <p className="text-xs text-slate-500 uppercase tracking-wider">Score Breakdown</p>
             <div className="flex items-center justify-between">
@@ -274,7 +266,6 @@ export default function StudentEvaluationPage() {
         </div>
       )}
 
-      {/* Academic Evaluation */}
       {loading ? (
         <Skeleton className="h-48" />
       ) : (
@@ -290,7 +281,6 @@ export default function StudentEvaluationPage() {
         />
       )}
 
-      {/* Workplace Evaluation */}
       {loading ? (
         <Skeleton className="h-48" />
       ) : (

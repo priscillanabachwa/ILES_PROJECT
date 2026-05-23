@@ -2,7 +2,6 @@ from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
 from .models import InternshipPlacement
 
-
 @receiver(pre_save, sender=InternshipPlacement)
 def capture_old_supervisors(sender, instance, **kwargs):
     """Snapshot the current supervisor values before saving so post_save can detect changes."""
@@ -18,7 +17,6 @@ def capture_old_supervisors(sender, instance, **kwargs):
         instance._old_workplace_supervisor = None
         instance._old_academic_supervisor  = None
 
-
 @receiver(post_save, sender=InternshipPlacement)
 def notify_on_placement_change(sender, instance, created, **kwargs):
     from user_accounts.notifications import notify_user
@@ -30,7 +28,6 @@ def notify_on_placement_change(sender, instance, created, **kwargs):
     student_name  = student.get_full_name() or student.email
 
     if created:
-        # ── Notify student of new placement ──────────────────────────────
         title = 'Internship Placement Assigned'
         msg   = (f'Hello {student.first_name},\n\n'
                  f'You have been assigned an internship placement at {company_name}.\n\n'
@@ -39,7 +36,6 @@ def notify_on_placement_change(sender, instance, created, **kwargs):
                  f'Please log in to view your placement details.')
         notify_user(student, title, msg, 'placement')
 
-        # ── Notify supervisors assigned at creation time ──────────────────
         if workplace_sup:
             notify_user(
                 workplace_sup,
@@ -61,14 +57,12 @@ def notify_on_placement_change(sender, instance, created, **kwargs):
             )
 
     else:
-        # ── Detect newly assigned supervisors ────────────────────────────
         old_ws = getattr(instance, '_old_workplace_supervisor', None)
         old_as = getattr(instance, '_old_academic_supervisor',  None)
 
         wp_changed = workplace_sup and workplace_sup != old_ws
         as_changed = academic_sup  and academic_sup  != old_as
 
-        # ── Notify student when supervisors change ────────────────────────
         if wp_changed or as_changed:
             sup_lines = []
             if academic_sup:
@@ -85,7 +79,6 @@ def notify_on_placement_change(sender, instance, created, **kwargs):
                 'placement',
             )
         else:
-            # Generic update (status change, dates, etc.)
             notify_user(
                 student,
                 'Your Internship Placement Has Been Updated',
@@ -96,7 +89,6 @@ def notify_on_placement_change(sender, instance, created, **kwargs):
                 'placement',
             )
 
-        # ── Notify newly assigned workplace supervisor ────────────────────
         if wp_changed:
             notify_user(
                 workplace_sup,
@@ -107,7 +99,6 @@ def notify_on_placement_change(sender, instance, created, **kwargs):
                 'placement',
             )
 
-        # ── Notify newly assigned academic supervisor ─────────────────────
         if as_changed:
             notify_user(
                 academic_sup,

@@ -169,7 +169,6 @@ function WorkflowTracker({ status }) {
   )
 }
 
-
 export default function StudentDashboard() {
   const { user } = useAuth()
 
@@ -215,7 +214,6 @@ export default function StudentDashboard() {
   return (
     <div className="space-y-6">
 
-      {/*  Header  */}
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-white">Welcome, {fullName} </h1>
@@ -237,22 +235,18 @@ export default function StudentDashboard() {
         )}
       </div>
 
-      {/*  Error  */}
       {error && (
         <div className="bg-red-500/10 border border-red-500/30 text-red-300 text-sm px-4 py-3 rounded-xl">{error}</div>
       )}
 
-      {/*  Stat cards  */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         <StatCard label="Logs Submitted"  value={stats?.logs_submitted}  sub="View all logs"    subLink="/student/logs"       accent="indigo"  icon={Icon.logbook}  />
         <StatCard label="Pending / Draft" value={stats?.pending_logs}    sub="Continue writing" subLink="/student/logs"       accent="amber"   icon={Icon.pending}  />
         <StatCard label="Current Score"   value={stats?.current_score != null ? `${Number(stats.current_score).toFixed(1)}%` : null} sub="View breakdown" subLink="/student/evaluation" accent="emerald" icon={Icon.score} />
       </div>
 
-      {/*  Main content  */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
 
-        {/* Left col N/A 3/5 */}
         <div className="lg:col-span-3 space-y-5">
 
           <Card title="My Internship Placement">
@@ -333,7 +327,6 @@ export default function StudentDashboard() {
           </Card>
         </div>
 
-        {/* Right col N/A 2/5 */}
         <div className="lg:col-span-2 space-y-5">
 
           <Card title="Score Breakdown" actionLabel="Full Evaluation" actionLink="/student/evaluation">

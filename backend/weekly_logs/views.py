@@ -9,7 +9,6 @@ from .serializers import WeeklyLogbookSerializer
 from .permissions import CanSubmitLog, CanApproveLog, CanReviewLog, CanRejectLog
     
 
-
 class WeeklyLogbookViewSet(viewsets.ModelViewSet):
     serializer_class = WeeklyLogbookSerializer
 
@@ -50,7 +49,6 @@ class WeeklyLogbookViewSet(viewsets.ModelViewSet):
         placement   = serializer.validated_data.get('placement')
         week_number = serializer.validated_data.get('week_number', 1)
 
-        # Block submission if supervisors are not yet assigned
         if serializer.validated_data.get('status') == 'submitted' and placement:
             if not placement.workplace_supervisor or not placement.academic_supervisor:
                 raise ValidationError(
@@ -142,7 +140,6 @@ class WeeklyLogbookViewSet(viewsets.ModelViewSet):
             )
 
         return Response(WeeklyLogbookSerializer(log).data)
-
 
     @action(detail=True, methods=['post'], url_path='approve')
     def approve(self, request, pk=None):
