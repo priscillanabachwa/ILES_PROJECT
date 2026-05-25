@@ -18,7 +18,7 @@ const NAV = {
     { to: '/admin/notifications',   label: 'Notifications'   },
     { to: '/admin/profile',         label: 'Profile'         },
   ],
-  student: [
+  student: [  
     { to: '/student/dashboard',     label: 'Dashboard'     },
     { to: '/student/logs',          label: 'My Logs'       },
     { to: '/student/notifications', label: 'Notifications' },
