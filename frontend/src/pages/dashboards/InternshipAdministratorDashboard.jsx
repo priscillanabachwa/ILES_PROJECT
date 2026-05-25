@@ -1,7 +1,7 @@
 ﻿import { useState, useEffect } from 'react'
 import { useAuth } from '../../Context/AuthContext'
 import { Link } from 'react-router-dom'
-import { toast, ToastContainer } from 'react-toastify'
+import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import dashboardService from "../../services/dashboardService"
 
@@ -677,8 +677,6 @@ export default function InternshipAdministratorDashboard() {
 
   return (
     <div className="space-y-6">
-
-      <ToastContainer position="top-right" autoClose={4000} hideProgressBar={false} newestOnTop closeOnClick theme="dark" />
 
       {modal === 'register' && (
         <RegisterStudentModal

@@ -50,7 +50,10 @@ async function getStudentStats() {
   const submitted = logbooks.filter(l => ['submitted', 'reviewed', 'approved'].includes(l.status));
   const pending = logbooks.filter(l => l.status === 'draft');
   const evalsArr = Array.isArray(evals) ? evals : [];
-  const academicEval  = evalsArr.find(e => e.evaluator_role === 'academic_supervisor');
+  // Use placement-level report eval only (excludes per-log and per-visit evals)
+  const academicEval  = evalsArr.find(e =>
+    e.evaluator_role === 'academic_supervisor' && e.log == null && e.visit_number == null
+  );
   const workplaceEval = evalsArr.find(e => e.evaluator_role === 'workplace_supervisor');
   const wScore      = workplaceEval?.total_score != null ? Number(workplaceEval.total_score) : null;
   const acItems     = academicEval?.items || [];
@@ -107,7 +110,10 @@ async function getStudentScores() {
   const evals = await fetchWithAuth(EVALUATIONS).catch(() => []);
   if (!Array.isArray(evals) || !evals.length) return { data: null };
 
-  const academicEval   = evals.find(e => e.evaluator_role === 'academic_supervisor')
+  // Use placement-level report eval only (excludes per-log and per-visit evals)
+  const academicEval   = evals.find(e =>
+    e.evaluator_role === 'academic_supervisor' && e.log == null && e.visit_number == null
+  )
   const workplaceEval  = evals.find(e => e.evaluator_role === 'workplace_supervisor')
 
   const workplaceScore = workplaceEval?.total_score != null ? Number(workplaceEval.total_score) : null
@@ -316,6 +322,11 @@ async function getAcademicPlacements() {
   return {
     data: placements.map(p => {
       const logs = logsByPlacement[p.id] || [];
+      const submittedCount = logs.filter(l => l.status === 'submitted').length;
+      const reviewedCount  = logs.filter(l => l.status === 'reviewed').length;
+      const approvedCount  = logs.filter(l => l.status === 'approved').length;
+      const pendingCount   = submittedCount + reviewedCount;
+
       let status = p.status;
       if (logs.some(l => l.status === 'submitted'))      status = 'submitted';
       else if (logs.some(l => l.status === 'reviewed'))  status = 'reviewed';
@@ -327,6 +338,10 @@ async function getAcademicPlacements() {
         student_id: String(p.student || ''),
         company: p.company_name || String(p.company || ''),
         status,
+        submitted_count: submittedCount,
+        reviewed_count:  reviewedCount,
+        approved_count:  approvedCount,
+        pending_count:   pendingCount,
       };
     }),
   };
@@ -337,31 +352,61 @@ async function getPendingReviews() {
     fetchWithAuth(PLACEMENTS),
     fetchWithAuth(LOGBOOKS),
   ]);
-  const pm = buildPlacementMap(placements);
+  const pm  = buildPlacementMap(placements);
+  const now = Date.now();
   return {
     data: logbooks
       .filter(l => ['submitted', 'reviewed'].includes(l.status))
       .map(l => ({
         ...l,
         student_name: capName(pm[l.placement]?.student_name || 'Unknown Student'),
-      })),
+        days_waiting: l.submitted_at
+          ? Math.floor((now - new Date(l.submitted_at)) / 86400000)
+          : null,
+      }))
+      .sort((a, b) => {
+        const aOverdue = a.deadline && new Date(a.deadline) < new Date();
+        const bOverdue = b.deadline && new Date(b.deadline) < new Date();
+        if (aOverdue && !bOverdue) return -1;
+        if (!aOverdue && bOverdue) return 1;
+        return (b.days_waiting ?? 0) - (a.days_waiting ?? 0);
+      }),
   };
 }
 
+// Returns per-student submission progress (replaces flat recent-activity list).
+// Sorted: students with pending action first, then by last submission date.
 async function getRecentActivity() {
   const [placements, logbooks] = await Promise.all([
     fetchWithAuth(PLACEMENTS),
     fetchWithAuth(LOGBOOKS),
   ]);
-  const pm = buildPlacementMap(placements);
+  const logsByPlacement = {};
+  for (const l of (Array.isArray(logbooks) ? logbooks : [])) {
+    if (!logsByPlacement[l.placement]) logsByPlacement[l.placement] = [];
+    logsByPlacement[l.placement].push(l);
+  }
   return {
-    data: logbooks.slice(0, 10).map(l => ({
-      id: l.id,
-      student_name: capName(pm[l.placement]?.student_name || 'Unknown Student'),
-      activity: `Weekly Log — Week ${l.week_number}`,
-      date: l.submitted_at || l.deadline,
-      status: l.status,
-    })),
+    data: (Array.isArray(placements) ? placements : []).map(p => {
+      const logs         = logsByPlacement[p.id] || [];
+      const pendingCount = logs.filter(l => ['submitted', 'reviewed'].includes(l.status)).length;
+      const approvedCount = logs.filter(l => l.status === 'approved').length;
+      const totalSubmitted = logs.filter(l => l.status !== 'draft').length;
+      const lastLog = logs
+        .filter(l => l.submitted_at)
+        .sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at))[0];
+      return {
+        id:              p.id,
+        student_name:    capName(p.student_name || String(p.student || '')),
+        company:         p.company_name || '',
+        total_submitted: totalSubmitted,
+        approved_count:  approvedCount,
+        pending_count:   pendingCount,
+        last_submission: lastLog?.submitted_at || null,
+        last_week:       lastLog?.week_number  || null,
+        last_status:     lastLog?.status       || null,
+      };
+    }).sort((a, b) => b.pending_count - a.pending_count),
   };
 }
 
@@ -463,8 +508,11 @@ async function getAdminEvaluations() {
   const byPlacement = {};
   for (const e of (Array.isArray(evals) ? evals : [])) {
     if (!byPlacement[e.placement]) byPlacement[e.placement] = { academic: null, workplace: null };
-    if (e.evaluator_role === 'academic_supervisor')  byPlacement[e.placement].academic  = e;
-    else if (e.evaluator_role === 'workplace_supervisor') byPlacement[e.placement].workplace = e;
+    // Academic: use the placement-level report eval only (not per-log or per-visit evals)
+    if (e.evaluator_role === 'academic_supervisor' && e.log == null && e.visit_number == null)
+      byPlacement[e.placement].academic = e;
+    else if (e.evaluator_role === 'workplace_supervisor')
+      byPlacement[e.placement].workplace = e;
   }
 
   const gradeFromScore = (s) => {

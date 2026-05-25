@@ -40,6 +40,11 @@ class AcademicEvaluation(models.Model):
         related_name='evaluations',
     )
 
+    # When set, this record is a visit evaluation (visit #1, #2, …).
+    # log=null & visit_number=null  → internship report evaluation
+    # log=null & visit_number≠null  → on-site visit evaluation
+    visit_number = models.PositiveIntegerField(null=True, blank=True)
+
     evaluator = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -58,15 +63,23 @@ class AcademicEvaluation(models.Model):
     class Meta:
         ordering = ['-created_at']
         constraints = [
+            # One log evaluation per (log, evaluator)
             models.UniqueConstraint(
                 condition=models.Q(log__isnull=False),
                 fields=['log', 'evaluator'],
                 name='unique_log_evaluation',
             ),
+            # One internship-report evaluation per (placement, evaluator)
             models.UniqueConstraint(
-                condition=models.Q(log__isnull=True),
+                condition=models.Q(log__isnull=True, visit_number__isnull=True),
                 fields=['placement', 'evaluator'],
                 name='unique_placement_evaluation',
+            ),
+            # One evaluation per visit number per (placement, evaluator)
+            models.UniqueConstraint(
+                condition=models.Q(log__isnull=True, visit_number__isnull=False),
+                fields=['placement', 'evaluator', 'visit_number'],
+                name='unique_visit_evaluation',
             ),
         ]
         permissions = [
@@ -78,7 +91,8 @@ class AcademicEvaluation(models.Model):
     def calculate_total_score(self):
         items = self.items.select_related('criteria').all()
 
-        if self.log:
+        # Log eval or visit eval → raw percentage of max score
+        if self.log or self.visit_number is not None:
             if not items:
                 return Decimal('0')
             item = items[0]
@@ -88,6 +102,7 @@ class AcademicEvaluation(models.Model):
                 )
             return Decimal('0')
 
+        # Internship report eval → weighted score
         total = Decimal('0')
         for item in items:
             if item.score and item.criteria.weight:
@@ -118,7 +133,9 @@ class AcademicEvaluation(models.Model):
     def __str__(self):
         if self.log:
             return f"Log eval — Week {self.log.week_number} for {self.placement} — Score:{self.total_score}"
-        return f"Placement eval for {self.placement} — Score:{self.total_score}"
+        if self.visit_number is not None:
+            return f"Visit {self.visit_number} eval for {self.placement} — Score:{self.total_score}"
+        return f"Report eval for {self.placement} — Score:{self.total_score}"
 
 class EvaluationScore(models.Model):
     evaluation = models.ForeignKey(AcademicEvaluation, on_delete=models.CASCADE, related_name='items')

@@ -30,9 +30,11 @@ export default function WorkplaceReportsPage() {
         const pm = Object.fromEntries(
           (Array.isArray(placements) ? placements : []).map(p => [p.id, p])
         )
+        // Only keep the placement-level report eval (not per-log or per-visit evals)
         const evalByPlacement = {}
         ;(Array.isArray(evals) ? evals : []).forEach(e => {
-          evalByPlacement[e.placement] = e
+          if (e.log == null && e.visit_number == null)
+            evalByPlacement[e.placement] = e
         })
 
         const logsByPlacement = {}

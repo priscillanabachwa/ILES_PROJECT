@@ -184,7 +184,10 @@ export default function StudentEvaluationPage() {
     fetchAll()
   }, [])
 
-  const academicEval  = evals.find(e => e.evaluator_role === 'academic_supervisor')
+  // Report evaluation = the placement-level academic eval (no log, no visit number)
+  const academicEval  = evals.find(e =>
+    e.evaluator_role === 'academic_supervisor' && e.log == null && e.visit_number == null
+  )
   const workplaceEval = evals.find(e => e.evaluator_role === 'workplace_supervisor')
 
   const academicScore  = academicEval?.total_score  != null ? Number(academicEval.total_score)  : null

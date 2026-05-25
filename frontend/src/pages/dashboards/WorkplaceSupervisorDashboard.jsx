@@ -192,32 +192,6 @@ export default function WorkplaceSupervisorDashboard() {
             )}
           </Card>
 
-          <Card title="Recent Activity" actionLabel="View All" actionLink="/supervisor/activity">
-            {loading ? <ListSkeleton /> : activity.length === 0 ? <p className="text-xs text-slate-500">No recent activity.</p> : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs" style={{ tableLayout:'fixed' }}>
-                  <thead>
-                    <tr className="text-slate-500 border-b border-slate-700/50">
-                      <th className="text-left pb-3 font-semibold w-1/4">Student</th>
-                      <th className="text-left pb-3 font-semibold w-1/3">Activity</th>
-                      <th className="text-left pb-3 font-semibold w-1/5">Date</th>
-                      <th className="text-left pb-3 font-semibold w-1/6">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-700/30">
-                    {activity.map((a, i) => (
-                      <tr key={a.id} className="hover:bg-slate-700/20 transition">
-                        <td className="py-3 pr-3"><div className="flex items-center gap-2"><AvatarCircle name={a.student_name} index={i} size="sm" /><span className="font-semibold text-white truncate capitalize">{a.student_name}</span></div></td>
-                        <td className="py-3 pr-3 text-slate-400 truncate">{a.activity}</td>
-                        <td className="py-3 pr-3 text-slate-500">{formatDate(a.date)}</td>
-                        <td className="py-3"><Badge status={a.status} overdue={isOverdue(a.deadline)} /></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </Card>
         </div>
 
         <div className="lg:col-span-2 space-y-5">

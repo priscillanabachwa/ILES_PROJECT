@@ -33,7 +33,7 @@ class AcademicEvaluationSerializer(serializers.ModelSerializer):
     class Meta:
         model  = AcademicEvaluation
         fields = [
-            'id', 'placement', 'log', 'log_week_number', 'items',
+            'id', 'placement', 'log', 'log_week_number', 'visit_number', 'items',
             'total_score', 'grade', 'status', 'overall_comment',
             'submitted_at', 'updated_at', 'created_at',
             'evaluator_role',

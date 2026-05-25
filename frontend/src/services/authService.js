@@ -1,4 +1,4 @@
-﻿const API_BASE_URL = '/api';
+const API_BASE_URL = '/api';
 
 export const loginUser = async (email, password) => {
   let response;
@@ -24,10 +24,6 @@ export const loginUser = async (email, password) => {
 
   const data = await response.json();
   return { token: data.token, user: data.user };
-};
-
-export const loginAdmin = async (email, password) => {
-  return loginUser(email, password);
 };
 
 export const registerUser = async (userData) => {
@@ -56,11 +52,6 @@ export const registerUser = async (userData) => {
   return { token: data.token, user: data.user };
 };
 
-export const logoutUser = () => {
-  localStorage.removeItem('authToken');
-  localStorage.removeItem('user');
-};
-
 export const getAuthToken = () => {
   return localStorage.getItem('authToken');
 };
@@ -68,10 +59,6 @@ export const getAuthToken = () => {
 export const getUser = () => {
   const user = localStorage.getItem('user');
   return user ? JSON.parse(user) : null;
-};
-
-export const isAuthenticated = () => {
-  return !!getAuthToken();
 };
 
 export const fetchWithAuth = async (url, options = {}) => {
@@ -104,51 +91,6 @@ export const fetchWithAuth = async (url, options = {}) => {
   return response.json();
 };
 
-export const getPlacementsByStudent = async (studentId) => {
-  return fetchWithAuth(`${API_BASE_URL}/placements/?student=${studentId}`);
-};
-
-export const getActivePlacement = async () => {
-  return fetchWithAuth(`${API_BASE_URL}/placements/?status=ACTIVE`);
-};
-
-export const getAllPlacements = async () => {
-  return fetchWithAuth(`${API_BASE_URL}/placements/`);
-};
-
-export const getWeeklyLogs = async (placementId) => {
-  return fetchWithAuth(`${API_BASE_URL}/weeklylogs/weekly-logs/?placement=${placementId}`);
-};
-
-export const createWeeklyLog = async (logData) => {
-  return fetchWithAuth(`${API_BASE_URL}/weeklylogs/weekly-logs/`, {
-    method: 'POST',
-    body: JSON.stringify(logData),
-  });
-};
-
-export const updateWeeklyLog = async (logId, logData) => {
-  return fetchWithAuth(`${API_BASE_URL}/weeklylogs/weekly-logs/${logId}/`, {
-    method: 'PUT',
-    body: JSON.stringify(logData),
-  });
-};
-
-export const submitWeeklyLog = async (logId) => {
-  return fetchWithAuth(`${API_BASE_URL}/weeklylogs/weekly-logs/${logId}/`, {
-    method: 'PATCH',
-    body: JSON.stringify({ status: 'submitted' }),
-  });
-};
-
-export const getEvaluations = async () => {
-  return fetchWithAuth(`${API_BASE_URL}/evaluations/`);
-};
-
-export const getEvaluationsByPlacement = async (placementId) => {
-  return fetchWithAuth(`${API_BASE_URL}/evaluations/?placement=${placementId}`);
-};
-
 export const updateUserProfile = async (userData) => {
   const user = getUser();
   if (!user || !user.id) {
@@ -159,10 +101,6 @@ export const updateUserProfile = async (userData) => {
     method: 'PATCH',
     body: JSON.stringify(userData),
   });
-};
-
-export const getUserProfile = async (userId) => {
-  return fetchWithAuth(`${API_BASE_URL}/accounts/users/${userId}/`);
 };
 
 export const requestPasswordReset = async (email) => {
