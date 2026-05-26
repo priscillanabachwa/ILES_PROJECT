@@ -1,12 +1,9 @@
 
-from django.shortcuts import render
-
 from rest_framework import viewsets
 from .models import InternshipPlacement, Company
 from .serializers import PlacementSerializer, CompanySerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import filters
-
 
 class CompanyViewSet(viewsets.ModelViewSet):
     queryset = Company.objects.all().order_by('company_name')

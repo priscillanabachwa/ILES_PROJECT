@@ -5,7 +5,7 @@ from django.core.validators import MinValueValidator
 from django.conf import settings
 
 class WeeklyLogbook(models.Model):
-    STATUS_CHOICE =[
+    STATUS_CHOICE = [
         ('draft', 'Draft'),
         ('submitted', 'Submitted'),
         ('reviewed', 'Reviewed'),
