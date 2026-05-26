@@ -1,5 +1,5 @@
 ﻿import { useState, useEffect, useRef, useCallback } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useLocation } from 'react-router-dom'
 import axios from 'axios'
 import { toast } from 'react-toastify'
 import { getAuthToken, fetchWithAuth } from '../services/authService'
@@ -89,8 +89,7 @@ function WorkflowTracker({ status, returned = false }) {
     <div className="flex items-start mt-3 pt-3 border-t border-slate-700/50">
       {steps.map((step, i) => {
         const isRedX      = returned && i === approvedI
-        const isCompleted = returned ? i <= idx : i <= idx
-        const isFuture    = !isRedX && !isCompleted
+        const isCompleted = i <= idx
 
         const circleClass = isRedX
           ? 'bg-red-600 border-red-600 text-white'
@@ -105,7 +104,7 @@ function WorkflowTracker({ status, returned = false }) {
           : 'text-slate-600'
 
         const connectorClass = returned
-          ? (i < idx ? 'bg-indigo-600' : 'bg-slate-700')
+          ? (i < idx ? 'bg-indigo-600' : i === idx ? 'bg-red-600' : 'bg-slate-700')
           : (i < idx ? 'bg-indigo-600' : 'bg-slate-700')
 
         return (
@@ -179,7 +178,6 @@ const inputCls = (hasErr) =>
      : 'border-slate-600 focus:border-indigo-500 focus:ring-indigo-500/20'}`
 
 export default function MyLogsPage() {
-  const navigate = useNavigate()
   const location = useLocation()
 
   const [logs,        setLogs]        = useState([])
@@ -377,7 +375,6 @@ export default function MyLogsPage() {
       } else if (err.message) {
         msg = err.message
       }
-      console.error('[LOG SUBMIT ERROR]', err.response?.status, data)
       toast.error(msg)
     } finally {
       setSubmitting(false)
@@ -805,7 +802,7 @@ export default function MyLogsPage() {
             <div className="flex flex-col sm:flex-row gap-3 pt-2 border-t border-slate-700/50">
               <button
                 type="button"
-                onClick={() => { resetForm(); navigate('/student/logs'); setView('history') }}
+                onClick={() => { resetForm(); setView('history') }}
                 disabled={submitting}
                 className="flex-1 py-3 rounded-xl text-sm font-semibold border border-slate-600 text-slate-400
                   hover:bg-slate-700/50 hover:text-white disabled:opacity-50 transition active:scale-[0.98]"

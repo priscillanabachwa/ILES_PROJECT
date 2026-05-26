@@ -118,7 +118,7 @@ function ScoreBreakdown({ scores }) {
             <div className="flex justify-between text-xs mb-1">
               <span className="text-slate-400">{label} <span className="text-slate-600">({weight}%)</span></span>
               <span className="font-semibold text-white">
-                {score != null ? `${Number(score).toFixed(1)} / 100` : 'Pending'}
+                {score != null ? `${Number(score).toFixed(1)}%` : 'Pending'}
               </span>
             </div>
             <div className="w-full bg-slate-700 rounded-full h-2">

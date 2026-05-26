@@ -119,12 +119,7 @@ export const requestPasswordReset = async (email) => {
     );
   }
 
-  const data = await response.json();
-  if (data.recovery_code) {
-    console.log('%c RECOVERY CODE:', 'color: red; font-size: 14px; font-weight: bold;', data.recovery_code);
-    console.log('%cCheck the Developer Console above to see your recovery code. Enter it in the modal.', 'color: orange; font-size: 12px;');
-  }
-  return data;
+  return response.json();
 };
 
 export const verifyResetCode = async (email, code) => {

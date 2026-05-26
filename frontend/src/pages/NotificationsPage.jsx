@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { fetchWithAuth, getAuthToken } from '../services/authService'
+import { fetchWithAuth } from '../services/authService'
 
 const API = '/api'
 
@@ -148,16 +148,10 @@ export default function NotificationsPage() {
   const deleteNotif = async (id) => {
     setDeletingId(id)
     try {
-      const token = getAuthToken()
-      const res = await fetch(`${API}/accounts/notifications/${id}/`, {
-        method: 'DELETE',
-        headers: { Authorization: `Token ${token}` },
-      })
-      if (res.ok || res.status === 204) {
-        const removed = notifications.find(n => n.id === id)
-        setNotifications(prev => prev.filter(n => n.id !== id))
-        if (removed && !removed.is_read) setUnreadCount(c => Math.max(0, c - 1))
-      }
+      await fetchWithAuth(`${API}/accounts/notifications/${id}/`, { method: 'DELETE' })
+      const removed = notifications.find(n => n.id === id)
+      setNotifications(prev => prev.filter(n => n.id !== id))
+      if (removed && !removed.is_read) setUnreadCount(c => Math.max(0, c - 1))
     } catch {  } finally {
       setDeletingId(null)
     }
@@ -175,15 +169,9 @@ export default function NotificationsPage() {
     if (!window.confirm('Delete all notifications? This cannot be undone.')) return
     setClearingAll(true)
     try {
-      const token = getAuthToken()
-      const res = await fetch(`${API}/accounts/notifications/clear-all/`, {
-        method: 'DELETE',
-        headers: { Authorization: `Token ${token}` },
-      })
-      if (res.ok || res.status === 204) {
-        setNotifications([])
-        setUnreadCount(0)
-      }
+      await fetchWithAuth(`${API}/accounts/notifications/clear-all/`, { method: 'DELETE' })
+      setNotifications([])
+      setUnreadCount(0)
     } catch {  } finally {
       setClearingAll(false)
     }

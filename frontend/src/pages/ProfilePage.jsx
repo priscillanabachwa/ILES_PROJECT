@@ -85,7 +85,7 @@ const AVATAR_BG = {
   admin:                'bg-rose-600',
 }
 
-function Avatar({ user, preview, onSelect, editMode }) {
+function Avatar({ user, preview, onSelect, onFileSelect, editMode }) {
   const inputRef = useRef()
   const bg  = AVATAR_BG[user?.role] || 'bg-slate-600'
   const src = preview || user?.profile_picture || null
@@ -107,7 +107,13 @@ function Avatar({ user, preview, onSelect, editMode }) {
         </button>
       )}
       <input ref={inputRef} type="file" accept="image/*" className="hidden"
-        onChange={(e) => { const file = e.target.files?.[0]; if (file) onSelect(URL.createObjectURL(file)) }} />
+        onChange={(e) => {
+          const file = e.target.files?.[0]
+          if (file) {
+            onSelect(URL.createObjectURL(file))
+            onFileSelect?.(file)
+          }
+        }} />
     </div>
   )
 }
@@ -152,6 +158,7 @@ export default function ProfilePage() {
 
   const [form, setForm]               = useState(buildInitial())
   const [avatarPreview, setAvatar]    = useState(null)
+  const [avatarFile, setAvatarFile]   = useState(null)
   const [fieldErrors, setFieldErrors] = useState({})
   const [saving, setSaving]           = useState(false)
   const [editMode, setEditMode]       = useState(false)
@@ -171,6 +178,7 @@ export default function ProfilePage() {
   const handleCancelEdit = () => {
     setForm(buildInitial())
     setAvatar(null)
+    setAvatarFile(null)
     setFieldErrors({})
     setEditMode(false)
   }
@@ -186,14 +194,32 @@ export default function ProfilePage() {
     if (Object.keys(errs).length) { setFieldErrors(errs); return }
     setSaving(true)
     try {
+      // Step 1: save text fields as JSON
       const updatedData = Object.fromEntries(
         UPDATABLE_FIELDS.map(key => [key, form[key] || ''])
       )
-      const response = await updateUserProfile(updatedData)
+      let finalData = await updateUserProfile(updatedData)
+
+      // Step 2: upload profile picture if a new file was selected
+      if (avatarFile && user?.id) {
+        const formData = new FormData()
+        formData.append('profile_picture', avatarFile)
+        const token = getAuthToken()
+        const picRes = await fetch(`/api/accounts/users/${user.id}/`, {
+          method: 'PATCH',
+          headers: { Authorization: `Token ${token}` },
+          body: formData,
+        })
+        if (picRes.ok) {
+          finalData = await picRes.json()
+        }
+      }
+
       const token = getAuthToken()
-      login({ ...user, ...response }, token)
+      login({ ...user, ...finalData }, token)
       toast.success('Profile updated successfully.')
       setAvatar(null)
+      setAvatarFile(null)
       setEditMode(false)
     } catch (err) {
       toast.error(err.message || 'Failed to update profile. Please try again.')
@@ -224,7 +250,7 @@ export default function ProfilePage() {
       <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 space-y-5">
 
         <div className="flex items-center gap-4 pb-5 border-b border-slate-700/50">
-          <Avatar user={user} preview={avatarPreview} onSelect={setAvatar} editMode={editMode} />
+          <Avatar user={user} preview={avatarPreview} onSelect={setAvatar} onFileSelect={setAvatarFile} editMode={editMode} />
           <div className="flex-1 min-w-0">
             <p className="text-lg font-bold text-white truncate">{displayName}</p>
             <p className="text-slate-400 text-sm truncate">{user?.email}</p>

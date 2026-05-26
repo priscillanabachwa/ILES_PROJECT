@@ -144,7 +144,10 @@ function NotificationBell() {
 
   const markRead = async (id) => {
     try {
-      await fetchWithAuth(`${API}/accounts/notifications/${id}/`, { method: 'PATCH' })
+      await fetchWithAuth(`${API}/accounts/notifications/${id}/`, {
+        method: 'PATCH',
+        body: JSON.stringify({ is_read: true }),
+      })
       setNotifs(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n))
       setUnread(prev => Math.max(0, prev - 1))
     } catch {  }

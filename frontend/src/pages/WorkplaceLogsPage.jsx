@@ -156,7 +156,7 @@ export default function WorkplaceLogsPage() {
   const total     = visibleLogs.length
   const submitted = visibleLogs.filter(l => l.status === 'submitted').length
   const approved  = visibleLogs.filter(l => l.status === 'approved').length
-  const reviewed  = visibleLogs.filter(l => l.status === 'reviewed').length + approved  
+  const reviewed  = visibleLogs.filter(l => l.status === 'reviewed').length
 
   const filtered = visibleLogs.filter((l) => {
     const matchStatus = statusFilter === 'all' || l.status === statusFilter

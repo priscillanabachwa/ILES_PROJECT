@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { toast } from 'react-toastify'
 import { fetchWithAuth } from '../services/authService'
 import { capName } from '../services/dashboardService'
@@ -15,7 +15,6 @@ function Skeleton({ className = '' }) {
 export default function WorkplaceReportsPage() {
   const [rows,    setRows]    = useState([])
   const [loading, setLoading] = useState(true)
-  const printRef = useRef(null)
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -125,7 +124,7 @@ export default function WorkplaceReportsPage() {
       )}
 
       {/* Report table */}
-      <div ref={printRef} className="bg-slate-800/30 border border-slate-700/50 rounded-2xl overflow-hidden">
+      <div className="bg-slate-800/30 border border-slate-700/50 rounded-2xl overflow-hidden">
 
         {/* Print-only header (hidden on screen) */}
         <div className="hidden print:block p-6 border-b border-slate-700/50">

@@ -66,7 +66,7 @@ function EvaluationSection({ title, subtitle, evaluation, emptyMessage, logFeedb
           <table className="w-full">
             <thead>
               <tr className="border-b border-slate-700/50">
-                {['Criteria', 'Score / 100'].map(h => (
+                {['Criteria', 'Score (out of 100)'].map(h => (
                   <th key={h} className="text-left text-xs text-slate-500 uppercase tracking-wider px-6 py-3 font-semibold">
                     {h}
                   </th>
@@ -111,7 +111,7 @@ function EvaluationSection({ title, subtitle, evaluation, emptyMessage, logFeedb
                                     'text-red-400'
                   }`}>
                     {score != null
-                      ? `${score % 1 === 0 ? score.toFixed(0) : score.toFixed(2)} / 100`
+                      ? `${score % 1 === 0 ? score.toFixed(0) : score.toFixed(2)}`
                       : '—'}
                   </span>
                 </td>
@@ -184,19 +184,45 @@ export default function StudentEvaluationPage() {
     fetchAll()
   }, [])
 
-  // Report evaluation = the placement-level academic eval (no log, no visit number)
-  const academicEval  = evals.find(e =>
-    e.evaluator_role === 'academic_supervisor' && e.log == null && e.visit_number == null
-  )
-  const workplaceEval = evals.find(e => e.evaluator_role === 'workplace_supervisor')
+  const workplaceEval  = evals.find(e => e.evaluator_role === 'workplace_supervisor')
+  const academicEvals  = evals.filter(e => e.evaluator_role === 'academic_supervisor')
+  // Report evaluation: final placement-level eval (no log, no visit)
+  const reportEval     = academicEvals.find(e => e.log == null && e.visit_number == null)
+  // Logbook: per-log evaluations (one per approved weekly log)
+  const logEvalsScored = academicEvals.filter(e => e.log != null && e.total_score != null)
+  // Other academic: on-site visit evaluations
+  const visitEvalsScored = academicEvals.filter(e => e.visit_number != null && e.total_score != null)
 
-  const academicScore  = academicEval?.total_score  != null ? Number(academicEval.total_score)  : null
-  const workplaceScore = workplaceEval?.total_score != null ? Number(workplaceEval.total_score) : null
+  const workplaceScore     = workplaceEval?.total_score != null ? Number(workplaceEval.total_score) : null
+  const reportScore        = reportEval?.total_score    != null ? Number(reportEval.total_score)    : null
+  const logbookScore       = logEvalsScored.length > 0
+    ? Number((logEvalsScored.reduce((s, e) => s + Number(e.total_score), 0) / logEvalsScored.length).toFixed(1))
+    : null
+  const otherAcademicScore = visitEvalsScored.length > 0
+    ? Number((visitEvalsScored.reduce((s, e) => s + Number(e.total_score), 0) / visitEvalsScored.length).toFixed(1))
+    : null
 
-  const finalScore =
-    academicScore != null && workplaceScore != null
-      ? Number(((academicScore * 0.6) + (workplaceScore * 0.4)).toFixed(1))
-      : academicScore ?? workplaceScore ?? null
+  // Academic (60%) = Logbook (30%) + Report (20%) + Other Academic (10%)
+  const academicScore = (logbookScore != null || reportScore != null || otherAcademicScore != null)
+    ? Number((
+        (logbookScore       ?? 0) * 0.5   +   // 30% of total ÷ 60% = 50% of academic bucket
+        (reportScore        ?? 0) * (1/3) +   // 20% of total ÷ 60% = 33.3% of academic bucket
+        (otherAcademicScore ?? 0) * (1/6)     // 10% of total ÷ 60% = 16.7% of academic bucket
+      ).toFixed(1))
+    : null
+
+  // Final score: Workplace (40%) + Academic (60%)
+  // Formula: WP×0.4 + LB×0.3 + RPT×0.2 + Other×0.1
+  const anyAvailable = workplaceScore != null || logbookScore != null ||
+    reportScore != null || otherAcademicScore != null
+  const finalScore = anyAvailable
+    ? Number((
+        (workplaceScore      ?? 0) * 0.4 +
+        (logbookScore        ?? 0) * 0.3 +
+        (reportScore         ?? 0) * 0.2 +
+        (otherAcademicScore  ?? 0) * 0.1
+      ).toFixed(1))
+    : null
 
   const grade = computeGrade(finalScore)
 
@@ -233,9 +259,11 @@ export default function StudentEvaluationPage() {
               {finalScore != null ? `${finalScore.toFixed(1)}%` : '—'}
             </p>
             <p className="text-xs text-slate-600 mt-2">
-              {academicScore != null && workplaceScore != null
-                ? 'Combined from both evaluations'
-                : 'Awaiting both evaluations'}
+              {anyAvailable
+                ? workplaceScore != null && academicScore != null
+                  ? 'Combined from all evaluations'
+                  : 'Partial — some evaluations pending'
+                : 'Awaiting all evaluations'}
             </p>
           </div>
 
@@ -249,21 +277,40 @@ export default function StudentEvaluationPage() {
 
           <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 space-y-3">
             <p className="text-xs text-slate-500 uppercase tracking-wider">Score Breakdown</p>
+            {/* Workplace — 40% */}
             <div className="flex items-center justify-between">
-              <span className="text-xs text-slate-400">Academic (60%)</span>
-              <span className={`text-sm font-bold ${academicScore != null ? 'text-indigo-400' : 'text-slate-600'}`}>
+              <span className="text-xs text-slate-400 font-semibold">Workplace (40%)</span>
+              <span className={`text-sm font-bold ${workplaceScore != null ? 'text-indigo-400' : 'text-slate-600'}`}>
+                {workplaceScore != null
+                  ? `${workplaceScore % 1 === 0 ? workplaceScore.toFixed(0) : workplaceScore.toFixed(2)}%`
+                  : '—'}
+              </span>
+            </div>
+            {/* Academic — 60% (Logbook 30% + Report 20% + Other 10%) */}
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-slate-400 font-semibold">Academic (60%)</span>
+              <span className={`text-sm font-bold ${academicScore != null ? 'text-emerald-400' : 'text-slate-600'}`}>
                 {academicScore != null
                   ? `${academicScore % 1 === 0 ? academicScore.toFixed(0) : academicScore.toFixed(2)}%`
                   : '—'}
               </span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-slate-400">Workplace (40%)</span>
-              <span className={`text-sm font-bold ${workplaceScore != null ? 'text-emerald-400' : 'text-slate-600'}`}>
-                {workplaceScore != null
-                  ? `${workplaceScore % 1 === 0 ? workplaceScore.toFixed(0) : workplaceScore.toFixed(2)}%`
-                  : '—'}
-              </span>
+            {/* Academic sub-breakdown */}
+            <div className="pl-3 border-l border-slate-700 space-y-1.5">
+              {[
+                { label: 'Logbook (30%)',     score: logbookScore,       color: 'text-amber-400'   },
+                { label: 'Report (20%)',      score: reportScore,        color: 'text-sky-400'     },
+                { label: 'Other Acad. (10%)', score: otherAcademicScore, color: 'text-rose-400'    },
+              ].map(({ label, score, color }) => (
+                <div key={label} className="flex items-center justify-between">
+                  <span className="text-xs text-slate-500">{label}</span>
+                  <span className={`text-xs font-semibold ${score != null ? color : 'text-slate-600'}`}>
+                    {score != null
+                      ? `${score % 1 === 0 ? score.toFixed(0) : score.toFixed(2)}%`
+                      : '—'}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -274,9 +321,9 @@ export default function StudentEvaluationPage() {
       ) : (
         <EvaluationSection
           title="Academic Supervisor Evaluation"
-          subtitle="Scores submitted by your academic supervisor"
-          evaluation={academicEval}
-          emptyMessage="Your academic supervisor has not submitted an evaluation yet."
+          subtitle="End-of-internship report evaluation by your academic supervisor"
+          evaluation={reportEval}
+          emptyMessage="Your academic supervisor has not submitted the final report evaluation yet."
           logFeedback={logbooks
             .filter(l => l.supervisor_comment && ['reviewed', 'approved'].includes(l.status))
             .sort((a, b) => a.week_number - b.week_number)

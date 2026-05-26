@@ -42,6 +42,65 @@ function buildPlacementMap(placements) {
   return Object.fromEntries(placements.map(p => [p.id, p]));
 }
 
+function gradeFromScore(s) {
+  if (s == null) return null;
+  if (s >= 80) return 'A';
+  if (s >= 70) return 'B';
+  if (s >= 60) return 'C';
+  if (s >= 50) return 'D';
+  return 'F';
+}
+
+// Formula: Workplace (40%) + Logbook (30%) + Report (20%) + Other Academic (10%)
+// Each component comes from a separate evaluation record type — not keyword-matched criteria names.
+function computeScoreComponents(evalsArr) {
+  const arr = Array.isArray(evalsArr) ? evalsArr : [];
+
+  const workplaceEval = arr.find(e => e.evaluator_role === 'workplace_supervisor');
+  const academicEvals = arr.filter(e => e.evaluator_role === 'academic_supervisor');
+
+  // Per-log academic evals → logbook component (30%)
+  const logEvals   = academicEvals.filter(e => e.log != null && e.total_score != null);
+  // Final placement-level academic eval → report component (20%)
+  const reportEval = academicEvals.find(e => e.log == null && e.visit_number == null);
+  // On-site visit evals → other academic component (10%)
+  const visitEvals = academicEvals.filter(e => e.visit_number != null && e.total_score != null);
+
+  const workplaceScore = workplaceEval?.total_score != null ? Number(workplaceEval.total_score) : null;
+
+  const logbookScore = logEvals.length > 0
+    ? Number((logEvals.reduce((s, e) => s + Number(e.total_score), 0) / logEvals.length).toFixed(1))
+    : null;
+
+  const reportScore = reportEval?.total_score != null ? Number(reportEval.total_score) : null;
+
+  const otherAcademicScore = visitEvals.length > 0
+    ? Number((visitEvals.reduce((s, e) => s + Number(e.total_score), 0) / visitEvals.length).toFixed(1))
+    : null;
+
+  const anyAvailable = workplaceScore != null || logbookScore != null ||
+    reportScore != null || otherAcademicScore != null;
+
+  // Running score: null components contribute 0 (partial until all evaluations are in)
+  const finalScore = anyAvailable
+    ? Number((
+        (workplaceScore      ?? 0) * 0.4 +
+        (logbookScore        ?? 0) * 0.3 +
+        (reportScore         ?? 0) * 0.2 +
+        (otherAcademicScore  ?? 0) * 0.1
+      ).toFixed(1))
+    : null;
+
+  return {
+    final_score:          finalScore,
+    grade:                gradeFromScore(finalScore),
+    workplace_score:      workplaceScore,
+    logbook_score:        logbookScore,
+    report_score:         reportScore,
+    other_academic_score: otherAcademicScore,
+  };
+}
+
 async function getStudentStats() {
   const [logbooks, evals] = await Promise.all([
     fetchWithAuth(LOGBOOKS),
@@ -49,34 +108,7 @@ async function getStudentStats() {
   ]);
   const submitted = logbooks.filter(l => ['submitted', 'reviewed', 'approved'].includes(l.status));
   const pending = logbooks.filter(l => l.status === 'draft');
-  const evalsArr = Array.isArray(evals) ? evals : [];
-  // Use placement-level report eval only (excludes per-log and per-visit evals)
-  const academicEval  = evalsArr.find(e =>
-    e.evaluator_role === 'academic_supervisor' && e.log == null && e.visit_number == null
-  );
-  const workplaceEval = evalsArr.find(e => e.evaluator_role === 'workplace_supervisor');
-  const wScore      = workplaceEval?.total_score != null ? Number(workplaceEval.total_score) : null;
-  const acItems     = academicEval?.items || [];
-  const lbItem      = acItems.find(i => i.criteria_name?.toLowerCase().includes('logbook'));
-  const rpItem      = acItems.find(i => i.criteria_name?.toLowerCase().includes('report'));
-  const otherItems  = acItems.filter(i =>
-    !i.criteria_name?.toLowerCase().includes('logbook') &&
-    !i.criteria_name?.toLowerCase().includes('report')
-  );
-  const lbScore     = lbItem  ? Number(lbItem.score)  : null;
-  const rpScore     = rpItem  ? Number(rpItem.score)   : null;
-  const otherScore  = otherItems.length > 0
-    ? Number((otherItems.reduce((s, i) => s + Number(i.score), 0) / otherItems.length).toFixed(1))
-    : null;
-  const aTotal      = academicEval?.total_score != null ? Number(academicEval.total_score) : null;
-  let currentScore  = null;
-  if (wScore != null && lbScore != null && rpScore != null && otherScore != null) {
-    currentScore = Number(((wScore * 0.4) + (lbScore * 0.3) + (rpScore * 0.2) + (otherScore * 0.1)).toFixed(1));
-  } else if (wScore != null && aTotal != null) {
-    currentScore = Number(((wScore * 0.4) + (aTotal * 0.6)).toFixed(1));
-  } else {
-    currentScore = aTotal ?? wScore ?? null;
-  }
+  const { final_score: currentScore } = computeScoreComponents(Array.isArray(evals) ? evals : []);
   return {
     data: {
       logs_submitted: submitted.length,
@@ -109,60 +141,7 @@ async function getNextDeadline() {
 async function getStudentScores() {
   const evals = await fetchWithAuth(EVALUATIONS).catch(() => []);
   if (!Array.isArray(evals) || !evals.length) return { data: null };
-
-  // Use placement-level report eval only (excludes per-log and per-visit evals)
-  const academicEval   = evals.find(e =>
-    e.evaluator_role === 'academic_supervisor' && e.log == null && e.visit_number == null
-  )
-  const workplaceEval  = evals.find(e => e.evaluator_role === 'workplace_supervisor')
-
-  const workplaceScore = workplaceEval?.total_score != null ? Number(workplaceEval.total_score) : null
-
-  const acItems        = academicEval?.items || []
-  const logbookItem    = acItems.find(i => i.criteria_name?.toLowerCase().includes('logbook'))
-  const reportItem     = acItems.find(i => i.criteria_name?.toLowerCase().includes('report'))
-  const otherAcItems   = acItems.filter(i =>
-    !i.criteria_name?.toLowerCase().includes('logbook') &&
-    !i.criteria_name?.toLowerCase().includes('report')
-  )
-  const logbookScore       = logbookItem ? Number(logbookItem.score) : null
-  const reportScore        = reportItem  ? Number(reportItem.score)  : null
-  const otherAcademicScore = otherAcItems.length > 0
-    ? Number((otherAcItems.reduce((s, i) => s + Number(i.score), 0) / otherAcItems.length).toFixed(1))
-    : null
-  const academicTotal  = academicEval?.total_score != null ? Number(academicEval.total_score) : null
-
-  let finalScore = null
-  if (workplaceScore != null && logbookScore != null && reportScore != null && otherAcademicScore != null) {
-    finalScore = (workplaceScore * 0.4) + (logbookScore * 0.3) + (reportScore * 0.2) + (otherAcademicScore * 0.1)
-  } else if (workplaceScore != null && academicTotal != null) {
-    finalScore = (workplaceScore * 0.4) + (academicTotal * 0.6)
-  } else if (academicTotal != null) {
-    finalScore = academicTotal
-  } else if (workplaceScore != null) {
-    finalScore = workplaceScore
-  }
-
-  const gradeFromScore = (s) => {
-    if (s == null) return null
-    if (s >= 80) return 'A'
-    if (s >= 70) return 'B'
-    if (s >= 60) return 'C'
-    if (s >= 50) return 'D'
-    return 'F'
-  }
-
-  return {
-    data: {
-      final_score:          finalScore != null ? Number(finalScore.toFixed(1)) : null,
-      grade:                gradeFromScore(finalScore),
-      workplace_score:      workplaceScore,
-      logbook_score:        logbookScore,
-      report_score:         reportScore,
-      other_academic_score: otherAcademicScore,
-      academic_total:       academicTotal,
-    },
-  };
+  return { data: computeScoreComponents(evals) };
 }
 
 async function getWorkplaceStats() {
