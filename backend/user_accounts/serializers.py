@@ -1,6 +1,5 @@
 from rest_framework import serializers
-from django.contrib.auth import authenticate
-from .models import CustomUserManager, CustomUser, Notification
+from .models import CustomUser, Notification
 
 class CustomUserSerializer(serializers.ModelSerializer):
 
@@ -95,33 +94,6 @@ class CustomUserSerializer(serializers.ModelSerializer):
         rep["profile_picture"] = pic
         rep.pop("password", None)
         return rep
-
-class LoginSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-    password = serializers.CharField(style={'input_type': 'password'}, trim_whitespace=False)
-
-    def validate(self, attrs):
-        email = attrs.get('email')
-        password = attrs.get('password')
-
-        if email and password:
-            try:
-                user = CustomUser.objects.get(email=email)
-                if not user.check_password(password):
-                    raise serializers.ValidationError(
-                        'Unable to log in with provided credentials.', code='authorization'
-                    )
-            except CustomUser.DoesNotExist:
-                raise serializers.ValidationError(
-                    'Unable to log in with provided credentials.', code='authorization'
-                )
-        else:
-            raise serializers.ValidationError(
-                'Must include "email" and "password".', code='authorization'
-            )
-
-        attrs['user'] = user
-        return attrs
 
 class NotificationSerializer(serializers.ModelSerializer):
     class Meta:

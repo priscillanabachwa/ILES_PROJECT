@@ -2,7 +2,6 @@
 import { useAuth } from '../../Context/AuthContext'
 import { Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import 'react-toastify/dist/ReactToastify.css'
 import dashboardService from "../../services/dashboardService"
 
 const getInitials = (name) =>
@@ -670,9 +669,9 @@ export default function InternshipAdministratorDashboard() {
   }
 
   const roleBreakdown = [
-    { role:'Students',              count:stats?.total_students,   color:'bg-indigo-500' },
-    { role:'Academic Supervisors',  count:stats?.total_supervisors ? Math.round(stats.total_supervisors * 0.5) : null, color:'bg-emerald-500' },
-    { role:'Workplace Supervisors', count:stats?.total_supervisors ? Math.round(stats.total_supervisors * 0.5) : null, color:'bg-amber-500' },
+    { role:'Students',              count: loading ? null : stats?.total_students,                                              color:'bg-indigo-500' },
+    { role:'Academic Supervisors',  count: loading ? null : users.filter(u => u.role === 'academic_supervisor').length,          color:'bg-emerald-500' },
+    { role:'Workplace Supervisors', count: loading ? null : users.filter(u => u.role === 'workplace_supervisor').length,         color:'bg-amber-500' },
   ]
 
   return (
@@ -731,7 +730,7 @@ export default function InternshipAdministratorDashboard() {
           { label:'Pending Placements',   value:stats?.pending_placements,   color:'text-amber-300',   link:'/admin/users?role=placements', linkText:'Assign now'  },
           { label:'Unassigned Students',  value:stats?.unassigned_students,  color:'text-rose-300',    onClick:() => { setSelectedPlacement(null); setModal('supervisor') }, linkText:'Assign now'  },
           { label:'Evaluations Complete', value:stats?.evaluations_complete, color:'text-emerald-300', link:'/admin/evaluations',           linkText:'View reports'},
-          { label:'Logs Overdue',         value:stats?.logs_overdue ?? 6,    color:'text-red-300',     link:'/admin/logs',                  linkText:'Review now'  },
+          { label:'Logs Overdue',         value:stats?.logs_overdue ?? 0,    color:'text-red-300',     link:'/admin/logs',                  linkText:'Review now'  },
         ].map(({ label, value, color, link, linkText, onClick }) => (
           <div key={label} className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-4 text-center">
             <p className="text-xs text-slate-400 uppercase tracking-wide mb-1">{label}</p>

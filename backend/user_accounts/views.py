@@ -1,20 +1,15 @@
-from django.shortcuts import render
 from rest_framework import permissions, viewsets, status
 from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
-from django.shortcuts import render
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny 
-from rest_framework.response import Response
-from rest_framework import status, viewsets, permissions
+from rest_framework.permissions import AllowAny
 from django.core.cache import cache
 from django.core.mail import send_mail
 from django.conf import settings
 from .utils import generate_reset_code
 
 from .models import CustomUser, Notification
-from .serializers import CustomUserSerializer, LoginSerializer, NotificationSerializer
+from .serializers import CustomUserSerializer, NotificationSerializer
 
 class CustomUserViewSet(viewsets.ModelViewSet):
     """API endpoint for managing custom users."""

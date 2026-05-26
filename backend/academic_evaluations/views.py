@@ -1,4 +1,5 @@
 from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticated
 from .models import AcademicEvaluation, EvaluationCriteria, EvaluationScore
 from .serializers import (
     AcademicEvaluationSerializer,
@@ -8,6 +9,7 @@ from .serializers import (
 
 class AcademicEvaluationViewSet(viewsets.ModelViewSet):
     serializer_class = AcademicEvaluationSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
@@ -28,6 +30,7 @@ class AcademicEvaluationViewSet(viewsets.ModelViewSet):
 
 class EvaluationCriteriaViewSet(viewsets.ModelViewSet):
     serializer_class = EvaluationCriteriaSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         qs = EvaluationCriteria.objects.filter(is_active=True)
@@ -39,3 +42,4 @@ class EvaluationCriteriaViewSet(viewsets.ModelViewSet):
 class EvaluationScoreViewSet(viewsets.ModelViewSet):
     queryset         = EvaluationScore.objects.all().select_related('criteria')
     serializer_class = EvaluationScoreSerializer
+    permission_classes = [IsAuthenticated]

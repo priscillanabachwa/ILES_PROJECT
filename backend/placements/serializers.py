@@ -8,29 +8,6 @@ class CompanySerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ['created_at']
 
-class InternshipPlacementSerializer(serializers.ModelSerializer):
-    student_name = serializers.SerializerMethodField()
-    company_name = serializers.SerializerMethodField()
-
-    class Meta:
-        model = InternshipPlacement
-        fields = [
-            'id', 'student', 'student_name', 'company', 'company_name',
-            'workplace_supervisor', 'academic_supervisor',
-            'start_date', 'end_date', 'status'
-        ]
-        read_only_fields = [
-            'status', 'workplace_supervisor', 'academic_supervisor',
-            'start_date', 'end_date', 'created_at'
-        ]
-
-    def get_student_name(self, obj):
-        u = obj.student
-        return f"{u.first_name} {u.last_name}".strip() if u else ''
-
-    def get_company_name(self, obj):
-        return obj.company.company_name if obj.company else ''
-
 class PlacementSerializer(serializers.ModelSerializer):
     student_name = serializers.SerializerMethodField()
     company = serializers.PrimaryKeyRelatedField(
