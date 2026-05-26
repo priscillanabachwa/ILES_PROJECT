@@ -33,9 +33,6 @@ function CloseIcon() {
   )
 }
 
-// ─── Evaluate Modal ──────────────────────────────────────────────────────────
-// Works for log evals, visit evals, and report evals.
-// visitNumber prop is used when creating a brand-new visit evaluation.
 function EvaluateModal({ targetLog, placement, evaluation, criteria, studentName, visitNumber, onClose, onSuccess }) {
   const [scores,     setScores]     = useState({})
   const [comment,    setComment]    = useState('')
@@ -45,7 +42,6 @@ function EvaluateModal({ targetLog, placement, evaluation, criteria, studentName
   const isVisitEval  = visitNumber != null
   const isCompleted  = placement?.status === 'COMPLETED'
 
-  // Only lock 'final' criteria when it's a report eval AND placement is not completed
   const isCriteriaLocked = (c) =>
     !isLogEval && !isVisitEval && c.evaluation_stage === 'final' && !isCompleted
 
@@ -266,7 +262,6 @@ function EvaluateModal({ targetLog, placement, evaluation, criteria, studentName
   )
 }
 
-// ─── View Modal ──────────────────────────────────────────────────────────────
 function ViewModal({ title, evaluation, onClose }) {
   const ev = evaluation
   if (!ev) return null
@@ -328,22 +323,20 @@ function ViewModal({ title, evaluation, onClose }) {
   )
 }
 
-// ─── Main Page ───────────────────────────────────────────────────────────────
 export default function AcademicEvaluationsPage() {
   const [logRows,          setLogRows]          = useState([])
-  const [noLogPlacements,  setNoLogPlacements]  = useState([]) // placements with 0 approved logs
-  const [reportRows,       setReportRows]       = useState([])   // one per placement
-  const [visitGroups,      setVisitGroups]      = useState([])   // one per placement, contains array of visits
+  const [noLogPlacements,  setNoLogPlacements]  = useState([])
+  const [reportRows,       setReportRows]       = useState([])
+  const [visitGroups,      setVisitGroups]      = useState([])
   const [logCriteria,      setLogCriteria]      = useState([])
-  const [reportCriteria,   setReportCriteria]   = useState([]) // 'final' stage
-  const [visitCriteria,    setVisitCriteria]    = useState([])   // 'any' stage
+  const [reportCriteria,   setReportCriteria]   = useState([])
+  const [visitCriteria,    setVisitCriteria]    = useState([])
   const [loading,          setLoading]          = useState(true)
   const [activeTab,        setActiveTab]        = useState('logs')
   const [search,           setSearch]           = useState('')
   const [statusFilter,     setStatusFilter]     = useState('all')
   const [modal,            setModal]            = useState(null)
 
-  // ── Load data ──────────────────────────────────────────────────────────────
   useEffect(() => {
     const fetchAll = async () => {
       setLoading(true)
@@ -360,7 +353,6 @@ export default function AcademicEvaluationsPage() {
         const criteria   = Array.isArray(criteriaData)   ? criteriaData   : []
         const logbooks   = Array.isArray(logbooksData)   ? logbooksData   : []
 
-        // Split criteria by stage
         const logCrit    = criteria.filter(c => c.evaluation_stage === 'log')
         const visitCrit  = criteria.filter(c => c.evaluation_stage === 'any')
         const reportCrit = criteria.filter(c => c.evaluation_stage === 'final')
@@ -368,10 +360,9 @@ export default function AcademicEvaluationsPage() {
         setVisitCriteria(visitCrit)
         setReportCriteria(reportCrit)
 
-        // Bucket evaluations
-        const evalByLog       = {}  // logId → eval
-        const evalByPlacement = {}  // placementId → eval  (log=null, visit_number=null)
-        const visitsByPlacement = {} // placementId → [eval, …] (visit_number != null)
+        const evalByLog       = {}
+        const evalByPlacement = {}
+        const visitsByPlacement = {}
 
         evals.forEach(e => {
           if (e.log != null) {
@@ -386,10 +377,6 @@ export default function AcademicEvaluationsPage() {
 
         const placementMap = Object.fromEntries(placements.map(p => [p.id, p]))
 
-        // ── Log rows ──
-        // Show ALL students, grouped by placement. Within each placement, show
-        // approved logs (scoreable). Students with no approved logs yet are still
-        // listed so the supervisor knows they exist but have nothing to score yet.
         const approvedLogs = logbooks.filter(l => l.status === 'approved')
         const approvedByPlacement = {}
         approvedLogs.forEach(l => {
@@ -397,8 +384,6 @@ export default function AcademicEvaluationsPage() {
           approvedByPlacement[l.placement].push(l)
         })
 
-        // One row per approved log (same as before), but we also track which
-        // placements have zero approved logs so we can surface them in the UI.
         setLogRows(approvedLogs.map(l => ({
           log:          l,
           placement:    placementMap[l.placement] || { id: l.placement },
@@ -407,7 +392,6 @@ export default function AcademicEvaluationsPage() {
           company:      placementMap[l.placement]?.company_name || '—',
         })))
 
-        // ── Placements with no approved logs yet ──
         const placementsWithApprovedLogs = new Set(approvedLogs.map(l => l.placement))
         setNoLogPlacements(
           placements
@@ -420,7 +404,6 @@ export default function AcademicEvaluationsPage() {
             }))
         )
 
-        // ── Report rows (one per placement) ──
         setReportRows(placements.map(p => ({
           placement:    p,
           evaluation:   evalByPlacement[p.id] || null,
@@ -428,7 +411,6 @@ export default function AcademicEvaluationsPage() {
           company:      p.company_name || '—',
         })))
 
-        // ── Visit groups (one group per placement, multiple visits each) ──
         setVisitGroups(placements.map(p => ({
           placement:    p,
           visits:       (visitsByPlacement[p.id] || []).sort((a, b) => a.visit_number - b.visit_number),
@@ -443,7 +425,6 @@ export default function AcademicEvaluationsPage() {
     fetchAll()
   }, [])
 
-  // ── Success handlers ───────────────────────────────────────────────────────
   const handleLogEvalSuccess = (updatedEval) => {
     setLogRows(prev => prev.map(r =>
       r.log.id === updatedEval.log ? { ...r, evaluation: updatedEval } : r
@@ -467,7 +448,6 @@ export default function AcademicEvaluationsPage() {
     }))
   }
 
-  // ── Stats ──────────────────────────────────────────────────────────────────
   const logEvaluated    = logRows.filter(r => r.evaluation?.status === 'SUBMITTED').length
   const logPending      = logRows.filter(r => !r.evaluation || r.evaluation.status !== 'SUBMITTED').length
   const totalVisits     = visitGroups.reduce((s, g) => s + g.visits.length, 0)
@@ -493,13 +473,11 @@ export default function AcademicEvaluationsPage() {
     g.company.toLowerCase().includes(search.toLowerCase())
   )
 
-  // ── Next visit number helper ───────────────────────────────────────────────
   const nextVisitNumber = (group) => {
     if (!group.visits.length) return 1
     return Math.max(...group.visits.map(v => v.visit_number)) + 1
   }
 
-  // ── Shared search bar ──────────────────────────────────────────────────────
   const SearchBar = () => (
     <div className="relative flex-1">
       <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"
@@ -516,7 +494,6 @@ export default function AcademicEvaluationsPage() {
   return (
     <div className="space-y-6">
 
-      {/* ── Modals ── */}
       {modal?.type === 'evaluate-log' && (
         <EvaluateModal
           targetLog={modal.row.log}
@@ -559,7 +536,6 @@ export default function AcademicEvaluationsPage() {
         />
       )}
 
-      {/* ── Header ── */}
       <div>
         <h1 className="text-2xl font-bold text-white">Evaluations</h1>
         <p className="text-sm text-slate-400 mt-1">
@@ -567,7 +543,6 @@ export default function AcademicEvaluationsPage() {
         </p>
       </div>
 
-      {/* ── Summary cards ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: 'Logs Evaluated',     value: logEvaluated,   color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20'  },
@@ -583,7 +558,6 @@ export default function AcademicEvaluationsPage() {
         ))}
       </div>
 
-      {/* ── Tabs ── */}
       <div className="flex gap-1 bg-slate-800/50 border border-slate-700/50 rounded-xl p-1 w-fit">
         {[
           { key: 'logs',    label: `Weekly Logs${logPending > 0 ? ` (${logPending} pending)` : ''}` },
@@ -599,9 +573,6 @@ export default function AcademicEvaluationsPage() {
         ))}
       </div>
 
-      {/* ══════════════════════════════════════════════════════════════════════
-          TAB 1 — Weekly Logs
-      ══════════════════════════════════════════════════════════════════════ */}
       {activeTab === 'logs' && (
         <>
           <div className="flex flex-col sm:flex-row gap-3">
@@ -713,7 +684,6 @@ export default function AcademicEvaluationsPage() {
             </div>
           </div>
 
-          {/* Students with no approved logs yet */}
           {noLogPlacements.length > 0 && (
             <div className="bg-amber-500/5 border border-amber-500/20 rounded-2xl overflow-hidden">
               <div className="px-5 py-3 border-b border-amber-500/20 flex items-center gap-2">
@@ -746,19 +716,15 @@ export default function AcademicEvaluationsPage() {
         </>
       )}
 
-      {/* ══════════════════════════════════════════════════════════════════════
-          TAB 2 — Visit Evaluations
-      ══════════════════════════════════════════════════════════════════════ */}
       {activeTab === 'visits' && (
         <>
-          {/* Info banner */}
           <div className="flex items-start gap-3 bg-teal-500/10 border border-teal-500/20 rounded-xl px-4 py-3">
             <svg className="w-4 h-4 text-teal-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
             </svg>
             <p className="text-teal-300 text-sm">
-              Record an evaluation after each on-site visit. You can add as many visits as you like, at any time.
+              Record an evaluation after each on-site visit.
             </p>
           </div>
 
@@ -774,7 +740,6 @@ export default function AcademicEvaluationsPage() {
             <div className="space-y-4">
               {filteredVisitGroups.map((group) => (
                 <div key={group.placement.id} className="bg-slate-800/30 border border-slate-700/50 rounded-2xl overflow-hidden">
-                  {/* Student header */}
                   <div className="flex items-center justify-between px-5 py-4 border-b border-slate-700/40 bg-slate-800/50">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-full bg-teal-600/20 border border-teal-500/30 flex items-center justify-center text-teal-400 font-bold text-sm flex-shrink-0">
@@ -801,7 +766,6 @@ export default function AcademicEvaluationsPage() {
                     </button>
                   </div>
 
-                  {/* Visit list */}
                   {group.visits.length === 0 ? (
                     <div className="px-5 py-6 text-center">
                       <p className="text-slate-600 text-xs">No visits recorded yet for this student.</p>
@@ -813,8 +777,7 @@ export default function AcademicEvaluationsPage() {
                         return (
                           <div key={visit.id} className="flex items-center justify-between px-5 py-3.5 hover:bg-slate-700/20 transition">
                             <div className="flex items-center gap-4">
-                              {/* Visit number badge */}
-                              <div className="w-8 h-8 rounded-lg bg-teal-500/15 border border-teal-500/25 flex items-center justify-center flex-shrink-0">
+                                <div className="w-8 h-8 rounded-lg bg-teal-500/15 border border-teal-500/25 flex items-center justify-center flex-shrink-0">
                                 <span className="text-teal-400 text-xs font-bold">#{visit.visit_number}</span>
                               </div>
                               <div>
@@ -872,12 +835,8 @@ export default function AcademicEvaluationsPage() {
         </>
       )}
 
-      {/* ══════════════════════════════════════════════════════════════════════
-          TAB 3 — Internship Reports
-      ══════════════════════════════════════════════════════════════════════ */}
       {activeTab === 'reports' && (
         <>
-          {/* Info banner */}
           <div className="flex items-start gap-3 bg-indigo-600/10 border border-indigo-500/20 rounded-xl px-4 py-3">
             <svg className="w-4 h-4 text-indigo-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -897,18 +856,25 @@ export default function AcademicEvaluationsPage() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-slate-700/50">
-                      {['Student', 'Company', 'Placement Status', 'Score', 'Grade', 'Eval Status', 'Actions'].map(h => (
+                      {['Student', 'Company', 'Placement Status', 'Score', 'Eval Status', 'Actions'].map(h => (
                         <th key={h} className="text-left text-xs text-slate-500 uppercase tracking-wider px-5 py-4 font-semibold">{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-700/30">
                     {filteredReportRows.length === 0 && (
-                      <tr><td colSpan={7} className="text-center py-12 text-slate-500 text-sm">No placements found.</td></tr>
+                      <tr><td colSpan={6} className="text-center py-12 text-slate-500 text-sm">No placements found.</td></tr>
                     )}
                     {filteredReportRows.map((row) => {
                       const ev        = row.evaluation
                       const completed = row.placement.status === 'COMPLETED'
+                      const rawScore = (() => {
+                        const items = ev?.items
+                        if (!items?.length) return null
+                        const totalScored = items.reduce((s, i) => s + Number(i.score), 0)
+                        const totalMax    = items.reduce((s, i) => s + Number(i.max_score), 0)
+                        return totalMax > 0 ? (totalScored / totalMax) * 100 : null
+                      })()
                       return (
                         <tr key={row.placement.id} className="hover:bg-slate-700/20 transition">
                           <td className="px-5 py-4">
@@ -930,13 +896,7 @@ export default function AcademicEvaluationsPage() {
                             </span>
                           </td>
                           <td className="px-5 py-4">
-                            <ScoreBadge score={ev?.total_score != null ? Number(ev.total_score) : null} />
-                          </td>
-                          <td className="px-5 py-4">
-                            <span className={`font-bold text-sm ${
-                              ev?.grade === 'A' ? 'text-emerald-400' : ev?.grade === 'B' ? 'text-indigo-400' :
-                              ev?.grade === 'C' ? 'text-amber-400'  : ev?.grade ? 'text-red-400' : 'text-slate-600'
-                            }`}>{ev?.grade || '—'}</span>
+                            <ScoreBadge score={rawScore} />
                           </td>
                           <td className="px-5 py-4">
                             <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${

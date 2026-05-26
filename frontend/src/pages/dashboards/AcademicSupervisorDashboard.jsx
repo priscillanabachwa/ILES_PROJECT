@@ -315,7 +315,6 @@ export default function AcademicDashboard() {
 
         <div className="lg:col-span-3 space-y-5">
 
-          {/* Assigned Students */}
           <Card
             title="Assigned Students"
             actionLabel="View All"
@@ -364,7 +363,6 @@ export default function AcademicDashboard() {
             )}
           </Card>
 
-          {/* Submission Progress (replaces flat Recent Activity) */}
           <Card title="Submission Progress" actionLabel="View All" actionLink="/academic/logs">
             {loading ? <ListSkeleton /> : (
               activity.length === 0
@@ -423,7 +421,6 @@ export default function AcademicDashboard() {
 
         <div className="lg:col-span-2 space-y-5">
 
-          {/* Pending Reviews — sorted by urgency, shows days waiting */}
           <Card title="Pending Reviews" actionLabel="Review All" actionLink="/academic/logs">
             {loading ? <ListSkeleton /> : (
               <div className="space-y-3">
@@ -488,16 +485,15 @@ export default function AcademicDashboard() {
                     </div>
                   )
                 })}
-                {stats?.pending_reviews > 4 && (
+                {((stats?.pending_reviews ?? 0) + (stats?.awaiting_approval ?? 0)) > 4 && (
                   <Link to="/academic/logs" className="text-xs text-amber-400 font-semibold hover:underline block pt-1">
-                    View all pending ({stats.pending_reviews})
+                    View all pending ({(stats.pending_reviews ?? 0) + (stats.awaiting_approval ?? 0)})
                   </Link>
                 )}
               </div>
             )}
           </Card>
 
-          {/* Evaluation Overview */}
           <Card title="Evaluation Overview" actionLabel="Go to Evaluations" actionLink="/academic/evaluations">
             {loading ? <ListSkeleton /> : (
               <div className="space-y-3">
@@ -548,7 +544,6 @@ export default function AcademicDashboard() {
             )}
           </Card>
 
-          {/* Quick Actions */}
           <Card title="Quick Actions">
             <div className="space-y-2">
               {[

@@ -34,9 +34,6 @@ const STATUS_SORT_ORDER = { submitted: 0, reviewed: 1, approved: 2, draft: 3 }
 const effectiveStatus = (log) =>
   log.status === 'draft' && log.supervisor_comment ? 'returned' : log.status
 
-// ─── Review Modal ─────────────────────────────────────────────────────────────
-// Handles submitted logs (review / approve / disapprove)
-// and reviewed logs (approve / disapprove) in one component.
 function ReviewModal({ log, onClose, onSuccess }) {
   const [comment,    setComment]    = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -149,7 +146,6 @@ function ReviewModal({ log, onClose, onSuccess }) {
             className="py-2.5 px-4 rounded-xl text-sm font-semibold border border-slate-600 text-slate-400 hover:bg-slate-700/50 transition disabled:opacity-50">
             Cancel
           </button>
-          {/* "Review" only shown for submitted logs — reviewed logs already have been reviewed */}
           {!isReviewed && (
             <button onClick={() => handleAction('review')} disabled={submitting}
               className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white transition disabled:opacity-50"
@@ -172,7 +168,6 @@ function ReviewModal({ log, onClose, onSuccess }) {
   )
 }
 
-// ─── Log Detail Modal (read-only view) ───────────────────────────────────────
 function LogDetailModal({ log, onClose }) {
   if (!log) return null
   return (
@@ -258,14 +253,12 @@ function LogDetailModal({ log, onClose }) {
 export default function AcademicLogsPage() {
   const navigate = useNavigate()
   const [logs,       setLogs]       = useState([])
-  const [evalByLog,  setEvalByLog]  = useState({})   // logId → eval
+  const [evalByLog,  setEvalByLog]  = useState({})
   const [loading,    setLoading]    = useState(true)
   const [search,     setSearch]     = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [reviewLog,    setReviewLog]    = useState(null)
   const [detailLog,    setDetailLog]    = useState(null)
-
-  const [evaluatedPlacements, setEvaluatedPlacements] = useState(new Set())
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -286,19 +279,11 @@ export default function AcademicLogsPage() {
             company: pm[l.placement]?.company_name || '—',
           }))
         )
-        // Per-log evaluation map (for "Evaluate →" button on approved logs)
         const logEvalMap = {}
         ;(Array.isArray(evalsData) ? evalsData : []).forEach(e => {
           if (e.log != null) logEvalMap[e.log] = e
         })
         setEvalByLog(logEvalMap)
-
-        // Placement-level evaluated set (gates the Approve button)
-        setEvaluatedPlacements(new Set(
-          (Array.isArray(evalsData) ? evalsData : [])
-            .filter(e => e.status === 'SUBMITTED')
-            .map(e => e.placement)
-        ))
       } catch {
         toast.error('Failed to load logs.')
       } finally { setLoading(false) }
@@ -312,7 +297,6 @@ export default function AcademicLogsPage() {
       l.id === id ? { ...l, status: newStatus, supervisor_comment: comment || l.supervisor_comment } : l
     ))
     if (newStatus === 'approved') {
-      // Show inline Evaluate prompt as a toast
       toast.info(
         <div>
           <p className="font-semibold text-sm">Log approved!</p>
@@ -337,14 +321,12 @@ export default function AcademicLogsPage() {
     }
   }
 
-  // Stats
-  const total            = logs.length
+  const total            = logs.filter(l => l.status !== 'draft' || l.supervisor_comment).length
   const submitted        = logs.filter(l => l.status === 'submitted').length
-  const awaitingApproval = logs.filter(l => l.status === 'reviewed').length   // currently in reviewed state only
+  const awaitingApproval = logs.filter(l => l.status === 'reviewed').length
   const approved         = logs.filter(l => l.status === 'approved').length
   const disapproved      = logs.filter(l => l.status === 'draft' && l.supervisor_comment).length
 
-  // Filter + sort
   const filtered = logs
     .filter((l) => {
       const matchStatus =
@@ -360,14 +342,17 @@ export default function AcademicLogsPage() {
       const pa = STATUS_SORT_ORDER[a.status] ?? 3
       const pb = STATUS_SORT_ORDER[b.status] ?? 3
       if (pa !== pb) return pa - pb
-      // Secondary: newest submission first within the same status
       return new Date(b.submitted_at || 0) - new Date(a.submitted_at || 0)
     })
 
   return (
     <div className="space-y-6">
       {reviewLog && (
-        <ReviewModal log={reviewLog} onClose={() => setReviewLog(null)} onSuccess={handleStatusUpdate} />
+        <ReviewModal
+          log={reviewLog}
+          onClose={() => setReviewLog(null)}
+          onSuccess={handleStatusUpdate}
+        />
       )}
       {detailLog && (
         <LogDetailModal log={detailLog} onClose={() => setDetailLog(null)} />
@@ -378,7 +363,6 @@ export default function AcademicLogsPage() {
         <p className="text-sm text-slate-400 mt-1">Review and approve weekly logs from your assigned students</p>
       </div>
 
-      {/* Stats — "Awaiting Approval" shows only currently-reviewed logs */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         {[
           { label: 'Total Logs',        value: total,           color: 'text-white',       bg: 'bg-slate-800/50 border-slate-700/50'     },
@@ -394,7 +378,6 @@ export default function AcademicLogsPage() {
         ))}
       </div>
 
-      {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"
@@ -426,7 +409,6 @@ export default function AcademicLogsPage() {
         </div>
       </div>
 
-      {/* Table */}
       <div className="bg-slate-800/30 border border-slate-700/50 rounded-2xl overflow-hidden">
         {loading ? (
           <div className="p-6 space-y-3">
@@ -475,13 +457,11 @@ export default function AcademicLogsPage() {
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-2 flex-wrap">
 
-                        {/* View — always available */}
                         <button onClick={() => setDetailLog(log)}
                           className="px-3 py-1.5 bg-slate-700/50 hover:bg-slate-700 text-slate-300 border border-slate-600 rounded-lg text-xs font-medium transition">
                           View
                         </button>
 
-                        {/* Submitted: open ReviewModal (review / approve / disapprove) */}
                         {log.status === 'submitted' && (
                           <button onClick={() => setReviewLog(log)}
                             className="px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 border border-blue-500/30 rounded-lg text-xs font-medium transition">
@@ -489,37 +469,20 @@ export default function AcademicLogsPage() {
                           </button>
                         )}
 
-                        {/* Reviewed: open ReviewModal (approve / disapprove) */}
-                        {log.status === 'reviewed' && (() => {
-                          const canApprove = evaluatedPlacements.has(log.placement)
-                          return (
-                            <>
-                              <div className="relative group">
-                                <button
-                                  onClick={() => canApprove && handleDirectApprove(log)}
-                                  disabled={!canApprove}
-                                  className={`px-3 py-1.5 border rounded-lg text-xs font-medium transition ${
-                                    canApprove
-                                      ? 'bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border-emerald-500/30'
-                                      : 'bg-slate-700/30 text-slate-500 border-slate-600/30 cursor-not-allowed'
-                                  }`}>
-                                  Approve
-                                </button>
-                                {!canApprove && (
-                                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-slate-900 border border-slate-700 text-slate-300 text-xs rounded-lg px-3 py-2 opacity-0 group-hover:opacity-100 transition pointer-events-none z-10 text-center">
-                                    Submit an evaluation for this student first
-                                  </div>
-                                )}
-                              </div>
-                              <button onClick={() => setReviewLog(log)}
-                                className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg text-xs font-medium transition">
-                                Disapprove
-                              </button>
-                            </>
-                          )
-                        })()}
+                        {log.status === 'reviewed' && (
+                          <>
+                            <button
+                              onClick={() => handleDirectApprove(log)}
+                              className="px-3 py-1.5 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/30 rounded-lg text-xs font-medium transition">
+                              Approve
+                            </button>
+                            <button onClick={() => setReviewLog(log)}
+                              className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg text-xs font-medium transition">
+                              Disapprove
+                            </button>
+                          </>
+                        )}
 
-                        {/* Approved: show Evaluate → if not yet scored, or Evaluated ✓ if done */}
                         {log.status === 'approved' && (
                           evalByLog[log.id]?.status === 'SUBMITTED' ? (
                             <span className="flex items-center gap-1 text-emerald-400 text-xs font-medium px-2 py-1">
