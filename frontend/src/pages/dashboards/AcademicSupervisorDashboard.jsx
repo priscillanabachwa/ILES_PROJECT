@@ -4,14 +4,18 @@ import { Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import dashboardService from "../../services/dashboardService"
 
+
+
 const formatDate = (iso) =>
   iso ? new Date(iso).toLocaleDateString('en-UG', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
 
 const getInitials = (name) =>
-  name?.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() || '?'
+   name?.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() || '?'
+
 
 const isOverdue = (deadline) =>
   deadline ? new Date(deadline) < new Date() : false
+
 
 const STATUS_STYLES = {
   'In Progress': 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30',
@@ -25,6 +29,8 @@ const STATUS_STYLES = {
   Overdue:       'bg-red-500/20 text-red-300 border border-red-500/30',
   draft:         'bg-slate-500/20 text-slate-400 border border-slate-500/30',
 }
+
+
 
 function Badge({ status, overdue = false }) {
   const s = overdue ? 'Overdue' : status
@@ -40,6 +46,8 @@ const AVATAR_COLORS = [
   'bg-rose-500',   'bg-teal-600',    'bg-violet-600',
 ]
 
+
+
 function AvatarCircle({ name, index = 0, size = 'md' }) {
   const bg = AVATAR_COLORS[index % AVATAR_COLORS.length]
   const sz = size === 'sm' ? 'w-7 h-7 text-xs' : 'w-9 h-9 text-xs'
@@ -53,6 +61,7 @@ function AvatarCircle({ name, index = 0, size = 'md' }) {
 function Skeleton({ className = '' }) {
   return <div className={`bg-slate-700/50 animate-pulse rounded-lg ${className}`} />
 }
+  
 
 function ListSkeleton() {
   return (
