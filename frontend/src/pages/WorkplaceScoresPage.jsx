@@ -4,9 +4,12 @@ import { fetchWithAuth } from '../services/authService'
 
 const API = '/api'
 
+
 function Skeleton({ className = '' }) {
   return <div className={`bg-slate-700/50 animate-pulse rounded-lg ${className}`} />
 }
+
+
 
 function ScoreBadge({ score }) {
   if (score == null) return <span className="text-slate-600 text-sm">—</span>
@@ -20,6 +23,8 @@ function ScoreBadge({ score }) {
     </span>
   )
 }
+  
+
 
 function ScoreDetailModal({ placement, evaluation, onClose }) {
   if (!placement) return null
@@ -105,6 +110,7 @@ function ScoreDetailModal({ placement, evaluation, onClose }) {
     </div>
   )
 }
+
 
 export default function WorkplaceScoresPage() {
   const [placements,  setPlacements]  = useState([])

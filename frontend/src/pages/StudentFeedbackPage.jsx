@@ -72,10 +72,13 @@ export default function StudentFeedbackPage() {
     fetchLogs()
   }, [])
 
+  
+
   // Only show logbooks that have a non-empty supervisor comment
   const feedbackLogs = logs.filter(
     (l) => l.supervisor_comment && l.supervisor_comment.trim() !== ''
   )
+
 
   // Sort: most recent submission first
   const sorted = [...feedbackLogs].sort((a, b) => {
@@ -84,6 +87,7 @@ export default function StudentFeedbackPage() {
     if (!b.submitted_at) return -1
     return new Date(b.submitted_at) - new Date(a.submitted_at)
   })
+
 
   return (
     <div className="space-y-6">
