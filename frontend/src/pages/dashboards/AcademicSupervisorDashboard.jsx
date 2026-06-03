@@ -1,4 +1,8 @@
-﻿import { useState, useEffect } from 'react'
+﻿
+
+
+
+import { useState, useEffect } from 'react'
 import { useAuth } from "../../Context/AuthContext"
 import { Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
@@ -8,6 +12,7 @@ import dashboardService from "../../services/dashboardService"
 
 const formatDate = (iso) =>
   iso ? new Date(iso).toLocaleDateString('en-UG', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
+
 
 const getInitials = (name) =>
    name?.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() || '?'
@@ -40,11 +45,13 @@ function Badge({ status, overdue = false }) {
     </span>
   )
 }
+ 
 
 const AVATAR_COLORS = [
   'bg-indigo-600', 'bg-emerald-600', 'bg-amber-500',
   'bg-rose-500',   'bg-teal-600',    'bg-violet-600',
 ]
+
 
 
 
@@ -58,10 +65,12 @@ function AvatarCircle({ name, index = 0, size = 'md' }) {
   )
 }
 
+
 function Skeleton({ className = '' }) {
   return <div className={`bg-slate-700/50 animate-pulse rounded-lg ${className}`} />
 }
   
+
 
 function ListSkeleton() {
   return (
@@ -79,6 +88,8 @@ function ListSkeleton() {
     </div>
   )
 }
+
+
 
 function MiniBarChart({ scores }) {
   const COLORS = ['#818cf8', '#34d399', '#fbbf24', '#f87171']
@@ -116,6 +127,8 @@ function MiniBarChart({ scores }) {
   )
 }
 
+
+
 const Icon = {
   students: <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-5-3.87M9 20H4v-2a4 4 0 015-3.87m6-4a4 4 0 11-8 0 4 4 0 018 0zm6 0a3 3 0 11-6 0 3 3 0 016 0z"/></svg>,
   logbook:  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>,
@@ -124,6 +137,7 @@ const Icon = {
   search:   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>,
   chevron:  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>,
 }
+
 
 function StatCard({ label, value, sub, subLink, icon, accent }) {
   const A = {
@@ -147,6 +161,8 @@ function StatCard({ label, value, sub, subLink, icon, accent }) {
   )
 }
 
+
+
 function Card({ title, actionLabel, actionLink, children, headerRight }) {
   return (
     <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl overflow-hidden">
@@ -165,6 +181,8 @@ function Card({ title, actionLabel, actionLink, children, headerRight }) {
     </div>
   )
 }
+
+
 
 export default function AcademicDashboard() {
   const { user } = useAuth()
@@ -205,7 +223,10 @@ export default function AcademicDashboard() {
     fetchAll()
   }, [])
 
+
+
   const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '')
+ 
   const fullName = [user?.first_name, user?.last_name].filter(Boolean).map(cap).join(' ') || 'Supervisor'
 
   const handleApprove = async (logId) => {
@@ -224,6 +245,7 @@ export default function AcademicDashboard() {
     p.student_name?.toLowerCase().includes(search.toLowerCase()) ||
     p.student_id?.toLowerCase().includes(search.toLowerCase())
   )
+  
   return (
     <div className="space-y-6">
 

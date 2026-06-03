@@ -5,8 +5,10 @@ import { toast, ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import dashboardService from "../../services/dashboardService"
 
+
 const getInitials = (name) =>
   name?.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() || '?'
+
 
 const STATUS_STYLES = {
   ACTIVE:              'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30',
@@ -19,6 +21,7 @@ const STATUS_STYLES = {
   admin:               'bg-rose-500/20 text-rose-300 border border-rose-500/30',
 }
 
+
 function Badge({ status }) {
   return (
     <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold capitalize whitespace-nowrap ${STATUS_STYLES[status] || 'bg-slate-500/20 text-slate-400'}`}>
@@ -27,7 +30,9 @@ function Badge({ status }) {
   )
 }
 
+
 const AVATAR_COLORS = ['bg-indigo-600','bg-emerald-600','bg-amber-500','bg-rose-500','bg-teal-600','bg-violet-600']
+
 
 function AvatarCircle({ name, index = 0, size = 'md' }) {
   const bg = AVATAR_COLORS[index % AVATAR_COLORS.length]
@@ -38,6 +43,7 @@ function AvatarCircle({ name, index = 0, size = 'md' }) {
     </div>
   )
 }
+
 
 function Skeleton({ className = '' }) {
   return <div className={`bg-slate-700/50 animate-pulse rounded-lg ${className}`} />
@@ -60,6 +66,7 @@ function ListSkeleton() {
   )
 }
 
+
 const Icon = {
   students:   <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-5-3.87M9 20H4v-2a4 4 0 015-3.87m6-4a4 4 0 11-8 0 4 4 0 018 0zm6 0a3 3 0 11-6 0 3 3 0 016 0z"/></svg>,
   placements: <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>,
@@ -76,6 +83,7 @@ const Icon = {
   bell:       <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>,
 }
 
+
 function Modal({ title, onClose, children }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
@@ -90,6 +98,7 @@ function Modal({ title, onClose, children }) {
   )
 }
 
+
 function FormField({ label, required, children }) {
   return (
     <div className="space-y-1.5">
@@ -101,12 +110,17 @@ function FormField({ label, required, children }) {
   )
 }
 
+
 const inputCls = "w-full rounded-lg px-3 py-2 text-sm text-white bg-slate-700/50 border border-slate-600 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition placeholder-slate-500"
+
 const selectCls = "w-full rounded-lg px-3 py-2 text-sm text-white bg-slate-700/50 border border-slate-600 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition"
 
 function RegisterStudentModal({ onClose, onSuccess }) {
+ 
   const [form, setForm] = useState({ first_name: '', last_name: '', email: '', password: '' })
+ 
   const [saving, setSaving] = useState(false)
+  
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }))
 
   const handleSubmit = async () => {
@@ -258,16 +272,23 @@ function AssignPlacementModal({ onClose, onSuccess }) {
   )
 }
 
+
 function AssignSupervisorModal({ onClose, placement = null, allPlacements = [], onSuccess }) {
+  
   const [academicSups, setAcademicSups] = useState([])
+ 
   const [workplaceSups, setWorkplaceSups] = useState([])
+  
   const [loadingOpts, setLoadingOpts] = useState(true)
+  
   const [form, setForm] = useState({
     placement_id:         placement?.id ? String(placement.id) : '',
     academic_supervisor:  placement?._academic_supervisor_id ? String(placement._academic_supervisor_id) : '',
     workplace_supervisor: placement?._workplace_supervisor_id ? String(placement._workplace_supervisor_id) : '',
   })
+ 
   const [saving, setSaving] = useState(false)
+ 
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }))
 
   useEffect(() => {
@@ -285,7 +306,9 @@ function AssignSupervisorModal({ onClose, placement = null, allPlacements = [], 
     load()
   }, [])
 
+
   const activePlacement = placement || allPlacements.find(p => String(p.id) === form.placement_id)
+ 
   const studentLabel = activePlacement?.student_name || ''
 
   const handleSubmit = async () => {
