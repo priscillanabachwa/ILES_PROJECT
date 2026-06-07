@@ -1,11 +1,12 @@
 ﻿import { useState, useEffect } from 'react'
 import { toast } from 'react-toastify'
 import { fetchWithAuth } from '../services/authService'
+import { capName } from '../services/dashboardService'
 
 const API = '/api'
 
 const formatDate = (iso) =>
-  iso ? new Date(iso).toLocaleDateString('en-UG', { day: 'numeric', month: 'short', year: 'numeric' }) : '"?'
+  iso ? new Date(iso).toLocaleDateString('en-UG', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
 
 const getInitials = (name) =>
   name?.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() || '?'
@@ -14,11 +15,11 @@ const isOverdue = (deadline) =>
   deadline ? new Date(deadline) < new Date() : false
 
 const STATUS_STYLES = {
-  draft:     'bg-slate-500/20 text-slate-400 border border-slate-500/30',
-  submitted: 'bg-amber-500/20 text-amber-300 border border-amber-500/30',
-  reviewed:  'bg-blue-500/20 text-blue-300 border border-blue-500/30',
-  approved:  'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
-  overdue:   'bg-red-500/20 text-red-300 border border-red-500/30',
+  draft:               'bg-slate-500/20 text-slate-400 border border-slate-500/30',
+  submitted:           'bg-amber-500/20 text-amber-300 border border-amber-500/30',
+  reviewed:            'bg-blue-500/20 text-blue-300 border border-blue-500/30',
+  approved:            'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
+  overdue:             'bg-red-500/20 text-red-300 border border-red-500/30',
 }
 
 function Badge({ status, overdue = false }) {
@@ -48,8 +49,8 @@ function Skeleton({ className = '' }) {
 function LogSkeleton() {
   return (
     <div className="space-y-3">
-      {[1,2,3,4,5].map((i) => (
-        <div key={i} className="p-4 rounded-xl border border-slate-700/50 space-y-2">
+      {[1,2,3,4,5].map((_i) => (
+        <div key={_i} className="p-4 rounded-xl border border-slate-700/50 space-y-2">
           <div className="flex items-center gap-3">
             <Skeleton className="w-8 h-8 rounded-full flex-shrink-0" />
             <Skeleton className="h-3 w-1/3" />
@@ -95,7 +96,7 @@ function LogDetailModal({ log, onClose, onStatusChange }) {
       <div className="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700 sticky top-0 bg-slate-800">
           <div>
-            <p className="text-sm font-bold text-white">Week {log.week_number} "? Log #{log.id}</p>
+            <p className="text-sm font-bold text-white">Week {log.week_number} — Log #{log.id}</p>
             <p className="text-xs text-slate-400 mt-0.5">Submitted {formatDate(log.submitted_at)}</p>
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-white transition">
@@ -165,7 +166,7 @@ function LogDetailModal({ log, onClose, onStatusChange }) {
           {log.status !== 'approved' && (
             <div className="space-y-1.5">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
-                {log.status === 'reviewed' ? 'Supervisor Comment' : 'Add Comment (required to review)'}
+                {log.status === 'reviewed' ? 'Academic Supervisor Comment' : 'Admin Comment (required to review)'}
               </p>
               <textarea
                 rows={3}
@@ -200,7 +201,7 @@ function LogDetailModal({ log, onClose, onStatusChange }) {
 
           {log.status === 'approved' && (
             <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 text-center">
-              <p className="text-xs text-emerald-300 font-medium">??? This log has been approved</p>
+              <p className="text-xs text-emerald-300 font-medium">This log has been approved</p>
             </div>
           )}
         </div>
@@ -224,8 +225,19 @@ export default function AdminLogsPage() {
       setLoading(true)
       setError('')
       try {
-        const data = await fetchWithAuth(`${API}/weeklylogs/logbooks/`)
-        setLogs(Array.isArray(data) ? data : [])
+        const [logsData, placementsData] = await Promise.all([
+          fetchWithAuth(`${API}/weeklylogs/logbooks/`),
+          fetchWithAuth(`${API}/placements/`).catch(() => []),
+        ])
+        const pm = Object.fromEntries(
+          (Array.isArray(placementsData) ? placementsData : []).map(p => [p.id, p])
+        )
+        const enriched = (Array.isArray(logsData) ? logsData : []).map(l => ({
+          ...l,
+          student_name: capName(pm[l.placement]?.student_name || ''),
+          company:      pm[l.placement]?.company_name  || '',
+        }))
+        setLogs(enriched)
       } catch (err) {
         setError(err.message || 'Failed to load logs.')
       } finally { setLoading(false) }
@@ -237,7 +249,6 @@ export default function AdminLogsPage() {
     setLogs((prev) => prev.map((l) =>
       l.id === id ? { ...l, status: newStatus, supervisor_comment: feedback || l.supervisor_comment } : l
     ))
-    // Update modal log if open
     if (selectedLog?.id === id) {
       setSelectedLog(prev => ({ ...prev, status: newStatus, supervisor_comment: feedback || prev.supervisor_comment }))
     }
@@ -272,10 +283,12 @@ export default function AdminLogsPage() {
 
   const filtered = logs.filter((l) => {
     const matchStatus = statusFilter === 'all' || l.status === statusFilter
+    const q = search.toLowerCase()
     const matchSearch = search === '' ||
-      `week ${l.week_number}`.includes(search.toLowerCase()) ||
-      l.activities?.toLowerCase().includes(search.toLowerCase()) ||
-      String(l.placement).includes(search)
+      l.student_name.toLowerCase().includes(q) ||
+      l.company.toLowerCase().includes(q) ||
+      `week ${l.week_number}`.includes(q) ||
+      l.activities?.toLowerCase().includes(q)
     return matchStatus && matchSearch
   })
 
@@ -283,8 +296,9 @@ export default function AdminLogsPage() {
     all:       logs.length,
     draft:     logs.filter((l) => l.status === 'draft').length,
     submitted: logs.filter((l) => l.status === 'submitted').length,
-    reviewed:  logs.filter((l) => l.status === 'reviewed').length,
     approved:  logs.filter((l) => l.status === 'approved').length,
+    reviewed:  logs.filter((l) => l.status === 'reviewed').length +
+               logs.filter((l) => l.status === 'approved').length,  
     overdue:   logs.filter((l) => isOverdue(l.deadline) && l.status === 'submitted').length,
   }
 
@@ -324,15 +338,14 @@ export default function AdminLogsPage() {
         )}
       </div>
 
-      {/* Stat pills */}
       <div className="grid grid-cols-3 lg:grid-cols-6 gap-3">
         {[
-          { key:'all',       label:'Total',    color:'text-white'       },
-          { key:'submitted', label:'Pending',  color:'text-amber-300'   },
-          { key:'reviewed',  label:'Reviewed', color:'text-blue-300'    },
-          { key:'approved',  label:'Approved', color:'text-emerald-300' },
-          { key:'draft',     label:'Draft',    color:'text-slate-400'   },
-          { key:'overdue',   label:'Overdue',  color:'text-red-300'     },
+          { key:'all',       label:'Total',   color:'text-white'       },
+          { key:'submitted', label:'Pending', color:'text-amber-300'   },
+          { key:'reviewed',  label:'Reviewed',color:'text-blue-300'    },
+          { key:'approved',  label:'Approved',color:'text-emerald-300' },
+          { key:'draft',     label:'Draft',   color:'text-slate-400'   },
+          { key:'overdue',   label:'Overdue', color:'text-red-300'     },
         ].map(({ key, label, color }) => (
           <div key={key} className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-3 text-center">
             <p className="text-xs text-slate-500 mb-1">{label}</p>
@@ -341,7 +354,6 @@ export default function AdminLogsPage() {
         ))}
       </div>
 
-      {/* Filters */}
       <div className="space-y-3">
         <div className="flex items-center gap-1 bg-slate-800/50 border border-slate-700/50 rounded-xl p-1 flex-wrap">
           {FILTERS.map(({ key, label }) => (
@@ -364,7 +376,7 @@ export default function AdminLogsPage() {
           <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
           </svg>
-          <input type="text" placeholder="Search activities or week number..."
+          <input type="text" placeholder="Search by student, company, or week..."
             value={search} onChange={(e) => setSearch(e.target.value)}
             className="bg-transparent outline-none text-sm text-slate-300 placeholder-slate-600 w-full" />
         </div>
@@ -385,7 +397,7 @@ export default function AdminLogsPage() {
             </div>
           )}
 
-          {filtered.map((log, i) => (
+          {filtered.map((log) => (
             <div
               key={log.id}
               className={`bg-slate-800/50 border rounded-2xl p-4 transition
@@ -401,8 +413,10 @@ export default function AdminLogsPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between flex-wrap gap-2 mb-1">
                     <div>
-                      <p className="text-sm font-bold text-white">Week {log.week_number} "? Placement #{log.placement}</p>
-                      <p className="text-xs text-slate-500">Log #{log.id}</p>
+                      <p className="text-sm font-bold text-white capitalize">
+                        Week {log.week_number} — {log.student_name || `Placement #${log.placement}`}
+                      </p>
+                      <p className="text-xs text-slate-500">{log.company || `Log #${log.id}`}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       {isOverdue(log.deadline) && log.status === 'submitted' && (
@@ -459,7 +473,7 @@ export default function AdminLogsPage() {
                 )}
 
                 {log.status === 'approved' && (
-                  <span className="text-xs text-emerald-400 font-medium ml-1">??? Approved</span>
+                  <span className="text-xs text-emerald-400 font-medium ml-1">Approved</span>
                 )}
 
                 <span className="ml-auto text-xs text-slate-600">Log #{log.id}</span>

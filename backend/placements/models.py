@@ -3,7 +3,6 @@ from django.conf import settings
 
 User = settings.AUTH_USER_MODEL
 
-
 class Company(models.Model):
     company_name = models.CharField(max_length=200)
     company_address = models.TextField(blank=True, null=True)
@@ -11,7 +10,6 @@ class Company(models.Model):
 
     def __str__(self):
         return self.company_name
-
 
 class InternshipPlacement(models.Model):
     STATUS_CHOICES = (
@@ -35,7 +33,7 @@ class InternshipPlacement(models.Model):
     )
 
     workplace_supervisor = models.ForeignKey(
-        'user_accounts.CustomUser',
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -44,7 +42,7 @@ class InternshipPlacement(models.Model):
     )
 
     academic_supervisor = models.ForeignKey(
-        'user_accounts.CustomUser',
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -62,22 +60,18 @@ class InternshipPlacement(models.Model):
         default='PENDING'
     )
 
-
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.student} - {self.company.company_name}"
 
-    #  VALIDATION (IMPORTANT)
     def clean(self):
         from django.core.exceptions import ValidationError
 
-        # End date must be after start date
         if self.end_date <= self.start_date:
             raise ValidationError("End date must be after start date")
 
-        # Prevent overlapping placements for same student
         overlapping = InternshipPlacement.objects.filter(
             student=self.student,
             start_date__lt=self.end_date,

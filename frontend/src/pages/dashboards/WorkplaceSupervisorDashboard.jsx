@@ -1,11 +1,11 @@
-﻿import { useState, useEffect, useRef } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { useAuth } from '../../Context/AuthContext'
 import { Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import dashboardService from "../../services/dashboardService"
 
 const formatDate = (iso) =>
-  iso ? new Date(iso).toLocaleDateString('en-UG', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A'
+  iso ? new Date(iso).toLocaleDateString('en-UG', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
 
 const getInitials = (name) =>
   name?.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() || '?'
@@ -14,16 +14,16 @@ const isOverdue = (deadline) =>
   deadline ? new Date(deadline) < new Date() : false
 
 const STATUS_STYLES = {
-  ACTIVE:    'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30',
-  COMPLETED: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
-  PENDING:   'bg-amber-500/20 text-amber-300 border border-amber-500/30',
-  CANCELLED: 'bg-red-500/20 text-red-300 border border-red-500/30',
-  submitted: 'bg-amber-500/20 text-amber-300 border border-amber-500/30',
-  reviewed:  'bg-blue-500/20 text-blue-300 border border-blue-500/30',
-  approved:  'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
-  rejected:  'bg-red-500/20 text-red-300 border border-red-500/30',
-  draft:     'bg-slate-500/20 text-slate-400 border border-slate-500/30',
-  overdue:   'bg-red-500/20 text-red-300 border border-red-500/30',
+  ACTIVE:              'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30',
+  COMPLETED:           'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
+  PENDING:             'bg-amber-500/20 text-amber-300 border border-amber-500/30',
+  CANCELLED:           'bg-red-500/20 text-red-300 border border-red-500/30',
+  submitted:           'bg-amber-500/20 text-amber-300 border border-amber-500/30',
+  reviewed:            'bg-blue-500/20 text-blue-300 border border-blue-500/30',
+  approved:            'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
+  rejected:            'bg-red-500/20 text-red-300 border border-red-500/30',
+  draft:               'bg-slate-500/20 text-slate-400 border border-slate-500/30',
+  overdue:             'bg-red-500/20 text-red-300 border border-red-500/30',
 }
 
 function Badge({ status, overdue = false }) {
@@ -68,39 +68,6 @@ function ListSkeleton() {
   )
 }
 
-function MiniBarChart({ scores }) {
-  const COLORS = ['#818cf8','#34d399','#fbbf24','#f87171']
-  const xTicks = [0,25,50,75,100]
-  return (
-    <div>
-      <div className="space-y-3 mb-2">
-        {scores.map(({ criteria, score }, i) => (
-          <div key={criteria}>
-            <div className="flex justify-between text-xs mb-1">
-              <span className="text-slate-400">{criteria}</span>
-              <span className="font-semibold text-white">{Number(score).toFixed(0)}</span>
-            </div>
-            <div className="w-full bg-slate-700 rounded-full h-2">
-              <div className="h-2 rounded-full transition-all" style={{ width: `${Math.min(score,100)}%`, backgroundColor: COLORS[i % COLORS.length] }} />
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="relative mt-3 border-t border-slate-700">
-        <div className="flex justify-between mt-1">
-          {xTicks.map((tick) => (
-            <div key={tick} className="flex flex-col items-center">
-              <div className="w-px h-1.5 bg-slate-600" />
-              <span className="text-slate-500 mt-0.5" style={{ fontSize:'9px' }}>{tick}</span>
-            </div>
-          ))}
-        </div>
-        <p className="text-center text-slate-500 mt-1" style={{ fontSize:'9px' }}>Score (out of 100)</p>
-      </div>
-    </div>
-  )
-}
-
 const Icon = {
   students: <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-5-3.87M9 20H4v-2a4 4 0 015-3.87m6-4a4 4 0 11-8 0 4 4 0 018 0zm6 0a3 3 0 11-6 0 3 3 0 016 0z"/></svg>,
   logbook:  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>,
@@ -124,7 +91,7 @@ function StatCard({ label, value, sub, subLink, icon, accent }) {
       <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${A.icon}`}>{icon}</div>
       <div>
         <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">{label}</p>
-        <p className={`text-3xl font-bold mt-0.5 ${A.val}`}>{value ?? 'N/A'}</p>
+        <p className={`text-3xl font-bold mt-0.5 ${A.val}`}>{value ?? '—'}</p>
         {sub && subLink
           ? <Link to={subLink} className={`text-xs font-medium mt-1 block hover:underline ${A.sub}`}>{sub} </Link>
           : sub && <p className={`text-xs font-medium mt-1 ${A.sub}`}>{sub}</p>
@@ -153,28 +120,23 @@ export default function WorkplaceSupervisorDashboard() {
 
   const [stats,      setStats]      = useState(null)
   const [placements, setPlacements] = useState([])
-  const [reviews,    setReviews]    = useState([])
   const [scores,     setScores]     = useState([])
   const [activity,   setActivity]   = useState([])
   const [loading,    setLoading]    = useState(true)
   const [error,      setError]      = useState('')
-  const [reviewingId,  setReviewingId]  = useState(null)
-  const [reviewComment, setReviewComment] = useState('')
-  const [actionLoading, setActionLoading] = useState(false)
 
   useEffect(() => {
     const fetchAll = async () => {
       setLoading(true); setError('')
       try {
-        const [statsRes, placementsRes, reviewsRes, scoresRes, activityRes] = await Promise.all([
+        const [statsRes, placementsRes, scoresRes, activityRes] = await Promise.all([
           dashboardService.getWorkplaceStats(),
           dashboardService.getWorkplacePlacements(),
-          dashboardService.getWorkplacePendingReviews(),
           dashboardService.getWorkplaceScores(),
           dashboardService.getWorkplaceActivity(),
         ])
         setStats(statsRes.data); setPlacements(placementsRes.data)
-        setReviews(reviewsRes.data); setScores(scoresRes.data); setActivity(activityRes.data)
+        setScores(scoresRes.data); setActivity(activityRes.data)
       } catch (err) {
         setError(err.message || 'Failed to load dashboard data. Please refresh.')
       } finally { setLoading(false) }
@@ -185,162 +147,51 @@ export default function WorkplaceSupervisorDashboard() {
   const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '')
   const fullName = [user?.first_name, user?.last_name].filter(Boolean).map(cap).join(' ') || 'Supervisor'
 
-  const handleReviewSubmit = async (logId) => {
-    if (!reviewComment.trim()) { toast.error('Please enter a comment before submitting.'); return }
-    setActionLoading(true)
-    try {
-      await dashboardService.reviewLog(logId, reviewComment)
-      toast.success('Log reviewed successfully.')
-      setReviewingId(null)
-      setReviewComment('')
-      setReviews(prev => prev.filter(r => r.id !== logId))
-      setStats(prev => prev ? { ...prev, pending_reviews: Math.max(0, prev.pending_reviews - 1) } : prev)
-    } catch (err) {
-      toast.error(err.message || 'Failed to submit review.')
-    } finally { setActionLoading(false) }
-  }
-
-  const handleReject = async (logId) => {
-    if (!reviewComment.trim()) { toast.error('Please enter a reason for rejection.'); return }
-    setActionLoading(true)
-    try {
-      await dashboardService.rejectLog(logId, reviewComment)
-      toast.success('Log returned to student for revision.')
-      setReviewingId(null)
-      setReviewComment('')
-      setReviews(prev => prev.filter(r => r.id !== logId))
-      setStats(prev => prev ? { ...prev, pending_reviews: Math.max(0, prev.pending_reviews - 1) } : prev)
-    } catch (err) {
-      toast.error(err.message || 'Failed to reject log.')
-    } finally { setActionLoading(false) }
-  }
-
   return (
     <div className="space-y-6">
 
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-white">Welcome, {fullName} </h1>
-          <p className="text-sm text-slate-400 mt-1">Review student logs, approve submissions, and score intern performance.</p>
-        </div>
-        <div className="bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-xs text-slate-400 font-medium flex items-center gap-2">
-          <svg className="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-          Semester 2024 N/A Semester II
+          <p className="text-sm text-slate-400 mt-1">Evaluate intern performance and track your assigned students.</p>
         </div>
       </div>
 
       {error && <div className="bg-red-500/10 border border-red-500/30 text-red-300 text-sm px-4 py-3 rounded-xl">{error}</div>}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Assigned Students"   value={stats?.assigned_students}  sub="View all students" subLink="/supervisor/students" accent="indigo"  icon={Icon.students} />
-        <StatCard label="Pending Reviews"      value={stats?.pending_reviews}    sub="Review now"        subLink="/supervisor/reviews"  accent="amber"   icon={Icon.logbook}  />
-        <StatCard label="Approved Logs"        value={stats?.approved_logs}      sub="View approved"     subLink="/supervisor/reviews"  accent="emerald" icon={Icon.approved} />
-        <StatCard label="Avg. Workplace Score" value={stats ? `${Number(stats.average_score).toFixed(0)}%` : null} sub="Contributes 40% to final" accent="rose" icon={Icon.score} />
+        <StatCard label="Assigned Students"   value={stats?.assigned_students} sub="View all students"          subLink="/supervisor/scores" accent="indigo"  icon={Icon.students} />
+        <StatCard label="Submitted Logs"      value={stats?.submitted_logs}    sub="Logs from your students"    subLink="/supervisor/logs"   accent="amber"   icon={Icon.logbook}  />
+        <StatCard label="Scores Submitted"    value={stats?.evaluated_count}   sub="Evaluations you've scored"  subLink="/supervisor/scores" accent="emerald" icon={Icon.approved} />
+        <StatCard label="Avg. Workplace Score" value={stats?.average_score != null ? `${Number(stats.average_score).toFixed(1)}%` : '—'} sub="Contributes 40% to final" accent="rose" icon={Icon.report} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
 
         <div className="lg:col-span-3 space-y-5">
 
-          <Card title="Pending Reviews" actionLabel="View All" actionLink="/supervisor/reviews">
-            {loading ? <ListSkeleton /> : (
+          <Card title="Recent Student Activity" actionLabel="View All" actionLink="/supervisor/scores">
+            {loading ? <ListSkeleton /> : activity.length === 0 ? (
+              <p className="text-xs text-slate-500">No recent activity from your students.</p>
+            ) : (
               <div className="space-y-3">
-                {reviews.length === 0 && <p className="text-xs text-slate-500">No pending reviews. You are all caught up!</p>}
-                {reviews.slice(0,4).map((r, i) => (
-                  <div key={r.id} className={`p-3 rounded-xl border transition ${isOverdue(r.deadline) ? 'border-red-500/30 bg-red-500/10' : 'border-slate-700/50 hover:border-indigo-500/40 hover:bg-indigo-600/10'}`}>
-                    <div className="flex items-start gap-3">
-                      <AvatarCircle name={r.student_name} index={i} />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between flex-wrap gap-2">
-                          <p className="text-sm font-semibold text-white">Week {r.week_number} N/A {r.student_name}</p>
-                          {isOverdue(r.deadline) ? <Badge status="overdue" /> : <Badge status={r.status} />}
-                        </div>
-                        <p className="text-xs text-slate-400 mt-0.5 truncate">{r.activities_preview}</p>
-                        <p className="text-xs text-slate-600 mt-0.5">
-                          Submitted {formatDate(r.submitted_at)}
-                          {isOverdue(r.deadline) && <span className="text-red-400 font-medium ml-2">x Past deadline</span>}
-                        </p>
+                {activity.slice(0, 5).map((a, i) => (
+                  <div key={a.id} className="flex items-start gap-3 p-3 rounded-xl border border-slate-700/50 hover:bg-slate-700/20 transition">
+                    <AvatarCircle name={a.student_name} index={i} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <p className="text-sm font-semibold text-white capitalize">{a.student_name}</p>
+                        <Badge status={a.status} overdue={isOverdue(a.deadline)} />
                       </div>
-                    </div>
-                    <div className="mt-3 pt-3 border-t border-slate-700/50 space-y-2">
-                      {reviewingId === r.id ? (
-                        <>
-                          <textarea
-                            rows={2}
-                            placeholder="Write your review comment..."
-                            value={reviewComment}
-                            onChange={e => setReviewComment(e.target.value)}
-                            className="w-full rounded-lg px-3 py-2 text-xs text-white bg-slate-700/50 border border-slate-600 outline-none focus:border-indigo-500 resize-none placeholder-slate-500"
-                          />
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => handleReviewSubmit(r.id)}
-                              disabled={actionLoading}
-                              className="flex-1 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition disabled:opacity-50"
-                            >
-                              {actionLoading ? 'Submitting...' : 'Submit Review'}
-                            </button>
-                            <button
-                              onClick={() => handleReject(r.id)}
-                              disabled={actionLoading}
-                              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20 transition disabled:opacity-50"
-                            >
-                              {Icon.reject} Reject
-                            </button>
-                            <button
-                              onClick={() => { setReviewingId(null); setReviewComment('') }}
-                              className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 border border-slate-600 hover:bg-slate-700/50 transition"
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        </>
-                      ) : (
-                        <button
-                          onClick={() => { setReviewingId(r.id); setReviewComment('') }}
-                          className="w-full text-center text-xs font-semibold text-indigo-400 border border-indigo-500/30 bg-indigo-600/10 hover:bg-indigo-600/20 py-1.5 rounded-lg transition"
-                        >
-                          Review & Comment
-                        </button>
-                      )}
+                      <p className="text-xs text-slate-400 mt-0.5 truncate">{a.activity}</p>
+                      <p className="text-xs text-slate-600 mt-0.5">{formatDate(a.date)}</p>
                     </div>
                   </div>
                 ))}
-                {stats?.pending_reviews > 4 && (
-                  <Link to="/supervisor/reviews" className="text-xs text-amber-400 font-semibold hover:underline block pt-1">
-                    View all pending ({stats.pending_reviews}) 
-                  </Link>
-                )}
               </div>
             )}
           </Card>
 
-          <Card title="Recent Activity" actionLabel="View All" actionLink="/supervisor/activity">
-            {loading ? <ListSkeleton /> : activity.length === 0 ? <p className="text-xs text-slate-500">No recent activity.</p> : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs" style={{ tableLayout:'fixed' }}>
-                  <thead>
-                    <tr className="text-slate-500 border-b border-slate-700/50">
-                      <th className="text-left pb-3 font-semibold w-1/4">Student</th>
-                      <th className="text-left pb-3 font-semibold w-1/3">Activity</th>
-                      <th className="text-left pb-3 font-semibold w-1/5">Date</th>
-                      <th className="text-left pb-3 font-semibold w-1/6">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-700/30">
-                    {activity.map((a, i) => (
-                      <tr key={a.id} className="hover:bg-slate-700/20 transition">
-                        <td className="py-3 pr-3"><div className="flex items-center gap-2"><AvatarCircle name={a.student_name} index={i} size="sm" /><span className="font-semibold text-white truncate">{a.student_name}</span></div></td>
-                        <td className="py-3 pr-3 text-slate-400 truncate">{a.activity}</td>
-                        <td className="py-3 pr-3 text-slate-500">{formatDate(a.date)}</td>
-                        <td className="py-3"><Badge status={a.status} overdue={isOverdue(a.deadline)} /></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </Card>
         </div>
 
         <div className="lg:col-span-2 space-y-5">
@@ -353,8 +204,8 @@ export default function WorkplaceSupervisorDashboard() {
                   <div key={p.id} className="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-700/30 transition">
                     <AvatarCircle name={p.student_name} index={i} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-white truncate">{p.student_name}</p>
-                      <p className="text-xs text-slate-400 truncate">{p.student_id} x {p.department}</p>
+                      <p className="text-sm font-semibold text-white truncate capitalize">{p.student_name}</p>
+                      <p className="text-xs text-slate-400 truncate">{p.company || 'No company assigned'}</p>
                     </div>
                     <Badge status={p.status} />
                   </div>
@@ -366,35 +217,13 @@ export default function WorkplaceSupervisorDashboard() {
             )}
           </Card>
 
-          <Card title="Workplace Scores" actionLabel="View All" actionLink="/supervisor/scores">
-            {loading ? <ListSkeleton /> : (
-              <>
-                {scores.length === 0 ? <p className="text-xs text-slate-500">No scores submitted yet.</p> : <MiniBarChart scores={scores} />}
-                <div className="grid grid-cols-2 gap-3 mt-4">
-                  <div className="bg-indigo-600/10 border border-indigo-500/20 rounded-xl p-3 text-center">
-                    <p className="text-xs text-indigo-400">Avg. Score</p>
-                    <p className="text-xl font-bold text-indigo-300 mt-0.5">{stats ? `${Number(stats.average_score).toFixed(0)}%` : 'N/A'}</p>
-                  </div>
-                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 text-center">
-                    <p className="text-xs text-amber-400">Weight</p>
-                    <p className="text-xl font-bold text-amber-300 mt-0.5">40%</p>
-                  </div>
-                </div>
-                <div className="mt-3 bg-slate-700/30 border border-slate-700/50 rounded-xl p-3">
-                  <p className="text-xs text-slate-400 font-medium mb-1">Your contribution</p>
-                  <p className="text-xs text-slate-500">Your scores contribute 40% to each student's final grade</p>
-                </div>
-              </>
-            )}
-          </Card>
-
           <Card title="Quick Actions">
             <div className="space-y-2">
               {[
-                { label:'View My Students',  sub:'All assigned interns',          icon:Icon.students, to:'/supervisor/students', color:'text-indigo-400 bg-indigo-600/20'  },
-                { label:'Review Submissions', sub:'Approve or reject log entries', icon:Icon.logbook,  to:'/supervisor/reviews',  color:'text-amber-400 bg-amber-500/20'    },
-                { label:'Score Performance',  sub:'Submit workplace scores',       icon:Icon.score,    to:'/supervisor/scores',   color:'text-emerald-400 bg-emerald-500/20' },
-                { label:'Generate Report',    sub:'Download student reports',      icon:Icon.report,   to:'/supervisor/reports',  color:'text-rose-400 bg-rose-500/20'      },
+                { label:'View My Students',  sub:'All assigned interns',     icon:Icon.students, to:'/supervisor/scores',  color:'text-indigo-400 bg-indigo-600/20'   },
+                { label:'Score Performance', sub:'Submit workplace scores',  icon:Icon.score,    to:'/supervisor/scores',  color:'text-emerald-400 bg-emerald-500/20' },
+                { label:'View Student Logs', sub:'Browse submitted logs',    icon:Icon.logbook,  to:'/supervisor/logs',    color:'text-amber-400 bg-amber-500/20'     },
+                { label:'Generate Report',   sub:'Download student reports', icon:Icon.report,   to:'/supervisor/reports', color:'text-rose-400 bg-rose-500/20'       },
               ].map(({ label, sub, icon, to, color }) => (
                 <Link key={label} to={to} className="flex items-center gap-3 p-3 rounded-xl border border-slate-700/50 hover:border-indigo-500/40 hover:bg-indigo-600/10 transition group">
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${color}`}>{icon}</div>

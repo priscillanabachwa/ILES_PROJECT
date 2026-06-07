@@ -6,7 +6,6 @@ import { toast } from 'react-toastify';
 import './Register.css';
 import ILES_LOGO from '../assets/ILES_LOGO.png';
 
-// ==================== EYE ICONS ====================
 const EyeIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
     fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -24,7 +23,6 @@ const EyeOffIcon = () => (
   </svg>
 );
 
-// ==================== MAIN COMPONENT ====================
 export default function Register() {
   const { login } = useAuth();
   const [formData, setFormData] = useState({
@@ -78,7 +76,8 @@ export default function Register() {
         role: formData.role,
       });
       login(response.user, response.token);
-      toast.success('Account created successfully! Welcome to ILES.');
+      const firstName = response.user?.first_name || response.user?.email?.split('@')[0] || 'there'
+      toast.success(`Welcome to ILES, ${firstName}! Your account has been created successfully.`, { autoClose: 5000 })
       const roleRoutes = {
         student: '/student/dashboard',
         admin: '/admin/dashboard',
@@ -86,7 +85,6 @@ export default function Register() {
         workplace_supervisor: '/supervisor/dashboard',
       };
       navigate(roleRoutes[response.user.role] || '/login');
-          
     } catch (err) {
       setError(err.message || 'Registration failed. Please try again.');
     } finally {
@@ -98,7 +96,6 @@ export default function Register() {
     <div className="reg-root">
       <div className="reg-card">
 
-        {/* Logo + Title */}
         <div className="reg-header">
           <div className="reg-logo-wrap">
             <img src={ILES_LOGO} alt="ILES Logo" className="reg-logo" />
@@ -108,7 +105,6 @@ export default function Register() {
 
         <form onSubmit={handleSubmit} className="reg-form">
 
-          {/* First & Last Name */}
           <div className="form-row">
             <div className="form-group">
               <label htmlFor="first_name">First Name</label>
@@ -136,7 +132,6 @@ export default function Register() {
             </div>
           </div>
 
-          {/* Email */}
           <div className="form-group">
             <label htmlFor="email">Email <span className="req">*</span></label>
             <input
@@ -151,7 +146,6 @@ export default function Register() {
             />
           </div>
 
-          {/* Role */}
           <div className="form-group">
             <label htmlFor="role">Role</label>
             <select
@@ -168,21 +162,31 @@ export default function Register() {
             </select>
           </div>
 
-          {/* Phone */}
           <div className="form-group">
             <label htmlFor="phone_number">Phone Number</label>
-            <input
-              id="phone_number"
-              type="tel"
-              name="phone_number"
-              value={formData.phone_number}
-              onChange={handleInputChange}
-              placeholder="Enter your phone number"
-              disabled={loading}
-            />
+            <div style={{ display:'flex', border:'1.5px solid #c5d8f0', borderRadius:'8px', overflow:'hidden' }}>
+              <span style={{
+                padding:'10px 12px', background:'#d8eaf7', color:'#1e3a5f',
+                fontWeight:700, fontSize:'14px', whiteSpace:'nowrap', userSelect:'none',
+                borderRight:'1.5px solid #c5d8f0',
+              }}>+256</span>
+              <input
+                id="phone_number"
+                type="tel"
+                inputMode="numeric"
+                maxLength={9}
+                placeholder="700 000 000"
+                value={formData.phone_number.replace(/^\+256/, '')}
+                onChange={(e) => {
+                  const digits = e.target.value.replace(/\D/g, '').slice(0, 9)
+                  setFormData(prev => ({ ...prev, phone_number: digits ? `+256${digits}` : '' }))
+                }}
+                disabled={loading}
+                style={{ flex:1, border:'none', outline:'none', padding:'10px 12px', fontSize:'14px', color:'#000' }}
+              />
+            </div>
           </div>
 
-          {/* Password */}
           <div className="form-group">
             <label htmlFor="password">Password <span className="req">*</span> <span className="hint">(min. 8 characters)</span></label>
             <div className="pw-wrap">
@@ -208,7 +212,6 @@ export default function Register() {
             </div>
           </div>
 
-          {/* Confirm Password */}
           <div className="form-group">
             <label htmlFor="confirm_password">Confirm Password <span className="req">*</span></label>
             <div className="pw-wrap">
