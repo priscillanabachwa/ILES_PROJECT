@@ -1,22 +1,20 @@
-/* ==================== RESET ==================== */
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-/* ==================== PAGE ROOT ==================== */
 .reg-root {
   font-family: 'Segoe UI', 'Inter', sans-serif;
   min-height: 100vh;
-  background: #0a1628;
+  background: #1e3a5f;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 2rem;
 }
 
-/* ==================== CARD ==================== */
 .reg-card {
   background: #bce0f7;
   border-radius: 16px;
@@ -26,7 +24,6 @@
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3);
 }
 
-/* ==================== HEADER ==================== */
 .reg-header {
   display: flex;
   flex-direction: column;
@@ -60,14 +57,12 @@
   letter-spacing: 0.3px;
 }
 
-/* ==================== FORM ==================== */
 .reg-form {
   display: flex;
   flex-direction: column;
   gap: 1.1rem;
 }
 
-/* Side-by-side row */
 .form-row {
   display: flex;
   gap: 14px;
@@ -78,7 +73,6 @@
   min-width: 0;
 }
 
-/* ==================== FORM GROUPS ==================== */
 .form-group {
   display: flex;
   flex-direction: column;
@@ -101,7 +95,6 @@
   font-size: 12px;
 }
 
-/* ==================== INPUTS & SELECT ==================== */
 .form-group input,
 .form-group select {
   width: 100%;
@@ -119,7 +112,7 @@
 
 .form-group input:focus,
 .form-group select:focus {
-  border-color: #0a1628;
+  border-color: #1e3a5f;
   box-shadow: 0 0 0 3px rgba(10, 22, 40, 0.12);
 }
 
@@ -134,7 +127,6 @@
   opacity: 0.7;
 }
 
-/* ==================== PASSWORD WRAPPER ==================== */
 .pw-wrap {
   position: relative;
   display: flex;
@@ -143,6 +135,15 @@
 
 .pw-wrap input {
   padding-right: 46px;
+}
+
+.pw-wrap input::-ms-reveal,
+.pw-wrap input::-ms-clear,
+.pw-wrap input::-webkit-contacts-auto-fill-button,
+.pw-wrap input::-webkit-credentials-auto-fill-button {
+  display: none !important;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .pw-toggle {
@@ -163,7 +164,7 @@
 }
 
 .pw-toggle:hover {
-  color: #0a1628;
+  color: #1e3a5f;
 }
 
 .pw-toggle:disabled {
@@ -171,7 +172,6 @@
   opacity: 0.45;
 }
 
-/* ==================== ERROR ==================== */
 .reg-error {
   background: #fff0f0;
   border: 1px solid #f5a0a0;
@@ -182,11 +182,10 @@
   border-radius: 6px;
 }
 
-/* ==================== SUBMIT BUTTON ==================== */
 .reg-btn {
   width: 100%;
   padding: 12px;
-  background: #0a1628;
+  background: #1e3a5f;
   color: #ffffff;
   border: none;
   border-radius: 8px;
@@ -199,7 +198,7 @@
 }
 
 .reg-btn:hover {
-  background: #1a3a6e;
+  background: #2a5490;
   box-shadow: 0 4px 16px rgba(10, 22, 40, 0.25);
 }
 
@@ -213,7 +212,6 @@
   box-shadow: none;
 }
 
-/* ==================== FOOTER LINK ==================== */
 .reg-footer {
   text-align: center;
   margin-top: 1.5rem;
@@ -236,7 +234,6 @@
   text-decoration: underline;
 }
 
-/* ==================== RESPONSIVE ==================== */
 @media (max-width: 540px) {
   .reg-root {
     padding: 1rem;
@@ -274,6 +271,6 @@
 
   .form-group input,
   .form-group select {
-    font-size: 16px; /* prevents iOS zoom */
+    font-size: 16px; 
   }
 }

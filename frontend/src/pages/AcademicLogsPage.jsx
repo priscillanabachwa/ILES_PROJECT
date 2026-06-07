@@ -1,11 +1,13 @@
-﻿import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { fetchWithAuth } from '../services/authService'
+import { capName } from '../services/dashboardService'
 
 const API = '/api'
 
 const formatDate = (iso) =>
-  iso ? new Date(iso).toLocaleDateString('en-UG', { day: 'numeric', month: 'short', year: 'numeric' }) : '"?'
+  iso ? new Date(iso).toLocaleDateString('en-UG', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
 
 function Skeleton({ className = '' }) {
   return <div className={`bg-slate-700/50 animate-pulse rounded-lg ${className}`} />
@@ -16,36 +18,67 @@ const STATUS_STYLES = {
   submitted: 'bg-amber-500/15 text-amber-400 border-amber-500/25',
   reviewed:  'bg-blue-500/15 text-blue-400 border-blue-500/25',
   approved:  'bg-emerald-500/15 text-emerald-400 border-emerald-500/25',
-  rejected:  'bg-red-500/15 text-red-400 border-red-500/25',
+  returned:  'bg-red-500/15 text-red-400 border-red-500/25',
 }
 
-function ReviewModal({ log, onClose, onSuccess }) {
-  const [comment, setComment] = useState('')
-  const [submitting, setSubmitting] = useState(false)
+const STATUS_LABELS = {
+  draft:     'Draft',
+  submitted: 'Submitted',
+  reviewed:  'Reviewed',
+  approved:  'Approved',
+  returned:  'Returned',
+}
 
-  const handleSubmit = async () => {
-    if (!comment.trim()) { toast.error('Supervisor comment is required.'); return }
+const STATUS_SORT_ORDER = { submitted: 0, reviewed: 1, approved: 2, draft: 3 }
+
+const effectiveStatus = (log) =>
+  log.status === 'draft' && log.supervisor_comment ? 'returned' : log.status
+
+// ─── Review Modal ─────────────────────────────────────────────────────────────
+// Handles submitted logs (review / approve / disapprove)
+// and reviewed logs (approve / disapprove) in one component.
+function ReviewModal({ log, onClose, onSuccess }) {
+  const [comment,    setComment]    = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const isReviewed = log.status === 'reviewed'
+
+  const handleAction = async (action) => {
+    if ((action === 'review' || action === 'disapprove') && !comment.trim()) {
+      toast.error(action === 'review' ? 'A comment is required to review.' : 'A reason is required to disapprove.')
+      return
+    }
     setSubmitting(true)
     try {
-      await fetchWithAuth(`${API}/weeklylogs/logbooks/${log.id}/review/`, {
-        method: 'POST',
-        body: JSON.stringify({ supervisor_comment: comment.trim() }),
-      })
-      toast.success('Log marked as reviewed.')
-      onSuccess(log.id, 'reviewed', comment.trim())
+      const body = { supervisor_comment: comment.trim() }
+      if (action === 'review') {
+        await fetchWithAuth(`${API}/weeklylogs/logbooks/${log.id}/review/`, { method: 'POST', body: JSON.stringify(body) })
+        toast.success('Log marked as reviewed.')
+        onSuccess(log.id, 'reviewed', comment.trim())
+      } else if (action === 'approve') {
+        await fetchWithAuth(`${API}/weeklylogs/logbooks/${log.id}/approve/`, { method: 'POST', body: JSON.stringify(body) })
+        toast.success('Log approved.')
+        onSuccess(log.id, 'approved', comment.trim())
+      } else if (action === 'disapprove') {
+        await fetchWithAuth(`${API}/weeklylogs/logbooks/${log.id}/reject/`, { method: 'POST', body: JSON.stringify(body) })
+        toast.success('Log sent back for revision.')
+        onSuccess(log.id, 'draft', comment.trim())
+      }
       onClose()
-    } catch {
-      toast.error('Failed to review log.')
+    } catch (err) {
+      const msg = err?.detail || err?.message || `Failed to ${action} log.`
+      toast.error(msg)
     } finally { setSubmitting(false) }
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-slate-800 border border-slate-700/50 rounded-2xl w-full max-w-lg shadow-2xl">
-        <div className="flex items-start justify-between p-6 border-b border-slate-700/50">
+      <div className="relative bg-slate-800 border border-slate-700/50 rounded-2xl w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh]">
+        <div className="flex items-start justify-between p-6 border-b border-slate-700/50 flex-shrink-0">
           <div>
-            <h2 className="text-lg font-bold text-white">Review Log "? Week {log.week_number}</h2>
+            <h2 className="text-lg font-bold text-white">
+              {isReviewed ? 'Approve or Disapprove' : 'Review Log'} — Week {log.week_number}
+            </h2>
             <p className="text-slate-400 text-sm mt-0.5">{log.student_name}</p>
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-white transition p-1">
@@ -54,7 +87,8 @@ function ReviewModal({ log, onClose, onSuccess }) {
             </svg>
           </button>
         </div>
-        <div className="p-6 space-y-4">
+
+        <div className="p-6 space-y-4 overflow-y-auto flex-1">
           <div className="bg-slate-700/30 rounded-xl p-4 border border-slate-700/50 space-y-3 max-h-48 overflow-y-auto">
             <div>
               <p className="text-xs text-slate-500 mb-1">Activities</p>
@@ -73,34 +107,72 @@ function ReviewModal({ log, onClose, onSuccess }) {
               </div>
             )}
           </div>
+
+          {log.attachment_url && (
+            <a
+              href={log.attachment_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 px-4 py-3 bg-indigo-600/10 border border-indigo-500/20 rounded-xl hover:bg-indigo-600/20 transition group"
+            >
+              <svg className="w-5 h-5 text-indigo-400 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
+              </svg>
+              <span className="text-sm text-indigo-300 group-hover:text-indigo-200 flex-1 truncate">
+                {decodeURIComponent(log.attachment_url.split('/').pop())}
+              </span>
+              <svg className="w-4 h-4 text-indigo-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+              </svg>
+            </a>
+          )}
+
           <div>
-            <label className="text-xs text-slate-500 uppercase tracking-wider mb-2 block">
-              Supervisor Comment <span className="text-red-400">*</span>
-            </label>
+            <label className="text-xs text-slate-500 uppercase tracking-wider mb-1 block">Supervisor Comment</label>
+            <p className="text-slate-600 text-xs mb-2">
+              {isReviewed
+                ? 'Required when disapproving · Optional when approving'
+                : 'Required when reviewing or disapproving · Optional when approving'}
+            </p>
             <textarea
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               rows={4}
-              placeholder="Enter your review comment..."
+              placeholder="Enter your comment or feedback..."
               className="w-full bg-slate-700/50 border border-slate-600 rounded-xl px-4 py-3 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 resize-none"
             />
           </div>
-          <div className="flex gap-3">
-            <button onClick={onClose}
-              className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-slate-600 text-slate-400 hover:bg-slate-700/50 transition">
-              Cancel
+        </div>
+
+        <div className="flex gap-2 p-6 pt-4 border-t border-slate-700/50 flex-shrink-0 flex-wrap">
+          <button onClick={onClose} disabled={submitting}
+            className="py-2.5 px-4 rounded-xl text-sm font-semibold border border-slate-600 text-slate-400 hover:bg-slate-700/50 transition disabled:opacity-50">
+            Cancel
+          </button>
+          {/* "Review" only shown for submitted logs — reviewed logs already have been reviewed */}
+          {!isReviewed && (
+            <button onClick={() => handleAction('review')} disabled={submitting}
+              className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white transition disabled:opacity-50"
+              title="Add comment and mark as reviewed">
+              {submitting ? '…' : 'Review'}
             </button>
-            <button onClick={handleSubmit} disabled={submitting}
-              className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white transition disabled:opacity-50">
-              {submitting ? 'Submitting...' : 'Submit Review'}
-            </button>
-          </div>
+          )}
+          <button onClick={() => handleAction('approve')} disabled={submitting}
+            className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition disabled:opacity-50"
+            title="Approve this log">
+            {submitting ? '…' : 'Approve'}
+          </button>
+          <button onClick={() => handleAction('disapprove')} disabled={submitting}
+            className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-red-600 hover:bg-red-700 text-white transition disabled:opacity-50">
+            {submitting ? '…' : 'Disapprove'}
+          </button>
         </div>
       </div>
     </div>
   )
 }
 
+// ─── Log Detail Modal (read-only view) ───────────────────────────────────────
 function LogDetailModal({ log, onClose }) {
   if (!log) return null
   return (
@@ -109,7 +181,7 @@ function LogDetailModal({ log, onClose }) {
       <div className="relative bg-slate-800 border border-slate-700/50 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
         <div className="flex items-start justify-between p-6 border-b border-slate-700/50 sticky top-0 bg-slate-800">
           <div>
-            <h2 className="text-lg font-bold text-white">Week {log.week_number} "? {log.student_name}</h2>
+            <h2 className="text-lg font-bold text-white">Week {log.week_number} — {log.student_name}</h2>
             <p className="text-slate-400 text-sm mt-0.5">{log.company}</p>
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-white transition p-1">
@@ -139,7 +211,7 @@ function LogDetailModal({ log, onClose }) {
           </div>
           {log.supervisor_comment && (
             <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
-              <p className="text-xs text-blue-400 mb-1">Supervisor Comment</p>
+              <p className="text-xs text-blue-400 mb-1">Academic Supervisor Comment</p>
               <p className="text-slate-300 text-sm">{log.supervisor_comment}</p>
             </div>
           )}
@@ -154,7 +226,7 @@ function LogDetailModal({ log, onClose }) {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
               </svg>
               <span className="text-sm text-indigo-300 group-hover:text-indigo-200 flex-1 truncate">
-                {log.attachment_url.split('/').pop()}
+                {decodeURIComponent(log.attachment_url.split('/').pop())}
               </span>
               <svg className="w-4 h-4 text-indigo-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
@@ -164,8 +236,8 @@ function LogDetailModal({ log, onClose }) {
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div className="bg-slate-700/30 rounded-xl p-3 border border-slate-700/50">
               <p className="text-xs text-slate-500 mb-1">Status</p>
-              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${STATUS_STYLES[log.status] || STATUS_STYLES.draft}`}>
-                {log.status}
+              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${STATUS_STYLES[effectiveStatus(log)] || STATUS_STYLES.draft}`}>
+                {STATUS_LABELS[effectiveStatus(log)] || log.status}
               </span>
             </div>
             <div className="bg-slate-700/30 rounded-xl p-3 border border-slate-700/50">
@@ -184,20 +256,25 @@ function LogDetailModal({ log, onClose }) {
 }
 
 export default function AcademicLogsPage() {
-  const [logs, setLogs] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState('')
+  const navigate = useNavigate()
+  const [logs,       setLogs]       = useState([])
+  const [evalByLog,  setEvalByLog]  = useState({})   // logId → eval
+  const [loading,    setLoading]    = useState(true)
+  const [search,     setSearch]     = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
-  const [reviewLog, setReviewLog] = useState(null)
-  const [detailLog, setDetailLog] = useState(null)
+  const [reviewLog,    setReviewLog]    = useState(null)
+  const [detailLog,    setDetailLog]    = useState(null)
+
+  const [evaluatedPlacements, setEvaluatedPlacements] = useState(new Set())
 
   useEffect(() => {
     const fetchAll = async () => {
       setLoading(true)
       try {
-        const [logsData, placementsData] = await Promise.all([
+        const [logsData, placementsData, evalsData] = await Promise.all([
           fetchWithAuth(`${API}/weeklylogs/logbooks/`).catch(() => []),
           fetchWithAuth(`${API}/placements/`).catch(() => []),
+          fetchWithAuth(`${API}/evaluations/evaluations/`).catch(() => []),
         ])
         const pm = Object.fromEntries(
           (Array.isArray(placementsData) ? placementsData : []).map(p => [p.id, p])
@@ -205,10 +282,23 @@ export default function AcademicLogsPage() {
         setLogs(
           (Array.isArray(logsData) ? logsData : []).map(l => ({
             ...l,
-            student_name: pm[l.placement]?.student_name || `Placement #${l.placement}`,
-            company: pm[l.placement]?.company_name || '"?',
+            student_name: capName(pm[l.placement]?.student_name || `Placement #${l.placement}`),
+            company: pm[l.placement]?.company_name || '—',
           }))
         )
+        // Per-log evaluation map (for "Evaluate →" button on approved logs)
+        const logEvalMap = {}
+        ;(Array.isArray(evalsData) ? evalsData : []).forEach(e => {
+          if (e.log != null) logEvalMap[e.log] = e
+        })
+        setEvalByLog(logEvalMap)
+
+        // Placement-level evaluated set (gates the Approve button)
+        setEvaluatedPlacements(new Set(
+          (Array.isArray(evalsData) ? evalsData : [])
+            .filter(e => e.status === 'SUBMITTED')
+            .map(e => e.placement)
+        ))
       } catch {
         toast.error('Failed to load logs.')
       } finally { setLoading(false) }
@@ -217,33 +307,62 @@ export default function AcademicLogsPage() {
   }, [])
 
   const handleStatusUpdate = (id, newStatus, comment) => {
+    const log = logs.find(l => l.id === id)
     setLogs(prev => prev.map(l =>
       l.id === id ? { ...l, status: newStatus, supervisor_comment: comment || l.supervisor_comment } : l
     ))
+    if (newStatus === 'approved') {
+      // Show inline Evaluate prompt as a toast
+      toast.info(
+        <div>
+          <p className="font-semibold text-sm">Log approved!</p>
+          <p className="text-xs mt-0.5 mb-2">
+            Award marks for <span className="font-semibold">{log?.student_name || 'this student'}</span> now.
+          </p>
+          <button onClick={() => navigate('/academic/evaluations')} className="text-xs font-bold underline">
+            Go to Evaluations →
+          </button>
+        </div>,
+        { autoClose: 6000 }
+      )
+    }
   }
 
-  const handleApprove = async (log) => {
+  const handleDirectApprove = async (log) => {
     try {
       await fetchWithAuth(`${API}/weeklylogs/logbooks/${log.id}/approve/`, { method: 'POST' })
-      toast.success('Log approved.')
       handleStatusUpdate(log.id, 'approved', '')
     } catch {
       toast.error('Failed to approve log.')
     }
   }
 
-  const total     = logs.length
-  const submitted = logs.filter(l => l.status === 'submitted').length
-  const reviewed  = logs.filter(l => l.status === 'reviewed').length
-  const approved  = logs.filter(l => l.status === 'approved').length
+  // Stats
+  const total            = logs.length
+  const submitted        = logs.filter(l => l.status === 'submitted').length
+  const awaitingApproval = logs.filter(l => l.status === 'reviewed').length   // currently in reviewed state only
+  const approved         = logs.filter(l => l.status === 'approved').length
+  const disapproved      = logs.filter(l => l.status === 'draft' && l.supervisor_comment).length
 
-  const filtered = logs.filter((l) => {
-    const matchStatus = statusFilter === 'all' || l.status === statusFilter
-    const matchSearch = search === '' ||
-      l.student_name.toLowerCase().includes(search.toLowerCase()) ||
-      l.company.toLowerCase().includes(search.toLowerCase())
-    return matchStatus && matchSearch
-  })
+  // Filter + sort
+  const filtered = logs
+    .filter((l) => {
+      const matchStatus =
+        statusFilter === 'all'         ? true :
+        statusFilter === 'disapproved' ? l.status === 'draft' && l.supervisor_comment :
+                                         l.status === statusFilter
+      const matchSearch = search === '' ||
+        l.student_name.toLowerCase().includes(search.toLowerCase()) ||
+        l.company.toLowerCase().includes(search.toLowerCase())
+      return matchStatus && matchSearch
+    })
+    .sort((a, b) => {
+      const pa = STATUS_SORT_ORDER[a.status] ?? 3
+      const pb = STATUS_SORT_ORDER[b.status] ?? 3
+      if (pa !== pb) return pa - pb
+      // Secondary: newest submission first within the same status
+      return new Date(b.submitted_at || 0) - new Date(a.submitted_at || 0)
+    })
 
   return (
     <div className="space-y-6">
@@ -259,12 +378,14 @@ export default function AcademicLogsPage() {
         <p className="text-sm text-slate-400 mt-1">Review and approve weekly logs from your assigned students</p>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Stats — "Awaiting Approval" shows only currently-reviewed logs */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         {[
-          { label: 'Total Logs', value: total,     color: 'text-white',       bg: 'bg-slate-800/50 border-slate-700/50'    },
-          { label: 'Submitted',  value: submitted,  color: 'text-amber-400',   bg: 'bg-amber-500/10 border-amber-500/20'    },
-          { label: 'Reviewed',   value: reviewed,   color: 'text-blue-400',    bg: 'bg-blue-500/10 border-blue-500/20'      },
-          { label: 'Approved',   value: approved,   color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20'},
+          { label: 'Total Logs',        value: total,           color: 'text-white',       bg: 'bg-slate-800/50 border-slate-700/50'     },
+          { label: 'Submitted',         value: submitted,       color: 'text-amber-400',   bg: 'bg-amber-500/10 border-amber-500/20'     },
+          { label: 'Awaiting Approval', value: awaitingApproval, color: 'text-blue-400',   bg: 'bg-blue-500/10 border-blue-500/20'       },
+          { label: 'Approved',          value: approved,        color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
+          { label: 'Disapproved',       value: disapproved,     color: 'text-red-400',     bg: 'bg-red-500/10 border-red-500/20'         },
         ].map(({ label, value, color, bg }) => (
           <div key={label} className={`rounded-2xl p-5 border ${bg}`}>
             <p className="text-slate-400 text-xs uppercase tracking-wider mb-2">{label}</p>
@@ -273,6 +394,7 @@ export default function AcademicLogsPage() {
         ))}
       </div>
 
+      {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"
@@ -286,10 +408,11 @@ export default function AcademicLogsPage() {
         </div>
         <div className="flex gap-2 flex-wrap">
           {[
-            { key: 'all',       label: 'All'       },
-            { key: 'submitted', label: 'Submitted' },
-            { key: 'reviewed',  label: 'Reviewed'  },
-            { key: 'approved',  label: 'Approved'  },
+            { key: 'all',          label: 'All'         },
+            { key: 'submitted',    label: 'Submitted'   },
+            { key: 'reviewed',     label: 'Reviewed'    },
+            { key: 'approved',     label: 'Approved'    },
+            { key: 'disapproved',  label: 'Disapproved' },
           ].map(({ key, label }) => (
             <button key={key} onClick={() => setStatusFilter(key)}
               className={`px-4 py-2.5 rounded-xl text-sm font-medium transition ${
@@ -303,6 +426,7 @@ export default function AcademicLogsPage() {
         </div>
       </div>
 
+      {/* Table */}
       <div className="bg-slate-800/30 border border-slate-700/50 rounded-2xl overflow-hidden">
         {loading ? (
           <div className="p-6 space-y-3">
@@ -341,30 +465,80 @@ export default function AcademicLogsPage() {
                       <span className="text-slate-300 text-sm font-medium">Week {log.week_number}</span>
                     </td>
                     <td className="px-5 py-4">
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border capitalize ${STATUS_STYLES[log.status] || STATUS_STYLES.draft}`}>
-                        {log.status}
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${STATUS_STYLES[effectiveStatus(log)] || STATUS_STYLES.draft}`}>
+                        {STATUS_LABELS[effectiveStatus(log)] || log.status}
                       </span>
                     </td>
                     <td className="px-5 py-4">
                       <p className="text-slate-500 text-xs">{formatDate(log.submitted_at)}</p>
                     </td>
                     <td className="px-5 py-4">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+
+                        {/* View — always available */}
                         <button onClick={() => setDetailLog(log)}
                           className="px-3 py-1.5 bg-slate-700/50 hover:bg-slate-700 text-slate-300 border border-slate-600 rounded-lg text-xs font-medium transition">
                           View
                         </button>
+
+                        {/* Submitted: open ReviewModal (review / approve / disapprove) */}
                         {log.status === 'submitted' && (
                           <button onClick={() => setReviewLog(log)}
                             className="px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 border border-blue-500/30 rounded-lg text-xs font-medium transition">
                             Review
                           </button>
                         )}
-                        {log.status === 'reviewed' && (
-                          <button onClick={() => handleApprove(log)}
-                            className="px-3 py-1.5 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/30 rounded-lg text-xs font-medium transition">
-                            Approve
-                          </button>
+
+                        {/* Reviewed: open ReviewModal (approve / disapprove) */}
+                        {log.status === 'reviewed' && (() => {
+                          const canApprove = evaluatedPlacements.has(log.placement)
+                          return (
+                            <>
+                              <div className="relative group">
+                                <button
+                                  onClick={() => canApprove && handleDirectApprove(log)}
+                                  disabled={!canApprove}
+                                  className={`px-3 py-1.5 border rounded-lg text-xs font-medium transition ${
+                                    canApprove
+                                      ? 'bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border-emerald-500/30'
+                                      : 'bg-slate-700/30 text-slate-500 border-slate-600/30 cursor-not-allowed'
+                                  }`}>
+                                  Approve
+                                </button>
+                                {!canApprove && (
+                                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-slate-900 border border-slate-700 text-slate-300 text-xs rounded-lg px-3 py-2 opacity-0 group-hover:opacity-100 transition pointer-events-none z-10 text-center">
+                                    Submit an evaluation for this student first
+                                  </div>
+                                )}
+                              </div>
+                              <button onClick={() => setReviewLog(log)}
+                                className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg text-xs font-medium transition">
+                                Disapprove
+                              </button>
+                            </>
+                          )
+                        })()}
+
+                        {/* Approved: show Evaluate → if not yet scored, or Evaluated ✓ if done */}
+                        {log.status === 'approved' && (
+                          evalByLog[log.id]?.status === 'SUBMITTED' ? (
+                            <span className="flex items-center gap-1 text-emerald-400 text-xs font-medium px-2 py-1">
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
+                              </svg>
+                              Evaluated
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => navigate('/academic/evaluations')}
+                              className="px-3 py-1.5 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-400 border border-indigo-500/30 rounded-lg text-xs font-medium transition flex items-center gap-1"
+                            >
+                              Evaluate
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/>
+                              </svg>
+                            </button>
+                          )
                         )}
                       </div>
                     </td>
@@ -376,10 +550,9 @@ export default function AcademicLogsPage() {
         )}
         <div className="px-5 py-3 border-t border-slate-700/50 flex items-center justify-between">
           <p className="text-slate-500 text-xs">Showing {filtered.length} of {total} logs</p>
-          <p className="text-slate-500 text-xs">{submitted} pending review x {reviewed} awaiting approval</p>
+          <p className="text-slate-500 text-xs">{submitted} awaiting review · {awaitingApproval} awaiting approval</p>
         </div>
       </div>
     </div>
   )
 }
-

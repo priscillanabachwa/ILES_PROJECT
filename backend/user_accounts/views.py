@@ -1,21 +1,15 @@
-from django.shortcuts import render
 from rest_framework import permissions, viewsets, status
 from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
-from django.shortcuts import render
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny 
-from rest_framework.response import Response
-from rest_framework import status, viewsets, permissions
+from rest_framework.permissions import AllowAny
 from django.core.cache import cache
 from django.core.mail import send_mail
 from django.conf import settings
 from .utils import generate_reset_code
 
 from .models import CustomUser, Notification
-from .serializers import CustomUserSerializer, LoginSerializer, NotificationSerializer
-
+from .serializers import CustomUserSerializer, NotificationSerializer
 
 class CustomUserViewSet(viewsets.ModelViewSet):
     """API endpoint for managing custom users."""
@@ -29,6 +23,26 @@ class CustomUserViewSet(viewsets.ModelViewSet):
             qs = qs.filter(role=role)
         return qs
 
+    def destroy(self, request, *args, **kwargs):
+        if getattr(request.user, 'role', None) != 'admin':
+            return Response({'detail': 'Only administrators can delete users.'}, status=status.HTTP_403_FORBIDDEN)
+        instance = self.get_object()
+        if instance.id == request.user.id:
+            return Response({'detail': 'You cannot delete your own account.'}, status=status.HTTP_400_BAD_REQUEST)
+        instance.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=True, methods=['post'], url_path='toggle-active')
+    def toggle_active(self, request, pk=None):
+        if getattr(request.user, 'role', None) != 'admin':
+            return Response({'detail': 'Only administrators can activate or deactivate users.'}, status=status.HTTP_403_FORBIDDEN)
+        instance = self.get_object()
+        if instance.id == request.user.id:
+            return Response({'detail': 'You cannot deactivate your own account.'}, status=status.HTTP_400_BAD_REQUEST)
+        instance.is_active = not instance.is_active
+        instance.save(update_fields=['is_active'])
+        state = 'activated' if instance.is_active else 'deactivated'
+        return Response({'detail': f'User {state} successfully.', 'is_active': instance.is_active})
 
 class NotificationViewSet(viewsets.GenericViewSet):
     """List, mark-read, delete, and filter notifications for the logged-in user."""
@@ -93,7 +107,6 @@ class NotificationViewSet(viewsets.GenericViewSet):
         Notification.objects.filter(user=request.user).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def login_view(request):
@@ -114,7 +127,6 @@ def login_view(request):
             status=status.HTTP_401_UNAUTHORIZED
         )
 
-    # ✅ This correctly checks Django-hashed passwords
     if not user.check_password(password):
         return Response(
             {'detail': 'Invalid email or password.'},
@@ -136,13 +148,9 @@ def login_view(request):
             'email': user.email,
             'first_name': user.first_name,
             'last_name': user.last_name,
-            # ✅ Make sure this field exists on your User model
-            # Common values: 'student', 'admin', 'academic_supervisor', 'workplace_supervisor'
             'role': user.role,
         }
     })
-
-
 
 @api_view(['POST'])
 @permission_classes([permissions.AllowAny])
@@ -153,10 +161,8 @@ def register_view(request):
     if serializer.is_valid():
         user = serializer.save()
         
-        # Get or create authentication token for the new user
         token, created = Token.objects.get_or_create(user=user)
         
-        # Serialize user data
         user_serializer = CustomUserSerializer(user)
         
         return Response({
@@ -165,10 +171,6 @@ def register_view(request):
         }, status=status.HTTP_201_CREATED)
     
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-# ==================== PASSWORD RECOVERY ENDPOINTS =====================
-
 
 @api_view(['POST'])
 @permission_classes([permissions.AllowAny])
@@ -187,7 +189,6 @@ def password_reset_request(request):
     try:
         user = CustomUser.objects.get(email=email)
     except CustomUser.DoesNotExist:
-        # Don't reveal whether the email exists
         return Response(
             {'detail': 'If an account with that email exists, a recovery code has been sent.'},
             status=status.HTTP_200_OK
@@ -197,7 +198,6 @@ def password_reset_request(request):
     cache_key = f'password_reset_{email}'
     cache.set(cache_key, recovery_code, timeout=900)
 
-    # Always log the code so it's visible in Django console (helpful in development)
     logger.warning(f'[PASSWORD RESET] Code for {email}: {recovery_code}')
     print(f'[PASSWORD RESET] Code for {email}: {recovery_code}')
 
@@ -232,7 +232,6 @@ def password_reset_request(request):
         status=status.HTTP_200_OK
     )
 
-
 @api_view(['POST'])
 @permission_classes([permissions.AllowAny])
 def verify_reset_code(request):
@@ -261,20 +260,18 @@ def verify_reset_code(request):
         )
 
     verify_key = f'password_reset_verified_{email}'
-    cache.set(verify_key, True, timeout=900)  # 15 minutes
+    cache.set(verify_key, True, timeout=900)
     
     return Response(
         {'message': 'Code verified successfully'},
         status=status.HTTP_200_OK
     )
 
-
 @api_view(['POST'])
 @permission_classes([permissions.AllowAny])
 def password_reset_confirm(request):
     email = request.data.get('email')
     new_password = request.data.get('new_password')
-
 
     if not all([email, new_password]):
         return Response(
@@ -292,7 +289,6 @@ def password_reset_confirm(request):
     
     try:
         user = CustomUser.objects.get(email=email)
-        # Store password as plain text (no hashing)
         user.set_password(new_password)
         user.save() 
 
@@ -326,5 +322,4 @@ ILES System
             status=status.HTTP_404_NOT_FOUND
         )
     
-
 

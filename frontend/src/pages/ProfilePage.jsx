@@ -9,12 +9,12 @@ const ROLE_CONFIG = {
     badge: 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30',
     subtitle: 'Your details are visible to your assigned supervisors',
     fields: [
-      { key: 'first_name',   label: 'First Name',  type: 'text', maxLength: 150 },
-      { key: 'last_name',    label: 'Last Name',   type: 'text', maxLength: 150 },
-      { key: 'phone_number', label: 'Phone',        type: 'tel',  hint: 'e.g. +256 700 000 000' },
-      { key: 'institution',  label: 'Institution',  type: 'text' },
-      { key: 'department',   label: 'Department',   type: 'text' },
-      { key: 'student_id',   label: 'Student ID',   type: 'text' },
+      { key: 'first_name',   label: 'First Name',   type: 'text', maxLength: 150 },
+      { key: 'last_name',    label: 'Last Name',    type: 'text', maxLength: 150 },
+      { key: 'phone_number', label: 'Phone',         type: 'tel'  },
+      { key: 'institution',  label: 'Institution',   type: 'text' },
+      { key: 'department',   label: 'Course Name',   type: 'text' },
+      { key: 'student_id',   label: 'Student ID',    type: 'text' },
     ],
   },
   workplace_supervisor: {
@@ -24,7 +24,7 @@ const ROLE_CONFIG = {
     fields: [
       { key: 'first_name',   label: 'First Name',   type: 'text', maxLength: 150 },
       { key: 'last_name',    label: 'Last Name',    type: 'text', maxLength: 150 },
-      { key: 'phone_number', label: 'Phone',         type: 'tel',  hint: 'e.g. +256 700 000 000' },
+      { key: 'phone_number', label: 'Phone',         type: 'tel'  },
       { key: 'organisation', label: 'Organisation',  type: 'text' },
       { key: 'department',   label: 'Department',    type: 'text' },
       { key: 'job_title',    label: 'Job Title',     type: 'text' },
@@ -37,7 +37,7 @@ const ROLE_CONFIG = {
     fields: [
       { key: 'first_name',   label: 'First Name',  type: 'text', maxLength: 150 },
       { key: 'last_name',    label: 'Last Name',   type: 'text', maxLength: 150 },
-      { key: 'phone_number', label: 'Phone',        type: 'tel',  hint: 'e.g. +256 700 000 000' },
+      { key: 'phone_number', label: 'Phone',        type: 'tel'  },
       { key: 'institution',  label: 'Institution',  type: 'text' },
       { key: 'faculty',      label: 'Faculty',      type: 'text' },
       { key: 'staff_id',     label: 'Staff ID',     type: 'text' },
@@ -50,13 +50,18 @@ const ROLE_CONFIG = {
     fields: [
       { key: 'first_name',   label: 'First Name',  type: 'text', maxLength: 150 },
       { key: 'last_name',    label: 'Last Name',   type: 'text', maxLength: 150 },
-      { key: 'phone_number', label: 'Phone',        type: 'tel',  hint: 'e.g. +256 700 000 000' },
+      { key: 'phone_number', label: 'Phone',        type: 'tel'  },
     ],
   },
 }
 
 const validators = {
-  phone_number: (v) => v && !/^\+?[0-9\s]{7,15}$/.test(v) ? 'Enter a valid phone number' : '',
+  phone_number: (v) => {
+    if (!v) return ''
+    const digits = v.replace(/^\+256/, '')
+    if (!/^[0-9]{9}$/.test(digits)) return 'Enter exactly 9 digits after +256'
+    return ''
+  },
 }
 
 const validateField = (key, value) => validators[key]?.(value) || ''
@@ -64,7 +69,7 @@ const validateField = (key, value) => validators[key]?.(value) || ''
 const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '')
 
 const getFullName = (user) =>
-  [user?.first_name, user?.last_name].filter(Boolean).map(cap).join(' ') || 'N/A'
+  [user?.first_name, user?.last_name].filter(Boolean).map(cap).join(' ') || '—'
 
 const PencilIcon = ({ className = 'w-3.5 h-3.5' }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -80,7 +85,7 @@ const AVATAR_BG = {
   admin:                'bg-rose-600',
 }
 
-function Avatar({ user, preview, onSelect, editMode }) {
+function Avatar({ user, preview, onSelect, onFileSelect, editMode }) {
   const inputRef = useRef()
   const bg  = AVATAR_BG[user?.role] || 'bg-slate-600'
   const src = preview || user?.profile_picture || null
@@ -102,7 +107,13 @@ function Avatar({ user, preview, onSelect, editMode }) {
         </button>
       )}
       <input ref={inputRef} type="file" accept="image/*" className="hidden"
-        onChange={(e) => { const file = e.target.files?.[0]; if (file) onSelect(URL.createObjectURL(file)) }} />
+        onChange={(e) => {
+          const file = e.target.files?.[0]
+          if (file) {
+            onSelect(URL.createObjectURL(file))
+            onFileSelect?.(file)
+          }
+        }} />
     </div>
   )
 }
@@ -147,6 +158,7 @@ export default function ProfilePage() {
 
   const [form, setForm]               = useState(buildInitial())
   const [avatarPreview, setAvatar]    = useState(null)
+  const [avatarFile, setAvatarFile]   = useState(null)
   const [fieldErrors, setFieldErrors] = useState({})
   const [saving, setSaving]           = useState(false)
   const [editMode, setEditMode]       = useState(false)
@@ -166,6 +178,7 @@ export default function ProfilePage() {
   const handleCancelEdit = () => {
     setForm(buildInitial())
     setAvatar(null)
+    setAvatarFile(null)
     setFieldErrors({})
     setEditMode(false)
   }
@@ -181,15 +194,32 @@ export default function ProfilePage() {
     if (Object.keys(errs).length) { setFieldErrors(errs); return }
     setSaving(true)
     try {
-      // Only send fields that actually exist in the backend CustomUser model
+      // Step 1: save text fields as JSON
       const updatedData = Object.fromEntries(
         UPDATABLE_FIELDS.map(key => [key, form[key] || ''])
       )
-      const response = await updateUserProfile(updatedData)
+      let finalData = await updateUserProfile(updatedData)
+
+      // Step 2: upload profile picture if a new file was selected
+      if (avatarFile && user?.id) {
+        const formData = new FormData()
+        formData.append('profile_picture', avatarFile)
+        const token = getAuthToken()
+        const picRes = await fetch(`/api/accounts/users/${user.id}/`, {
+          method: 'PATCH',
+          headers: { Authorization: `Token ${token}` },
+          body: formData,
+        })
+        if (picRes.ok) {
+          finalData = await picRes.json()
+        }
+      }
+
       const token = getAuthToken()
-      login({ ...user, ...response }, token)
+      login({ ...user, ...finalData }, token)
       toast.success('Profile updated successfully.')
       setAvatar(null)
+      setAvatarFile(null)
       setEditMode(false)
     } catch (err) {
       toast.error(err.message || 'Failed to update profile. Please try again.')
@@ -219,9 +249,8 @@ export default function ProfilePage() {
 
       <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 space-y-5">
 
-        {/* Identity strip */}
         <div className="flex items-center gap-4 pb-5 border-b border-slate-700/50">
-          <Avatar user={user} preview={avatarPreview} onSelect={setAvatar} editMode={editMode} />
+          <Avatar user={user} preview={avatarPreview} onSelect={setAvatar} onFileSelect={setAvatarFile} editMode={editMode} />
           <div className="flex-1 min-w-0">
             <p className="text-lg font-bold text-white truncate">{displayName}</p>
             <p className="text-slate-400 text-sm truncate">{user?.email}</p>
@@ -239,7 +268,6 @@ export default function ProfilePage() {
 
         <SectionDivider title="Profile Details" subtitle={editMode ? 'Make your changes below then save' : undefined} />
 
-        {/* VIEW MODE */}
         {!editMode && (
           <div className="grid grid-cols-2 gap-x-8 gap-y-5">
             {config.fields.map(({ key, label }) => {
@@ -250,20 +278,41 @@ export default function ProfilePage() {
           </div>
         )}
 
-        {/* EDIT MODE */}
         {editMode && (
           <div className="space-y-4">
-            {config.fields.map(({ key, label, type, hint, maxLength }) => (
-              <Field key={key} label={label} error={fieldErrors[key]} hint={hint}>
-                <input type={type || 'text'} className={inputCls(fieldErrors[key])}
-                  value={form[key]} onChange={set(key)} maxLength={maxLength} />
-                {maxLength && (
-                  <p className="text-right text-xs text-slate-600 mt-0.5">{(form[key] || '').length}/{maxLength}</p>
+            {config.fields.map(({ key, label, type, maxLength }) => (
+              <Field key={key} label={label} error={fieldErrors[key]}>
+                {key === 'phone_number' ? (
+                  <div className={`flex items-center rounded-lg border overflow-hidden transition
+                    ${fieldErrors[key] ? 'border-red-500/50' : 'border-slate-600 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20'}`}>
+                    <span className="px-3 py-2 text-sm font-semibold text-slate-300 bg-slate-600/60 border-r border-slate-600 select-none whitespace-nowrap">
+                      +256
+                    </span>
+                    <input
+                      type="tel"
+                      inputMode="numeric"
+                      maxLength={9}
+                      placeholder="700 000 000"
+                      className="flex-1 px-3 py-2 text-sm outline-none bg-slate-700/50 text-white placeholder-slate-500"
+                      value={(form.phone_number || '').replace(/^\+256/, '')}
+                      onChange={(e) => {
+                        const digits = e.target.value.replace(/\D/g, '').slice(0, 9)
+                        setForm(f => ({ ...f, phone_number: digits ? `+256${digits}` : '' }))
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <input type={type || 'text'} className={inputCls(fieldErrors[key])}
+                      value={form[key]} onChange={set(key)} maxLength={maxLength} />
+                    {maxLength && (
+                      <p className="text-right text-xs text-slate-600 mt-0.5">{(form[key] || '').length}/{maxLength}</p>
+                    )}
+                  </>
                 )}
               </Field>
             ))}
 
-            {/* Save / Cancel */}
             <div className="flex gap-3 pt-1">
               <button onClick={handleCancelEdit}
                 className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-slate-600 text-slate-400 hover:bg-slate-700/50 transition">

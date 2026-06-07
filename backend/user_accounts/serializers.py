@@ -1,7 +1,5 @@
 from rest_framework import serializers
-from django.contrib.auth import authenticate
-from .models import CustomUserManager, CustomUser, Notification
-
+from .models import CustomUser, Notification
 
 class CustomUserSerializer(serializers.ModelSerializer):
 
@@ -44,14 +42,12 @@ class CustomUserSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "is_staff", "is_superuser", "is_active"]
 
     def validate(self, attrs):
-        # Password is required only during creation
         if not self.instance and not attrs.get('password'):
             raise serializers.ValidationError({"password": "Password is required for new users."})
         return attrs
 
     def validate_email(self, value):
         value = value.lower()
-        # Only check for duplicates if it's a new user or the email is being changed
         if self.instance is None or self.instance.email != value:
             if CustomUser.objects.filter(email=value).exclude(id=self.instance.id if self.instance else None).exists():
                 raise serializers.ValidationError("A user with this email already exists.")
@@ -64,7 +60,6 @@ class CustomUserSerializer(serializers.ModelSerializer):
         return value
 
     def validate_password(self, value):
-        # Password is optional, but if provided, must be min 8 chars
         if value and len(value) < 8:
             raise serializers.ValidationError("Password must be at least 8 characters long.")
         return value
@@ -72,21 +67,18 @@ class CustomUserSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         password = validated_data.pop("password")
         email = validated_data.pop("email")
-        # Use manager to ensure default fields and proper creation (password stored as plain text)
         user = CustomUser.objects.create_user(email=email, password=password, **validated_data)
         return user
 
     def update(self, instance, validated_data):
         password = validated_data.pop("password", None)
-        # Avoid changing sensitive flags via this serializer
         validated_data.pop("is_staff", None)
         validated_data.pop("is_superuser", None)
 
         instance = super().update(instance,validated_data)
         
         if password:
-            # Store password as plain text (no hashing)
-            instance.password = password
+            instance.set_password(password)
             instance.save()
         return instance
 
@@ -100,36 +92,8 @@ class CustomUserSerializer(serializers.ModelSerializer):
                 pic_url = request.build_absolute_uri(pic_url)
             pic = pic_url
         rep["profile_picture"] = pic
-        # Do not include password in representations
         rep.pop("password", None)
         return rep
-
-class LoginSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-    password = serializers.CharField(style={'input_type': 'password'}, trim_whitespace=False)
-
-    def validate(self, attrs):
-        email = attrs.get('email')
-        password = attrs.get('password')
-        
-        if email and password:
-            # Query user by email and compare plain text password
-            try:
-                user = CustomUser.objects.get(email=email)
-                # Compare plain text passwords
-                if user.password != password:
-                    msg = 'Unable to log in with provided credentials.'
-                    raise serializers.ValidationError(msg, code='authorization')
-            except CustomUser.DoesNotExist:
-                msg = 'Unable to log in with provided credentials.'
-                raise serializers.ValidationError(msg, code='authorization')
-        else:
-            msg = 'Must include "email" and "password".'
-            raise serializers.ValidationError(msg, code='authorization')
-
-        attrs['user'] = user
-        return attrs
-
 
 class NotificationSerializer(serializers.ModelSerializer):
     class Meta:

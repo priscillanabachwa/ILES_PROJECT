@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { fetchWithAuth } from '../services/authService'
 import dashboardService from '../services/dashboardService'
+import { useAuth } from '../Context/AuthContext'
 
 const API = '/api'
 
@@ -164,7 +165,7 @@ function UserDetailModal({ user, onClose, onResetPassword }) {
                 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
                 : 'bg-slate-500/20 text-slate-400 border-slate-500/30'
             }`}>
-              {user.is_active !== false ? '?N/A? Active' : '?N/A? Inactive'}
+              {user.is_active !== false ? 'Active' : 'Inactive'}
             </span>
           </div>
           <div className="bg-slate-700/30 rounded-xl p-4 border border-slate-700/50 space-y-3">
@@ -236,7 +237,6 @@ function PlacementsTab({ placements, setPlacements, loadingPlacements }) {
 
   return (
     <div className="space-y-4">
-      {/* Stat pills */}
       <div className="grid grid-cols-4 gap-3">
         {[
           { key:'all',       label:'Total',     color:'text-white'       },
@@ -251,7 +251,6 @@ function PlacementsTab({ placements, setPlacements, loadingPlacements }) {
         ))}
       </div>
 
-      {/* Filters */}
       <div className="flex items-center gap-3 flex-wrap">
         <div className="flex items-center gap-1 bg-slate-800/50 border border-slate-700/50 rounded-xl p-1 flex-1">
           {['all','ACTIVE','PENDING','COMPLETED'].map((s) => (
@@ -262,15 +261,14 @@ function PlacementsTab({ placements, setPlacements, loadingPlacements }) {
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-2 bg-slate-800/50 border border-slate-700/50 rounded-xl px-3 py-2 flex-1 min-w-[200px]">
-          <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <label className="flex items-center gap-2 bg-slate-800/50 border border-slate-700/50 rounded-xl px-3 py-2 flex-1 min-w-[200px] cursor-text">
+          <svg className="w-4 h-4 text-slate-500 flex-shrink-0 pointer-events-none" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
           <input type="text" placeholder="Search student or company..." value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="bg-transparent outline-none text-sm text-slate-300 placeholder-slate-600 w-full" />
-        </div>
+        </label>
       </div>
 
-      {/* Table */}
       <div className="bg-slate-800/30 border border-slate-700/50 rounded-2xl overflow-hidden">
         {loadingPlacements ? <TableSkeleton cols={6} /> : (
           <div className="overflow-x-auto">
@@ -293,10 +291,10 @@ function PlacementsTab({ placements, setPlacements, loadingPlacements }) {
                         <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
                           {getNameInitials(p.student_name)}
                         </div>
-                        <p className="text-white text-sm font-semibold">{p.student_name || '"?'}</p>
+                        <p className="text-white text-sm font-semibold">{p.student_name || '—'}</p>
                       </div>
                     </td>
-                    <td className="px-4 py-4"><p className="text-slate-300 text-sm">{p.company_name || '"?'}</p></td>
+                    <td className="px-4 py-4"><p className="text-slate-300 text-sm">{p.company_name || '—'}</p></td>
                     <td className="px-4 py-4">
                       <p className="text-slate-400 text-xs truncate max-w-[100px]">
                         {p.academic_supervisor_name || <span className="text-red-400 italic">None</span>}
@@ -334,8 +332,52 @@ function PlacementsTab({ placements, setPlacements, loadingPlacements }) {
   )
 }
 
+function DeleteConfirmModal({ user, onClose, onConfirm, deleting }) {
+  if (!user) return null
+  const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-slate-800 border border-slate-700/50 rounded-2xl w-full max-w-sm shadow-2xl">
+        <div className="p-6 space-y-4">
+          <div className="w-12 h-12 rounded-full bg-red-500/15 border border-red-500/30 flex items-center justify-center mx-auto">
+            <svg className="w-6 h-6 text-red-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round"
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+            </svg>
+          </div>
+          <div className="text-center">
+            <p className="text-white font-bold text-lg">Delete User</p>
+            <p className="text-slate-400 text-sm mt-1">
+              Are you sure you want to permanently delete <span className="text-white font-semibold">{fullName}</span>?
+            </p>
+            <p className="text-slate-500 text-xs mt-2">This action cannot be undone.</p>
+          </div>
+          <div className="flex gap-3 pt-1">
+            <button
+              onClick={onClose}
+              disabled={deleting}
+              className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-slate-600 text-slate-400 hover:bg-slate-700/50 disabled:opacity-50 transition"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onConfirm}
+              disabled={deleting}
+              className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-red-600 hover:bg-red-700 text-white disabled:opacity-50 transition"
+            >
+              {deleting ? 'Deleting...' : 'Delete'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function AdminUsersPage() {
   const [searchParams] = useSearchParams()
+  const { user: currentUser } = useAuth()
 
   const [users,            setUsers]            = useState([])
   const [placements,       setPlacements]       = useState([])
@@ -346,14 +388,14 @@ export default function AdminUsersPage() {
   const [statusFilter,     setStatusFilter]     = useState('all')
   const [selectedUser,     setSelectedUser]     = useState(null)
   const [showRegister,     setShowRegister]     = useState(false)
+  const [userToDelete,     setUserToDelete]     = useState(null)
+  const [deleting,         setDeleting]         = useState(false)
 
   useEffect(() => {
-    // Fetch users
     fetchWithAuth(`${API}/accounts/users/`)
       .then(data => setUsers(Array.isArray(data) ? data : []))
       .catch(() => toast.error('Failed to load users.'))
       .finally(() => setLoadingUsers(false))
-    // Fetch placements
     fetchWithAuth(`${API}/placements/`)
       .then(data => setPlacements(Array.isArray(data) ? data : []))
       .catch(() => {})
@@ -395,6 +437,34 @@ export default function AdminUsersPage() {
     }
   }
 
+  const handleToggleActive = async (u) => {
+    const action = u.is_active !== false ? 'deactivate' : 'activate'
+    try {
+      const res = await fetchWithAuth(`${API}/accounts/users/${u.id}/toggle-active/`, { method: 'POST' })
+      setUsers(prev => prev.map(usr => usr.id === u.id ? { ...usr, is_active: res.is_active } : usr))
+      const name = `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email
+      toast.success(`${name} has been ${res.is_active ? 'activated' : 'deactivated'}.`)
+    } catch (err) {
+      toast.error(err.message || `Failed to ${action} user.`)
+    }
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!userToDelete) return
+    setDeleting(true)
+    try {
+      await fetchWithAuth(`${API}/accounts/users/${userToDelete.id}/`, { method: 'DELETE' })
+      setUsers(prev => prev.filter(u => u.id !== userToDelete.id))
+      const name = `${userToDelete.first_name || ''} ${userToDelete.last_name || ''}`.trim() || userToDelete.email
+      toast.success(`${name} has been deleted.`)
+      setUserToDelete(null)
+    } catch (err) {
+      toast.error(err.message || 'Failed to delete user.')
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   const ROLE_FILTERS = [
     { key:'all',                  label:'All Roles'  },
     { key:'student',              label:'Students'   },
@@ -417,6 +487,14 @@ export default function AdminUsersPage() {
           user={selectedUser}
           onClose={() => setSelectedUser(null)}
           onResetPassword={handleResetPassword}
+        />
+      )}
+      {userToDelete && (
+        <DeleteConfirmModal
+          user={userToDelete}
+          onClose={() => setUserToDelete(null)}
+          onConfirm={handleDeleteConfirm}
+          deleting={deleting}
         />
       )}
 
@@ -445,7 +523,6 @@ export default function AdminUsersPage() {
         </div>
       )}
 
-      {/* Role filter tabs + Register Student button */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-1 bg-slate-800/50 border border-slate-700/50 rounded-xl p-1 flex-1">
           {ROLE_FILTERS.map(({ key, label }) => (
@@ -482,14 +559,14 @@ export default function AdminUsersPage() {
       {!isPlacementsTab && (
         <>
           <div className="flex gap-3 flex-wrap">
-            <div className="flex items-center gap-2 bg-slate-800/50 border border-slate-700/50 rounded-xl px-3 py-2 flex-1 min-w-[200px]">
-              <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <label className="flex items-center gap-2 bg-slate-800/50 border border-slate-700/50 rounded-xl px-3 py-2 flex-1 min-w-[200px] cursor-text">
+              <svg className="w-4 h-4 text-slate-500 flex-shrink-0 pointer-events-none" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
               </svg>
               <input type="text" placeholder="Search by name or email..."
                 value={search} onChange={(e) => setSearch(e.target.value)}
                 className="bg-transparent outline-none text-sm text-slate-300 placeholder-slate-600 w-full" />
-            </div>
+            </label>
             <div className="flex gap-2">
               {['all','active','inactive'].map((s) => (
                 <button key={s} onClick={() => setStatusFilter(s)}
@@ -548,13 +625,31 @@ export default function AdminUsersPage() {
                           </span>
                         </td>
                         <td className="px-5 py-4">
-                          <p className="text-slate-400 text-sm">{u.phone_number || '"?'}</p>
+                          <p className="text-slate-400 text-sm">{u.phone_number || '—'}</p>
                         </td>
                         <td className="px-5 py-4">
-                          <button onClick={() => setSelectedUser(u)}
-                            className="px-3 py-1.5 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-400 border border-indigo-500/30 rounded-lg text-xs font-medium transition">
-                            View
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button onClick={() => setSelectedUser(u)}
+                              className="px-3 py-1.5 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-400 border border-indigo-500/30 rounded-lg text-xs font-medium transition">
+                              View
+                            </button>
+                            {u.id !== currentUser?.id && (
+                              <>
+                                <button onClick={() => handleToggleActive(u)}
+                                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition border ${
+                                    u.is_active !== false
+                                      ? 'bg-amber-500/10 hover:bg-amber-500/25 text-amber-400 border-amber-500/30'
+                                      : 'bg-emerald-500/10 hover:bg-emerald-500/25 text-emerald-400 border-emerald-500/30'
+                                  }`}>
+                                  {u.is_active !== false ? 'Deactivate' : 'Activate'}
+                                </button>
+                                <button onClick={() => setUserToDelete(u)}
+                                  className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/25 text-red-400 border border-red-500/30 rounded-lg text-xs font-medium transition">
+                                  Delete
+                                </button>
+                              </>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}
