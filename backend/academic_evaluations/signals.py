@@ -35,7 +35,7 @@ def send_evaluation_notification(sender, instance, created, **kwargs):
         supervisor_label = 'Academic Supervisor'
         title = 'Your Academic Evaluation Has Been Submitted'
 
-    # Build score string with criterion names
+    
     criteria_scores = []
     scored_items = instance.items.select_related('criteria').all()
     for item in scored_items:
@@ -45,7 +45,7 @@ def send_evaluation_notification(sender, instance, created, **kwargs):
     
     criteria_text = '\n'.join(criteria_scores) if criteria_scores else 'N/A'
     
-    # Only show overall score if all applicable criteria have been evaluated
+
     from .models import EvaluationCriteria
     applicable_criteria = EvaluationCriteria.objects.filter(
         evaluator_type=evaluator_role,
