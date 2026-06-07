@@ -25,7 +25,6 @@ def send_evaluation_notification(sender, instance, created, **kwargs):
 
     student       = instance.placement.student
     evaluator     = instance.evaluator
-    score         = f'{float(instance.total_score):.0f}%' if instance.total_score else 'N/A'
     grade         = instance.grade or 'N/A'
     evaluator_role = getattr(evaluator, 'role', '')
 
@@ -36,8 +35,17 @@ def send_evaluation_notification(sender, instance, created, **kwargs):
         supervisor_label = 'Academic Supervisor'
         title = 'Your Academic Evaluation Has Been Submitted'
 
+    # Build score string with criterion name
+    criteria_scores = []
+    for item in instance.items.select_related('criteria').all():
+        criterion_name = item.criteria.name
+        item_score = f'{float(item.score):.0f}%'
+        criteria_scores.append(f'Score ({criterion_name}): {item_score}')
+    
+    score = ' | '.join(criteria_scores) if criteria_scores else 'N/A'
+
     msg = (f'Hello {student.first_name},\n\n'
            f'Your evaluation has been submitted by your {supervisor_label}.\n\n'
-           f'Score: {score}  |  Grade: {grade}\n\n'
+           f'{score}  |  Grade: {grade}\n\n'
            f'Please log in to view your full evaluation results.')
     notify_user(student, title, msg, 'evaluation')
