@@ -33,7 +33,7 @@ class InternshipPlacement(models.Model):
     )
 
     workplace_supervisor = models.ForeignKey(
-        'user_accounts.CustomUser',
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -42,7 +42,7 @@ class InternshipPlacement(models.Model):
     )
 
     academic_supervisor = models.ForeignKey(
-        'user_accounts.CustomUser',
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

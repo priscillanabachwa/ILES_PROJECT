@@ -74,12 +74,12 @@ class WeeklyLogbookViewSet(viewsets.ModelViewSet):
         if instance.status == 'approved':
             return Response(
                 {'detail': 'Cannot edit an approved log.'},
-                status=status.HTTP_400_BAD_REQUEST
+                status=400
             )
         if user.role == 'student' and instance.status != 'draft':
             return Response(
                 {'detail': 'You can only edit logs while they are in draft status.'},
-                status=status.HTTP_400_BAD_REQUEST
+                status=400
             )
         return super().update(request, *args, **kwargs)
 
@@ -184,7 +184,6 @@ class WeeklyLogbookViewSet(viewsets.ModelViewSet):
         else:
             return Response(
                 {'detail': 'You do not have permission to reject logs.'},
-                status=status.HTTP_403_FORBIDDEN
+                status=403
             )
-
         return Response(WeeklyLogbookSerializer(log).data)
