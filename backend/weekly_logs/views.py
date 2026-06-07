@@ -139,15 +139,6 @@ class WeeklyLogbookViewSet(viewsets.ModelViewSet):
                 status=403
             )
 
-<<<<<<< HEAD
-        LogBookReview.objects.create(
-            logbook=log,
-            supervisor=request.user,
-            comment=comment,
-            status_at_review='reviewed'
-        )
-=======
->>>>>>> c0bf066bcf18f58af4e097391d9dbbd7f1db3703
         return Response(WeeklyLogbookSerializer(log).data)
 
     @action(detail=True, methods=['post'], url_path='approve')
@@ -160,13 +151,8 @@ class WeeklyLogbookViewSet(viewsets.ModelViewSet):
             )
         if log.status not in ('submitted', 'reviewed'):
             return Response(
-<<<<<<< HEAD
-                {'detail': 'Only reviewed logs can be approved.'},
-                status=400
-=======
                 {'detail': 'Only submitted or reviewed logs can be approved.'},
                 status=status.HTTP_400_BAD_REQUEST
->>>>>>> c0bf066bcf18f58af4e097391d9dbbd7f1db3703
             )
         comment = request.data.get('supervisor_comment', '').strip()
         if comment:
@@ -200,22 +186,4 @@ class WeeklyLogbookViewSet(viewsets.ModelViewSet):
                 {'detail': 'You do not have permission to reject logs.'},
                 status=403
             )
-<<<<<<< HEAD
-        if log.status != 'submitted':
-            return Response(
-                {'detail': 'Only submitted logs can be rejected.'},
-                status=400
-            )
-        comment = request.data.get('supervisor_comment', '').strip()
-        if not comment:
-            return Response(
-                {'detail': 'A supervisor comment is required to reject a log.'},
-                status=400
-            )
-        log.status = 'draft'
-        log.supervisor_comment = comment
-        log.save()
-=======
-
->>>>>>> c0bf066bcf18f58af4e097391d9dbbd7f1db3703
         return Response(WeeklyLogbookSerializer(log).data)
