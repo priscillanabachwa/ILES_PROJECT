@@ -2,7 +2,6 @@ from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
 from .models import WeeklyLogbook
 
-
 @receiver(pre_save, sender=WeeklyLogbook)
 def capture_previous_status(sender, instance, **kwargs):
     """Store the old status before saving so post_save can detect transitions."""
@@ -15,7 +14,6 @@ def capture_previous_status(sender, instance, **kwargs):
         instance._prev_status = None
 
 from django.contrib.auth.models import Group, Permission
-
 
 @receiver(post_save, sender=WeeklyLogbook)
 def notify_on_log_status_change(sender, instance, created, **kwargs):
@@ -31,7 +29,7 @@ def notify_on_log_status_change(sender, instance, created, **kwargs):
     student_name  = student.get_full_name() or student.email
 
     if created:
-        return  # Draft created — no notification needed
+        return
 
     if prev == 'draft' and curr == 'submitted':
         title = f'New Log Submitted — Week {week}'
@@ -45,20 +43,19 @@ def notify_on_log_status_change(sender, instance, created, **kwargs):
     elif prev == 'submitted' and curr == 'reviewed':
         title = f'Your Week {week} Log Has Been Reviewed'
         msg   = (f'Hello {student.first_name},\n\n'
-                 f'Your Week {week} logbook has been reviewed.\n\n'
-                 f'Supervisor comment: {instance.supervisor_comment}')
+                 f'Your Week {week} logbook has been reviewed by your Academic Supervisor.\n\n'
+                 f'Academic Supervisor comment: {instance.supervisor_comment}')
         notify_user(student, title, msg, 'log_reviewed', send_email=True, send_sms_alert=True)
 
-    elif prev == 'reviewed' and curr == 'approved':
+    elif prev in ('reviewed', 'submitted') and curr == 'approved':
         title = f'Your Week {week} Log Has Been Approved'
         msg   = (f'Hello {student.first_name},\n\n'
-                 f'Your Week {week} logbook has been approved. Well done!')
+                 f'Your Week {week} logbook has been approved by your Academic Supervisor. Well done!')
         notify_user(student, title, msg, 'log_approved', send_email=True, send_sms_alert=True)
 
-    elif prev == 'submitted' and curr == 'draft':
-        # Rejected — returned to draft for revision
+    elif (prev == 'submitted' or prev == 'reviewed') and curr == 'draft':
         title = f'Your Week {week} Log Requires Revision'
         msg   = (f'Hello {student.first_name},\n\n'
-                 f'Your Week {week} logbook has been returned for revision.\n\n'
-                 f'Supervisor feedback: {instance.supervisor_comment}')
+                 f'Your Week {week} logbook has been returned for revision by your Academic Supervisor.\n\n'
+                 f'Academic Supervisor feedback: {instance.supervisor_comment}')
         notify_user(student, title, msg, 'log_rejected', send_email=True, send_sms_alert=True)

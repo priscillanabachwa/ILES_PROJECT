@@ -7,7 +7,10 @@ const EVALUATIONS = `${BASE}/evaluations/evaluations/`;
 const CRITERIA = `${BASE}/evaluations/criteria/`;
 const USERS = `${BASE}/accounts/users/`;
 
-// ????????? helpers ????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
+export function capName(s) {
+  if (!s) return s
+  return String(s).replace(/\b\w/g, c => c.toUpperCase())
+}
 
 function weeksBetween(start, end) {
   if (!start || !end) return null;
@@ -39,7 +42,64 @@ function buildPlacementMap(placements) {
   return Object.fromEntries(placements.map(p => [p.id, p]));
 }
 
-// ????????? student dashboard ?????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
+function gradeFromScore(s) {
+  if (s == null) return null;
+  if (s >= 80) return 'A';
+  if (s >= 70) return 'B';
+  if (s >= 60) return 'C';
+  if (s >= 50) return 'D';
+  return 'F';
+}
+
+// Formula: Workplace (40%) + Logbook (30%) + Report (20%) + Other Academic (10%)
+// Each component comes from a separate evaluation record type — not keyword-matched criteria names.
+function computeScoreComponents(evalsArr) {
+  const arr = Array.isArray(evalsArr) ? evalsArr : [];
+
+  const workplaceEval = arr.find(e => e.evaluator_role === 'workplace_supervisor');
+  const academicEvals = arr.filter(e => e.evaluator_role === 'academic_supervisor');
+
+  // Per-log academic evals → logbook component (30%)
+  const logEvals   = academicEvals.filter(e => e.log != null && e.total_score != null);
+  // Final placement-level academic eval → report component (20%)
+  const reportEval = academicEvals.find(e => e.log == null && e.visit_number == null);
+  // On-site visit evals → other academic component (10%)
+  const visitEvals = academicEvals.filter(e => e.visit_number != null && e.total_score != null);
+
+  const workplaceScore = workplaceEval?.total_score != null ? Number(workplaceEval.total_score) : null;
+
+  const logbookScore = logEvals.length > 0
+    ? Number((logEvals.reduce((s, e) => s + Number(e.total_score), 0) / logEvals.length).toFixed(1))
+    : null;
+
+  const reportScore = reportEval?.total_score != null ? Number(reportEval.total_score) : null;
+
+  const otherAcademicScore = visitEvals.length > 0
+    ? Number((visitEvals.reduce((s, e) => s + Number(e.total_score), 0) / visitEvals.length).toFixed(1))
+    : null;
+
+  const anyAvailable = workplaceScore != null || logbookScore != null ||
+    reportScore != null || otherAcademicScore != null;
+
+  // Running score: null components contribute 0 (partial until all evaluations are in)
+  const finalScore = anyAvailable
+    ? Number((
+        (workplaceScore      ?? 0) * 0.4 +
+        (logbookScore        ?? 0) * 0.3 +
+        (reportScore         ?? 0) * 0.2 +
+        (otherAcademicScore  ?? 0) * 0.1
+      ).toFixed(1))
+    : null;
+
+  return {
+    final_score:          finalScore,
+    grade:                gradeFromScore(finalScore),
+    workplace_score:      workplaceScore,
+    logbook_score:        logbookScore,
+    report_score:         reportScore,
+    other_academic_score: otherAcademicScore,
+  };
+}
 
 async function getStudentStats() {
   const [logbooks, evals] = await Promise.all([
@@ -47,15 +107,13 @@ async function getStudentStats() {
     fetchWithAuth(EVALUATIONS).catch(() => []),
   ]);
   const submitted = logbooks.filter(l => ['submitted', 'reviewed', 'approved'].includes(l.status));
-  const pending = logbooks.filter(l => ['draft', 'submitted'].includes(l.status));
-  const withFeedback = logbooks.filter(l => l.supervisor_comment && l.status !== 'draft');
-  const latestEval = Array.isArray(evals) ? evals[0] : null;
+  const pending = logbooks.filter(l => l.status === 'draft');
+  const { final_score: currentScore } = computeScoreComponents(Array.isArray(evals) ? evals : []);
   return {
     data: {
       logs_submitted: submitted.length,
-      pending_logs: pending.length,
-      unread_feedback: withFeedback.length,
-      current_score: latestEval?.total_score != null ? Number(latestEval.total_score) : null,
+      pending_logs:   pending.length,
+      current_score:  currentScore,
     },
   };
 }
@@ -81,59 +139,58 @@ async function getNextDeadline() {
 }
 
 async function getStudentScores() {
-  const [evals, logbooks] = await Promise.all([
-    fetchWithAuth(EVALUATIONS).catch(() => []),
-    fetchWithAuth(LOGBOOKS),
-  ]);
+  const evals = await fetchWithAuth(EVALUATIONS).catch(() => []);
   if (!Array.isArray(evals) || !evals.length) return { data: null };
-  const latest = evals[0];
-  const feedback = logbooks
-    .filter(l => l.supervisor_comment)
-    .slice(0, 3)
-    .map(l => ({
-      from: 'Supervisor',
-      date: l.submitted_at || l.deadline,
-      comment: l.supervisor_comment,
-    }));
-  return {
-    data: {
-      final_score: latest.total_score != null ? Number(latest.total_score) : null,
-      grade: latest.grade || null,
-      workplace_score: null,
-      academic_score: null,
-      logbook_score: null,
-      recent_feedback: feedback,
-    },
-  };
+  return { data: computeScoreComponents(evals) };
 }
 
-// ????????? workplace supervisor dashboard ???????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
-
 async function getWorkplaceStats() {
-  const [placements, logbooks] = await Promise.all([
+  const [placements, logbooks, evals] = await Promise.all([
     fetchWithAuth(PLACEMENTS),
     fetchWithAuth(LOGBOOKS),
+    fetchWithAuth(EVALUATIONS).catch(() => []),
   ]);
+  const evalsArr = Array.isArray(evals) ? evals : [];
+  const submittedEvals = evalsArr.filter(e => e.status === 'SUBMITTED');
+  const avgScore = submittedEvals.length
+    ? Number((submittedEvals.reduce((s, e) => s + Number(e.total_score || 0), 0) / submittedEvals.length).toFixed(1))
+    : null;
   return {
     data: {
-      assigned_students: placements.filter(p => p.status === 'ACTIVE').length,
-      pending_reviews: logbooks.filter(l => l.status === 'submitted').length,
-      approved_logs: logbooks.filter(l => l.status === 'approved').length,
-      average_score: null,
+      assigned_students: placements.length,
+      submitted_logs:    logbooks.filter(l => l.status !== 'draft').length,
+      evaluated_count:   submittedEvals.length,
+      average_score:     avgScore,
     },
   };
 }
 
 async function getWorkplacePlacements() {
-  const placements = await fetchWithAuth(PLACEMENTS);
+  const [placements, logbooks] = await Promise.all([
+    fetchWithAuth(PLACEMENTS),
+    fetchWithAuth(LOGBOOKS).catch(() => []),
+  ]);
+
+  const logsByPlacement = {};
+  for (const l of (Array.isArray(logbooks) ? logbooks : [])) {
+    if (!logsByPlacement[l.placement]) logsByPlacement[l.placement] = [];
+    logsByPlacement[l.placement].push(l);
+  }
+
   return {
-    data: placements.map(p => ({
-      id: p.id,
-      student_name: p.student_name || String(p.student || ''),
-      student_id: String(p.student || ''),
-      department: '',
-      status: p.status,
-    })),
+    data: placements.map(p => {
+      const logs = logsByPlacement[p.id] || [];
+      let status = p.status;
+      if (logs.some(l => l.status === 'submitted'))     status = 'submitted';
+      else if (logs.some(l => l.status === 'reviewed')) status = 'reviewed';
+      else if (logs.some(l => l.status === 'approved')) status = 'approved';
+      return {
+        id: p.id,
+        student_name: capName(p.student_name || String(p.student || '')),
+        company: p.company_name || '',
+        status,
+      };
+    }),
   };
 }
 
@@ -147,7 +204,7 @@ async function getWorkplacePendingReviews() {
     .filter(l => l.status === 'submitted')
     .map(l => ({
       ...l,
-      student_name: pm[l.placement]?.student_name || 'Unknown Student',
+      student_name: capName(pm[l.placement]?.student_name || 'Unknown Student'),
       activities_preview: (l.activities || '').slice(0, 80),
     }));
   return { data: pending };
@@ -187,7 +244,7 @@ async function getWorkplaceActivity() {
   return {
     data: logbooks.slice(0, 10).map(l => ({
       id: l.id,
-      student_name: pm[l.placement]?.student_name || 'Unknown Student',
+      student_name: capName(pm[l.placement]?.student_name || 'Unknown Student'),
       activity: `Weekly Log — Week ${l.week_number}`,
       date: l.submitted_at || l.deadline,
       status: l.status,
@@ -196,40 +253,76 @@ async function getWorkplaceActivity() {
   };
 }
 
-// ????????? academic supervisor dashboard ??????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
-
 async function getAcademicStats() {
   const [placements, logbooks, evals] = await Promise.all([
     fetchWithAuth(PLACEMENTS),
     fetchWithAuth(LOGBOOKS),
     fetchWithAuth(EVALUATIONS).catch(() => []),
   ]);
-  const completedEvals = Array.isArray(evals)
-    ? evals.filter(e => e.status === 'SUBMITTED')
-    : [];
-  const avgScore = completedEvals.length
-    ? completedEvals.reduce((s, e) => s + Number(e.total_score || 0), 0) / completedEvals.length
-    : null;
+
+  const evalsArr    = Array.isArray(evals)    ? evals    : []
+  const logbooks_arr = Array.isArray(logbooks) ? logbooks : []
+
+  const submittedLogEvals = evalsArr.filter(e => e.status === 'SUBMITTED' && e.log != null)
+  const evaluatedLogIds   = new Set(submittedLogEvals.map(e => e.log))
+
+  const approvedLogs  = logbooks_arr.filter(l => l.status === 'approved')
+  const pendingEvals  = approvedLogs.filter(l => !evaluatedLogIds.has(l.id)).length
+  const completedEvals = submittedLogEvals.length
+
+  const avgScore = submittedLogEvals.length
+    ? submittedLogEvals.reduce((s, e) => s + Number(e.total_score || 0), 0) / submittedLogEvals.length
+    : null
+
   return {
     data: {
-      assigned_students: placements.length,
-      pending_reviews: logbooks.filter(l => ['submitted', 'reviewed'].includes(l.status)).length,
-      completed_evaluations: completedEvals.length,
-      average_score: avgScore,
+      assigned_students:     placements.length,
+      pending_reviews:       logbooks_arr.filter(l => l.status === 'submitted').length,
+      awaiting_approval:     logbooks_arr.filter(l => l.status === 'reviewed').length,
+      pending_evaluations:   pendingEvals,
+      completed_evaluations: completedEvals,
+      average_score:         avgScore,
     },
   };
 }
 
 async function getAcademicPlacements() {
-  const placements = await fetchWithAuth(PLACEMENTS);
+  const [placements, logbooks] = await Promise.all([
+    fetchWithAuth(PLACEMENTS),
+    fetchWithAuth(LOGBOOKS).catch(() => []),
+  ]);
+
+  const logsByPlacement = {};
+  for (const l of (Array.isArray(logbooks) ? logbooks : [])) {
+    if (!logsByPlacement[l.placement]) logsByPlacement[l.placement] = [];
+    logsByPlacement[l.placement].push(l);
+  }
+
   return {
-    data: placements.map(p => ({
-      id: p.id,
-      student_name: p.student_name || String(p.student || ''),
-      student_id: String(p.student || ''),
-      company: p.company_name || String(p.company || ''),
-      status: p.status,
-    })),
+    data: placements.map(p => {
+      const logs = logsByPlacement[p.id] || [];
+      const submittedCount = logs.filter(l => l.status === 'submitted').length;
+      const reviewedCount  = logs.filter(l => l.status === 'reviewed').length;
+      const approvedCount  = logs.filter(l => l.status === 'approved').length;
+      const pendingCount   = submittedCount + reviewedCount;
+
+      let status = p.status;
+      if (logs.some(l => l.status === 'submitted'))      status = 'submitted';
+      else if (logs.some(l => l.status === 'reviewed'))  status = 'reviewed';
+      else if (logs.some(l => l.status === 'approved'))  status = 'approved';
+
+      return {
+        id: p.id,
+        student_name: capName(p.student_name || String(p.student || '')),
+        student_id: String(p.student || ''),
+        company: p.company_name || String(p.company || ''),
+        status,
+        submitted_count: submittedCount,
+        reviewed_count:  reviewedCount,
+        approved_count:  approvedCount,
+        pending_count:   pendingCount,
+      };
+    }),
   };
 }
 
@@ -238,31 +331,61 @@ async function getPendingReviews() {
     fetchWithAuth(PLACEMENTS),
     fetchWithAuth(LOGBOOKS),
   ]);
-  const pm = buildPlacementMap(placements);
+  const pm  = buildPlacementMap(placements);
+  const now = Date.now();
   return {
     data: logbooks
       .filter(l => ['submitted', 'reviewed'].includes(l.status))
       .map(l => ({
         ...l,
-        student_name: pm[l.placement]?.student_name || 'Unknown Student',
-      })),
+        student_name: capName(pm[l.placement]?.student_name || 'Unknown Student'),
+        days_waiting: l.submitted_at
+          ? Math.floor((now - new Date(l.submitted_at)) / 86400000)
+          : null,
+      }))
+      .sort((a, b) => {
+        const aOverdue = a.deadline && new Date(a.deadline) < new Date();
+        const bOverdue = b.deadline && new Date(b.deadline) < new Date();
+        if (aOverdue && !bOverdue) return -1;
+        if (!aOverdue && bOverdue) return 1;
+        return (b.days_waiting ?? 0) - (a.days_waiting ?? 0);
+      }),
   };
 }
 
+// Returns per-student submission progress (replaces flat recent-activity list).
+// Sorted: students with pending action first, then by last submission date.
 async function getRecentActivity() {
   const [placements, logbooks] = await Promise.all([
     fetchWithAuth(PLACEMENTS),
     fetchWithAuth(LOGBOOKS),
   ]);
-  const pm = buildPlacementMap(placements);
+  const logsByPlacement = {};
+  for (const l of (Array.isArray(logbooks) ? logbooks : [])) {
+    if (!logsByPlacement[l.placement]) logsByPlacement[l.placement] = [];
+    logsByPlacement[l.placement].push(l);
+  }
   return {
-    data: logbooks.slice(0, 10).map(l => ({
-      id: l.id,
-      student_name: pm[l.placement]?.student_name || 'Unknown Student',
-      activity: `Weekly Log — Week ${l.week_number}`,
-      date: l.submitted_at || l.deadline,
-      status: l.status,
-    })),
+    data: (Array.isArray(placements) ? placements : []).map(p => {
+      const logs         = logsByPlacement[p.id] || [];
+      const pendingCount = logs.filter(l => ['submitted', 'reviewed'].includes(l.status)).length;
+      const approvedCount = logs.filter(l => l.status === 'approved').length;
+      const totalSubmitted = logs.filter(l => l.status !== 'draft').length;
+      const lastLog = logs
+        .filter(l => l.submitted_at)
+        .sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at))[0];
+      return {
+        id:              p.id,
+        student_name:    capName(p.student_name || String(p.student || '')),
+        company:         p.company_name || '',
+        total_submitted: totalSubmitted,
+        approved_count:  approvedCount,
+        pending_count:   pendingCount,
+        last_submission: lastLog?.submitted_at || null,
+        last_week:       lastLog?.week_number  || null,
+        last_status:     lastLog?.status       || null,
+      };
+    }).sort((a, b) => b.pending_count - a.pending_count),
   };
 }
 
@@ -290,8 +413,6 @@ async function getEvaluationScores() {
     })),
   };
 }
-
-// ????????? admin dashboard ???????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
 
 async function getAdminStats() {
   const [placements, users, logbooks, evals] = await Promise.all([
@@ -329,7 +450,7 @@ async function getAdminPlacements() {
   return {
     data: placements.map(p => ({
       id: p.id,
-      student_name: p.student_name || String(p.student || ''),
+      student_name: capName(p.student_name || String(p.student || '')),
       student_id: String(p.student || ''),
       company: p.company_name || String(p.company || ''),
       academic_supervisor: p.academic_supervisor_name || '',
@@ -362,21 +483,73 @@ async function getAdminEvaluations() {
     fetchWithAuth(PLACEMENTS),
   ]);
   const pm = buildPlacementMap(placements);
+
+  const byPlacement = {};
+  for (const e of (Array.isArray(evals) ? evals : [])) {
+    if (!byPlacement[e.placement]) byPlacement[e.placement] = { academic: null, workplace: null };
+    // Academic: use the placement-level report eval only (not per-log or per-visit evals)
+    if (e.evaluator_role === 'academic_supervisor' && e.log == null && e.visit_number == null)
+      byPlacement[e.placement].academic = e;
+    else if (e.evaluator_role === 'workplace_supervisor')
+      byPlacement[e.placement].workplace = e;
+  }
+
+  const gradeFromScore = (s) => {
+    if (s == null) return null;
+    if (s >= 80) return 'A';
+    if (s >= 70) return 'B';
+    if (s >= 60) return 'C';
+    if (s >= 50) return 'D';
+    return 'F';
+  };
+
   return {
-    data: (Array.isArray(evals) ? evals : []).map(e => ({
-      id: e.id,
-      student_name: pm[e.placement]?.student_name || `Placement #${e.placement}`,
-      final_score: e.total_score != null ? Number(e.total_score) : null,
-      grade: e.grade || null,
-      status: e.status,
-      workplace_score: null,
-      academic_score: null,
-      logbook_score: null,
-    })),
+    data: Object.entries(byPlacement).map(([placementId, { academic, workplace }]) => {
+      const wScore      = workplace?.total_score != null ? Number(workplace.total_score) : null;
+      const acItems     = academic?.items || [];
+      const logbookItem = acItems.find(i => i.criteria_name?.toLowerCase().includes('logbook'));
+      const reportItem  = acItems.find(i => i.criteria_name?.toLowerCase().includes('report'));
+      const otherItems  = acItems.filter(i =>
+        !i.criteria_name?.toLowerCase().includes('logbook') &&
+        !i.criteria_name?.toLowerCase().includes('report')
+      );
+      const logbookScore = logbookItem ? Number(logbookItem.score) : null;
+      const reportScore  = reportItem  ? Number(reportItem.score)  : null;
+      const otherScore   = otherItems.length > 0
+        ? Number((otherItems.reduce((s, i) => s + Number(i.score), 0) / otherItems.length).toFixed(1))
+        : null;
+      const aTotal = academic?.total_score != null ? Number(academic.total_score) : null;
+
+      let finalScore = null;
+      if (wScore != null && logbookScore != null && reportScore != null && otherScore != null)
+        finalScore = Number(((wScore * 0.4) + (logbookScore * 0.3) + (reportScore * 0.2) + (otherScore * 0.1)).toFixed(1));
+      else if (wScore != null && aTotal != null)
+        finalScore = Number(((wScore * 0.4) + (aTotal * 0.6)).toFixed(1));
+      else if (aTotal != null)  finalScore = aTotal;
+      else if (wScore != null)  finalScore = wScore;
+
+      const status = (academic?.status === 'SUBMITTED' || workplace?.status === 'SUBMITTED')
+        ? 'SUBMITTED' : 'PENDING';
+
+      return {
+        id: Number(placementId),
+        placement: Number(placementId),
+        student_name: capName(pm[placementId]?.student_name || `Placement #${placementId}`),
+        company:      pm[placementId]?.company_name || '—',
+        workplace_score:      wScore,
+        logbook_score:        logbookScore,
+        report_score:         reportScore,
+        other_academic_score: otherScore,
+        academic_total:       aTotal,
+        final_score:     finalScore,
+        total_score:     finalScore,
+        grade:           gradeFromScore(finalScore),
+        status,
+        items: [...(academic?.items || []), ...(workplace?.items || [])],
+      };
+    }),
   };
 }
-
-// ????????? action methods ??????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
 
 async function reviewLog(logId, comment) {
   return fetchWithAuth(`${LOGBOOKS}${logId}/review/`, {
@@ -442,37 +615,30 @@ async function getCompaniesList() {
   return fetchWithAuth(`${BASE}/placements/companies/`).catch(() => []);
 }
 
-// ????????? export ??????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
-
 const dashboardService = {
-  // Student
   getStudentStats,
   getStudentPlacement,
   getStudentLogbooks,
   getNextDeadline,
   getStudentScores,
 
-  // Workplace supervisor
   getWorkplaceStats,
   getWorkplacePlacements,
   getWorkplacePendingReviews,
   getWorkplaceScores,
   getWorkplaceActivity,
 
-  // Academic supervisor
   getAcademicStats,
   getAcademicPlacements,
   getPendingReviews,
   getRecentActivity,
   getEvaluationScores,
 
-  // Admin
   getAdminStats,
   getAdminPlacements,
   getAdminUsers,
   getAdminEvaluations,
 
-  // Actions
   reviewLog,
   approveLog,
   rejectLog,

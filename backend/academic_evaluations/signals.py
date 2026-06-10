@@ -2,7 +2,6 @@ from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
 from .models import AcademicEvaluation
 
-
 @receiver(pre_save, sender=AcademicEvaluation)
 def capture_evaluation_status(sender, instance, **kwargs):
     """Track previous status to detect DRAFT → SUBMITTED transition."""
@@ -14,7 +13,6 @@ def capture_evaluation_status(sender, instance, **kwargs):
     else:
         instance._prev_status = None
 
-
 @receiver(post_save, sender=AcademicEvaluation)
 def send_evaluation_notification(sender, instance, created, **kwargs):
     from user_accounts.notifications import notify_user
@@ -22,17 +20,24 @@ def send_evaluation_notification(sender, instance, created, **kwargs):
     prev = getattr(instance, '_prev_status', None)
     curr = instance.status
 
-    # Only notify when transitioning to SUBMITTED (not on every save)
     if curr != 'SUBMITTED' or prev == 'SUBMITTED':
         return
 
-    student = instance.placement.student
-    score   = f'{float(instance.total_score):.0f}%' if instance.total_score else 'N/A'
-    grade   = instance.grade or 'N/A'
+    student       = instance.placement.student
+    evaluator     = instance.evaluator
+    score         = f'{float(instance.total_score):.0f}%' if instance.total_score else 'N/A'
+    grade         = instance.grade or 'N/A'
+    evaluator_role = getattr(evaluator, 'role', '')
 
-    title = 'Your Academic Evaluation Has Been Submitted'
-    msg   = (f'Hello {student.first_name},\n\n'
-             f'Your academic evaluation has been submitted by your supervisor.\n\n'
-             f'Score: {score}  |  Grade: {grade}\n\n'
-             f'Please log in to view your full evaluation results.')
+    if evaluator_role == 'workplace_supervisor':
+        supervisor_label = 'Workplace Supervisor'
+        title = 'Your Workplace Evaluation Has Been Submitted'
+    else:
+        supervisor_label = 'Academic Supervisor'
+        title = 'Your Academic Evaluation Has Been Submitted'
+
+    msg = (f'Hello {student.first_name},\n\n'
+           f'Your evaluation has been submitted by your {supervisor_label}.\n\n'
+           f'Score: {score}  |  Grade: {grade}\n\n'
+           f'Please log in to view your full evaluation results.')
     notify_user(student, title, msg, 'evaluation')

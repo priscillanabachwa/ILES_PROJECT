@@ -15,7 +15,6 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = (userData, token) => {
-    // Store user and token received from login API call
     setUser(userData);
     localStorage.setItem('authToken', token);
     localStorage.setItem('user', JSON.stringify(userData));

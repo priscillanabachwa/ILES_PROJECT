@@ -5,7 +5,6 @@ from .models import CustomUser
 from django.core.mail import send_mail
 from django.conf import settings
 
-
 @receiver(post_save, sender=CustomUser)
 def send_welcome_notification(sender, instance, created, **kwargs):
     """Send welcome email + in-app notification when a new user registers."""
@@ -25,7 +24,6 @@ def send_welcome_notification(sender, instance, created, **kwargs):
             send_email=True,
             send_sms_alert=False,
         )
-
 
 @receiver(post_save, sender=CustomUser)
 def assign_user_to_group(sender, instance, created, **kwargs):

@@ -1,7 +1,6 @@
-﻿import { Link } from 'react-router-dom'
+﻿import { Link, useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../Context/AuthContext.jsx'
+import { useAuth } from '../Context/AuthContext'
 import { loginUser, requestPasswordReset, verifyResetCode, resetPassword } from '../services/authService'
 
 import { toast } from 'react-toastify'
@@ -9,7 +8,6 @@ import  './login.css'
 
 import ILES_LOGO from '../assets/ILES_LOGO.png'
 
-// ==================== FORGOT PASSWORD MODAL ====================
 function ForgotPasswordModal({ isOpen, onClose }) {
   const [step, setStep] = useState(1)
   const [email, setEmail] = useState('')
@@ -201,7 +199,6 @@ function ForgotPasswordModal({ isOpen, onClose }) {
   )
 }
 
-// ✅ FIXED: Role redirects now match the routes defined in App.jsx
 const ROLE_REDIRECTS = {
   student: '/student/dashboard',
   academic_supervisor: '/academic/dashboard',
@@ -209,7 +206,6 @@ const ROLE_REDIRECTS = {
   admin: '/admin/dashboard',
 }
 
-// ==================== MAIN LOGIN COMPONENT ====================
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -246,7 +242,6 @@ export default function Login() {
     <div className="login-root">
       <div className="login-card">
 
-        {/* Centered Logo + System Name */}
         <div className="login-header">
           <div className="logo-wrap">
             <img src={ILES_LOGO} alt="ILES Logo" className="logo-img" />
@@ -254,7 +249,6 @@ export default function Login() {
           <p className="system-name">INTERNSHIP LOGGING AND EVALUATION SYSTEM</p>
         </div>
 
-        {/* Login Form */}
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label htmlFor="email">Email address</label>

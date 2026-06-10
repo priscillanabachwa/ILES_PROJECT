@@ -16,10 +16,10 @@ router.register(r'notifications', NotificationViewSet,  basename='notification')
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('login/', login_view, name='login'),  # POST endpoint for user login
-    path('register/', register_view, name='register'),  # POST endpoint for user registration
-    path('password-reset-request/', password_reset_request, name='password-reset-request'),  # POST endpoint for requesting password reset
-    path('verify-reset-code/', verify_reset_code, name='verify-reset-code'),  # POST endpoint for verifying reset code
-    path('password-reset-confirm/', password_reset_confirm, name='password-reset-confirm'),  # POST endpoint for confirming password reset
+    path('login/', login_view, name='login'),
+    path('register/', register_view, name='register'),
+    path('password-reset-request/', password_reset_request, name='password-reset-request'),
+    path('verify-reset-code/', verify_reset_code, name='verify-reset-code'),
+    path('password-reset-confirm/', password_reset_confirm, name='password-reset-confirm'),
 ]
 

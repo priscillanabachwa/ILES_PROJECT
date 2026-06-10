@@ -1,8 +1,7 @@
 ﻿import { useState, useEffect } from 'react'
 import { useAuth } from '../../Context/AuthContext'
 import { Link } from 'react-router-dom'
-import { toast, ToastContainer } from 'react-toastify'
-import 'react-toastify/dist/ReactToastify.css'
+import { toast } from 'react-toastify'
 import dashboardService from "../../services/dashboardService"
 
 
@@ -112,8 +111,7 @@ function FormField({ label, required, children }) {
 
 
 const inputCls = "w-full rounded-lg px-3 py-2 text-sm text-white bg-slate-700/50 border border-slate-600 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition placeholder-slate-500"
-
-const selectCls = "w-full rounded-lg px-3 py-2 text-sm text-white bg-slate-700/50 border border-slate-600 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition"
+const selectCls = "w-full rounded-lg px-3 py-2 text-sm text-white bg-slate-800 border border-slate-600 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition appearance-none cursor-pointer"
 
 function RegisterStudentModal({ onClose, onSuccess }) {
  
@@ -182,7 +180,7 @@ function AssignPlacementModal({ onClose, onSuccess }) {
   const [students, setStudents] = useState([])
   const [companies, setCompanies] = useState([])
   const [loadingOpts, setLoadingOpts] = useState(true)
-  const [form, setForm] = useState({ student: '', company: '', company_name: '', start_date: '', end_date: '' })
+  const [form, setForm] = useState({ student: '', company_name: '', start_date: '', end_date: '' })
   const [saving, setSaving] = useState(false)
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }))
 
@@ -196,20 +194,21 @@ function AssignPlacementModal({ onClose, onSuccess }) {
         ])
         setStudents(Array.isArray(studs) ? studs : [])
         setCompanies(Array.isArray(comps) ? comps : [])
-      } catch { /* ignore */ } finally { setLoadingOpts(false) }
+      } catch {  } finally { setLoadingOpts(false) }
     }
     load()
   }, [])
 
   const handleSubmit = async () => {
-    if (!form.student || (!form.company && !form.company_name) || !form.start_date || !form.end_date) {
+    if (!form.student || !form.company_name.trim() || !form.start_date || !form.end_date) {
       toast.error('Please fill in all required fields.')
       return
     }
     setSaving(true)
     try {
       const payload = { student: form.student, start_date: form.start_date, end_date: form.end_date }
-      if (form.company) { payload.company = form.company } else { payload.company_name_input = form.company_name }
+      const match = companies.find(c => c.company_name.toLowerCase() === form.company_name.trim().toLowerCase())
+      if (match) { payload.company = match.id } else { payload.company_name_input = form.company_name.trim() }
       await dashboardService.createPlacement(payload)
       toast.success('Placement created successfully!')
       onSuccess?.()
@@ -227,7 +226,7 @@ function AssignPlacementModal({ onClose, onSuccess }) {
         <>
           <FormField label="Student" required>
             <select className={selectCls} value={form.student} onChange={set('student')}>
-              <option value="">Select student</option>
+              <option value="" className="bg-slate-800">Select student</option>
               {students.map(s => (
                 <option key={s.id} value={s.id}>
                   {`${s.first_name || ''} ${s.last_name || ''}`.trim() || s.email}
@@ -236,18 +235,20 @@ function AssignPlacementModal({ onClose, onSuccess }) {
             </select>
           </FormField>
           <FormField label="Company / Organisation" required>
-            <select className={selectCls} value={form.company} onChange={set('company')}>
-              <option value="">Select existing company or add new below</option>
+            <input
+              className={inputCls}
+              list="company-suggestions"
+              placeholder="Type or select a company..."
+              value={form.company_name}
+              onChange={set('company_name')}
+              autoComplete="off"
+            />
+            <datalist id="company-suggestions">
               {companies.map(c => (
-                <option key={c.id} value={c.id}>{c.company_name}</option>
+                <option key={c.id} value={c.company_name} />
               ))}
-            </select>
+            </datalist>
           </FormField>
-          {!form.company && (
-            <FormField label="New Company Name" required>
-              <input className={inputCls} placeholder="e.g. TechCorp Uganda" value={form.company_name} onChange={set('company_name')} />
-            </FormField>
-          )}
           <div className="grid grid-cols-2 gap-4">
             <FormField label="Start Date" required>
               <input className={inputCls} type="date" value={form.start_date} onChange={set('start_date')} />
@@ -301,7 +302,7 @@ function AssignSupervisorModal({ onClose, placement = null, allPlacements = [], 
         ])
         setAcademicSups(Array.isArray(acad) ? acad : [])
         setWorkplaceSups(Array.isArray(work) ? work : [])
-      } catch { /* ignore */ } finally { setLoadingOpts(false) }
+      } catch {  } finally { setLoadingOpts(false) }
     }
     load()
   }, [])
@@ -341,10 +342,12 @@ function AssignSupervisorModal({ onClose, placement = null, allPlacements = [], 
           {!placement ? (
             <FormField label="Placement / Student" required>
               <select className={selectCls} value={form.placement_id} onChange={set('placement_id')}>
-                <option value="">Select placement</option>
-                {allPlacements.map(p => (
-                  <option key={p.id} value={p.id}>{p.student_name} — {p.company}</option>
-                ))}
+                <option value="" className="bg-slate-800">Select placement</option>
+                {allPlacements
+                  .filter(p => !p._academic_supervisor_id || !p._workplace_supervisor_id)
+                  .map(p => (
+                    <option key={p.id} value={p.id}>{p.student_name} — {p.company}</option>
+                  ))}
               </select>
             </FormField>
           ) : (
@@ -354,7 +357,7 @@ function AssignSupervisorModal({ onClose, placement = null, allPlacements = [], 
           )}
           <FormField label="Academic Supervisor">
             <select className={selectCls} value={form.academic_supervisor} onChange={set('academic_supervisor')}>
-              <option value="">None / Keep existing</option>
+              <option value="" className="bg-slate-800">None / Keep existing</option>
               {academicSups.map(s => (
                 <option key={s.id} value={s.id}>
                   {`${s.first_name || ''} ${s.last_name || ''}`.trim() || s.email}
@@ -364,7 +367,7 @@ function AssignSupervisorModal({ onClose, placement = null, allPlacements = [], 
           </FormField>
           <FormField label="Workplace Supervisor">
             <select className={selectCls} value={form.workplace_supervisor} onChange={set('workplace_supervisor')}>
-              <option value="">None / Keep existing</option>
+              <option value="" className="bg-slate-800">None / Keep existing</option>
               {workplaceSups.map(s => (
                 <option key={s.id} value={s.id}>
                   {`${s.first_name || ''} ${s.last_name || ''}`.trim() || s.email}
@@ -388,21 +391,143 @@ function AssignSupervisorModal({ onClose, placement = null, allPlacements = [], 
   )
 }
 
-function ReportModal({ onClose }) {
+function ReportModal({ onClose, placements = [], users = [], evaluations = [] }) {
   const [reportType, setReportType] = useState('placements')
-  const [format, setFormat]         = useState('pdf')
+  const [format, setFormat]         = useState('csv')
   const [generating, setGenerating] = useState(false)
 
-  const handleGenerate = async () => {
-    setGenerating(true)
+  const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`
+
+  const makeCSV = (headers, rows) =>
+    [headers.join(','), ...rows.map(r => r.map(esc).join(','))].join('\n')
+
+  const downloadFile = (content, filename, mime) => {
+    const blob = new Blob([content], { type: mime })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a')
+    a.href = url; a.download = filename
+    document.body.appendChild(a); a.click()
+    document.body.removeChild(a); URL.revokeObjectURL(url)
+  }
+
+  const openPrint = (title, headers, rows) => {
+    const thead = `<tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>`
+    const tbody = rows.map(r =>
+      `<tr>${r.map(c => `<td>${c ?? '—'}</td>`).join('')}</tr>`
+    ).join('')
+    const w = window.open('', '_blank')
+    if (!w) { toast.error('Pop-up blocked — please allow pop-ups for this site.'); return }
+    w.document.write(`<!DOCTYPE html><html><head><title>ILES – ${title}</title><style>
+      *{box-sizing:border-box}body{font-family:Arial,sans-serif;padding:28px;color:#0f172a}
+      h1{font-size:20px;margin:0 0 4px}p.sub{color:#64748b;font-size:12px;margin:0 0 20px}
+      table{width:100%;border-collapse:collapse;font-size:12px}
+      th{background:#1e293b;color:#fff;padding:8px 10px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+      td{padding:8px 10px;border-bottom:1px solid #e2e8f0}
+      tr:nth-child(even) td{background:#f8fafc}
+      .footer{margin-top:24px;font-size:10px;color:#94a3b8}
+      .hint{display:flex;align-items:center;gap:10px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 16px;margin-bottom:24px;color:#1e40af;font-size:13px}
+      .hint strong{font-weight:700}
+      .hint-btn{margin-left:auto;background:#2563eb;color:#fff;border:none;border-radius:6px;padding:7px 16px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
+      .hint-btn:hover{background:#1d4ed8}
+      @media print{.hint{display:none}}
+    </style></head><body>
+      <div class="hint">
+        💡 To <strong>download as PDF</strong>: in the print dialog change <strong>Destination</strong> to <strong>"Save as PDF"</strong>
+        <button class="hint-btn" onclick="window.print()">⬇ Save as PDF</button>
+      </div>
+      <h1>ILES — ${title}</h1>
+      <p class="sub">Generated on ${new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'})}</p>
+      <table><thead>${thead}</thead><tbody>${tbody}</tbody></table>
+      <div class="footer">ILES – Internship Log &amp; Evaluation System</div>
+    </body></html>`)
+    w.document.close()
+    setTimeout(() => w.print(), 400)
+  }
+
+  const getReportData = () => {
+    switch (reportType) {
+      case 'placements': {
+        const headers = ['Student','Company','Status','Academic Supervisor','Workplace Supervisor','Start Date','End Date']
+        const rows = placements.map(p => [
+          p.student_name, p.company, p.status,
+          p.academic_supervisor  || 'Not assigned',
+          p.workplace_supervisor || 'Not assigned',
+          p.start_date || '—', p.end_date || '—',
+        ])
+        return { title:'Placement Summary Report', headers, rows }
+      }
+      case 'evaluations': {
+        const headers = ['Student','Academic Score','Workplace Score','Logbook Score','Final Score','Grade']
+        const rows = evaluations.map(e => [
+          e.student_name,
+          e.academic_score  ?? '—', e.workplace_score ?? '—', e.logbook_score ?? '—',
+          e.final_score != null ? `${e.final_score}%` : '—',
+          e.grade || '—',
+        ])
+        return { title:'Evaluation Scores Report', headers, rows }
+      }
+      case 'students': {
+        const headers = ['Name','Email','Company','Placement Status']
+        const pm = Object.fromEntries(placements.map(p => [p.student_id, p]))
+        const rows = users.filter(u => u.role === 'student').map(u => {
+          const pl = pm[String(u.id)] || {}
+          return [u.name, u.email, pl.company || 'No placement', pl.status || '—']
+        })
+        return { title:'Student Progress Report', headers, rows }
+      }
+      case 'supervisors': {
+        const headers = ['Name','Email','Role']
+        const rows = users
+          .filter(u => ['academic_supervisor','workplace_supervisor'].includes(u.role))
+          .map(u => [u.name, u.email, u.role.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())])
+        return { title:'Supervisor Activity Report', headers, rows }
+      }
+      default: { 
+        const headers = ['Type','Name','Detail','Status / Score']
+        const rows = [
+          ...users.filter(u=>u.role==='student').map(u => ['Student', u.name, u.email, '—']),
+          ...placements.map(p => ['Placement', p.student_name, p.company, p.status]),
+          ...evaluations.map(e => ['Evaluation', e.student_name, `Final: ${e.final_score ?? '—'}%`, e.grade || '—']),
+        ]
+        return { title:'Full System Report', headers, rows }
+      }
+    }
+  }
+
+  const handlePrint = () => {
     try {
-      setTimeout(() => {
-        toast.success(` ${reportType.charAt(0).toUpperCase() + reportType.slice(1)} report generated as ${format.toUpperCase()}!`)
-        setGenerating(false)
-        onClose()
-      }, 1500)
+      const { title, headers, rows } = getReportData()
+      if (rows.length === 0) { toast.warn('No data available for this report yet.'); return }
+      openPrint(title, headers, rows)
+      toast.success(`${title} opened for printing.`)
+      setTimeout(() => onClose(), 400)
     } catch {
-      toast.error('Failed to generate report. Please try again.')
+      toast.error('Failed to open print preview. Please try again.')
+    }
+  }
+
+  const handleDownload = () => {
+    try {
+      const { title, headers, rows } = getReportData()
+      if (rows.length === 0) { toast.warn('No data available for this report yet.'); return }
+
+      if (format === 'pdf') {
+        openPrint(title, headers, rows)
+        toast.success(`${title} opened for printing / save as PDF.`)
+        setTimeout(() => onClose(), 400)
+        return
+      }
+
+      setGenerating(true)
+      const stamp    = new Date().toISOString().slice(0, 10)
+      const filename = `ILES_${title.replace(/\s+/g, '_')}_${stamp}`
+      const mime     = format === 'excel' ? 'application/vnd.ms-excel' : 'text/csv'
+      const ext      = format === 'excel' ? '.xls' : '.csv'
+      downloadFile(makeCSV(headers, rows), filename + ext, mime)
+      toast.success(`${title} downloaded as ${format.toUpperCase()}.`)
+      setTimeout(() => { setGenerating(false); onClose() }, 400)
+    } catch {
+      toast.error('Failed to download report. Please try again.')
       setGenerating(false)
     }
   }
@@ -410,17 +535,25 @@ function ReportModal({ onClose }) {
   return (
     <Modal title="Generate System Report" onClose={onClose}>
       <FormField label="Report Type">
-        <select className={selectCls} value={reportType} onChange={(e) => setReportType(e.target.value)}>
-          <option value="placements">Placement Summary Report</option>
-          <option value="evaluations">Evaluation Scores Report</option>
-          <option value="students">Student Progress Report</option>
-          <option value="supervisors">Supervisor Activity Report</option>
-          <option value="full">Full System Report</option>
-        </select>
+        <div className="relative">
+          <select className={selectCls + ' pr-8'} value={reportType} onChange={(e) => setReportType(e.target.value)}>
+            <option value="placements">Placement Summary Report</option>
+            <option value="evaluations">Evaluation Scores Report</option>
+            <option value="students">Student Progress Report</option>
+            <option value="supervisors">Supervisor Activity Report</option>
+            <option value="full">Full System Report</option>
+          </select>
+          <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-slate-400">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+        </div>
       </FormField>
-      <FormField label="Export Format">
+
+      <FormField label="Download Format">
         <div className="flex gap-3">
-          {['pdf','excel','csv'].map((f) => (
+          {['pdf','csv','excel'].map((f) => (
             <label key={f} className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border cursor-pointer text-xs font-semibold transition
               ${format === f ? 'border-indigo-500 bg-indigo-600/20 text-indigo-300' : 'border-slate-600 text-slate-400 hover:border-slate-500'}`}>
               <input type="radio" name="format" value={f} checked={format === f} onChange={() => setFormat(f)} className="hidden" />
@@ -429,14 +562,25 @@ function ReportModal({ onClose }) {
           ))}
         </div>
       </FormField>
-      <div className="bg-slate-700/30 border border-slate-700/50 rounded-xl p-3">
-        <p className="text-xs text-slate-400">The report will include data from the current semester. Generated reports support institutional decision-making as per US20.</p>
-      </div>
+
       <div className="flex gap-3 pt-2">
-        <button onClick={onClose} className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-slate-600 text-slate-400 hover:bg-slate-700/50 transition">Cancel</button>
-        <button onClick={handleGenerate} disabled={generating}
-          className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-rose-600 hover:bg-rose-700 text-white transition">
-          {generating ? 'Generating...' : 'Generate Report'}
+        <button onClick={onClose}
+          className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-slate-600 text-slate-400 hover:bg-slate-700/50 transition">
+          Cancel
+        </button>
+        <button onClick={handlePrint}
+          className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-slate-600 hover:bg-slate-500 text-white transition flex items-center justify-center gap-2">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+          </svg>
+          Print
+        </button>
+        <button onClick={handleDownload} disabled={generating}
+          className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-rose-600 hover:bg-rose-700 text-white transition disabled:opacity-50 flex items-center justify-center gap-2">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+          </svg>
+          {generating ? 'Downloading...' : 'Download'}
         </button>
       </div>
     </Modal>
@@ -547,15 +691,13 @@ export default function InternshipAdministratorDashboard() {
   }
 
   const roleBreakdown = [
-    { role:'Students',              count:stats?.total_students,   color:'bg-indigo-500' },
-    { role:'Academic Supervisors',  count:stats?.total_supervisors ? Math.round(stats.total_supervisors * 0.5) : null, color:'bg-emerald-500' },
-    { role:'Workplace Supervisors', count:stats?.total_supervisors ? Math.round(stats.total_supervisors * 0.5) : null, color:'bg-amber-500' },
+    { role:'Students',              count: loading ? null : stats?.total_students,                                              color:'bg-indigo-500' },
+    { role:'Academic Supervisors',  count: loading ? null : users.filter(u => u.role === 'academic_supervisor').length,          color:'bg-emerald-500' },
+    { role:'Workplace Supervisors', count: loading ? null : users.filter(u => u.role === 'workplace_supervisor').length,         color:'bg-amber-500' },
   ]
 
   return (
     <div className="space-y-6">
-
-      <ToastContainer position="top-right" autoClose={4000} hideProgressBar={false} newestOnTop closeOnClick theme="dark" />
 
       {modal === 'register' && (
         <RegisterStudentModal
@@ -574,12 +716,21 @@ export default function InternshipAdministratorDashboard() {
           onClose={() => { setModal(null); setSelectedPlacement(null) }}
           placement={selectedPlacement}
           allPlacements={placements}
-          onSuccess={() => dashboardService.getAdminPlacements().then(r => setPlacements(r.data)).catch(() => {})}
+          onSuccess={() => {
+            dashboardService.getAdminPlacements().then(r => setPlacements(r.data)).catch(() => {})
+            dashboardService.getAdminStats().then(r => setStats(r.data)).catch(() => {})
+          }}
         />
       )}
-      {modal === 'report' && <ReportModal onClose={() => setModal(null)} />}
+      {modal === 'report' && (
+        <ReportModal
+          onClose={() => setModal(null)}
+          placements={placements}
+          users={users}
+          evaluations={evaluations}
+        />
+      )}
 
-      {/* Header */}
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-white">Welcome , {fullName} </h1>
@@ -597,7 +748,6 @@ export default function InternshipAdministratorDashboard() {
 
       {error && <div className="bg-red-500/10 border border-red-500/30 text-red-300 text-sm px-4 py-3 rounded-xl">{error}</div>}
 
-      {/* Stat cards row 1 */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="Total Students"    value={stats?.total_students}    sub="View all students"    subLink="/admin/users?role=student"              accent="indigo"  icon={Icon.students}   />
         <StatCard label="Active Placements" value={stats?.active_placements} sub="View all placements"  subLink="/admin/users?role=placements"           accent="emerald" icon={Icon.placements} />
@@ -605,32 +755,30 @@ export default function InternshipAdministratorDashboard() {
         <StatCard label="Average Score"     value={stats ? `${Number(stats.average_score).toFixed(1)}%` : null} sub="View all evaluations" subLink="/admin/evaluations" accent="rose" icon={Icon.score} />
       </div>
 
-      {/* Stat cards row 2 */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label:'Pending Placements',   value:stats?.pending_placements,   color:'text-amber-300',   link:'/admin/users?role=placements', linkText:'Assign now'  },
-          { label:'Unassigned Students',  value:stats?.unassigned_students,  color:'text-rose-300',    link:'/admin/users?role=student',    linkText:'Assign now'  },
-          { label:'Completed Evaluations', value:stats?.evaluations_complete, color:'text-emerald-300', link:'/admin/evaluations',           linkText:'View reports'},
-          { label:'Logs Overdue',         value:stats?.logs_overdue ?? 6,    color:'text-red-300',     link:'/admin/logs',                  linkText:'Review now'  },
-        ].map(({ label, value, color, link, linkText }) => (
+          { label:'Unassigned Students',  value:stats?.unassigned_students,  color:'text-rose-300',    onClick:() => { setSelectedPlacement(null); setModal('supervisor') }, linkText:'Assign now'  },
+          { label:'Evaluations Complete', value:stats?.evaluations_complete, color:'text-emerald-300', link:'/admin/evaluations',           linkText:'View reports'},
+          { label:'Logs Overdue',         value:stats?.logs_overdue ?? 0,    color:'text-red-300',     link:'/admin/logs',                  linkText:'Review now'  },
+        ].map(({ label, value, color, link, linkText, onClick }) => (
           <div key={label} className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-4 text-center">
             <p className="text-xs text-slate-400 uppercase tracking-wide mb-1">{label}</p>
             <p className={`text-2xl font-bold ${color}`}>{value ?? '—'}</p>
-            <Link to={link} className={`text-xs hover:underline mt-1 block ${color}`}>{linkText} </Link>
+            {onClick
+              ? <button onClick={onClick} className={`text-xs hover:underline mt-1 block w-full ${color}`}>{linkText}</button>
+              : <Link to={link} className={`text-xs hover:underline mt-1 block ${color}`}>{linkText} </Link>
+            }
           </div>
         ))}
       </div>
 
-      {/* Main content */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
 
-        {/* Left col N/A 3/5 */}
         <div className="lg:col-span-3 space-y-5">
 
-          {/* Recent Placements */}
           <Card title="Recent Placements" actionLabel="View All" actionLink="/admin/users?role=placements">
             <div className="space-y-3 mb-4">
-              {/* Status filter */}
               <div className="flex items-center gap-1 bg-slate-700/30 border border-slate-700/50 rounded-xl p-1">
                 {['all','ACTIVE','PENDING','COMPLETED'].map((s) => (
                   <button key={s} onClick={() => setStatusFilter(s)}
@@ -640,7 +788,6 @@ export default function InternshipAdministratorDashboard() {
                   </button>
                 ))}
               </div>
-              {/* Search + Student ID */}
               <div className="flex gap-2">
                 <div className="flex items-center gap-2 bg-slate-700/30 border border-slate-700/50 rounded-xl px-3 py-1.5 flex-1">
                   {Icon.search}
@@ -675,21 +822,18 @@ export default function InternshipAdministratorDashboard() {
                     {filteredPlacements.map((p, i) => (
                       <tr key={p.id} className="hover:bg-slate-700/20 transition">
 
-                        {/* Student */}
                         <td className="py-3 pr-2">
                           <div className="flex items-center gap-2">
                             <AvatarCircle name={p.student_name} index={i} size="sm" />
                             <div>
                               <p className="font-semibold text-white">{p.student_name}</p>
-                              {p.student_id && <p className="text-slate-500" style={{fontSize:'10px'}}>{p.student_id}</p>}
+                              {p.start_date && <p className="text-slate-500" style={{fontSize:'10px'}}>From {p.start_date}</p>}
                             </div>
                           </div>
                         </td>
 
-                        {/* Company */}
                         <td className="py-3 pr-2 text-slate-400">{p.company}</td>
 
-                        {/* Supervisors */}
                         <td className="py-3 pr-2">
                           {p.academic_supervisor
                             ? <p className="text-slate-400 truncate max-w-[100px]">{p.academic_supervisor}</p>
@@ -701,20 +845,16 @@ export default function InternshipAdministratorDashboard() {
                           }
                         </td>
 
-                        {/* Status */}
                         <td className="py-3 pr-2"><Badge status={p.status} /></td>
 
-                        {/* Actions */}
                         <td className="py-3">
                           <div className="flex items-center gap-1">
-                            {/* Assign N/A only when supervisors missing and not completed */}
                             {(!p.academic_supervisor || !p.workplace_supervisor) && p.status !== 'COMPLETED' && (
                               <button onClick={() => handleInlineAssign(p)}
                                 className="text-xs font-semibold text-amber-400 hover:text-amber-300 border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 px-2 py-1 rounded-lg transition whitespace-nowrap">
                                 Assign
                               </button>
                             )}
-                            {/* Done N/A only for ACTIVE placements */}
                             {p.status === 'ACTIVE' && (
                               <button onClick={() => handleMarkCompleted(p)}
                                 className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-1 rounded-lg transition whitespace-nowrap">
@@ -732,9 +872,6 @@ export default function InternshipAdministratorDashboard() {
             )}
           </Card>
 
-
-
-          {/* Evaluation Overview */}
           <Card title="Evaluation Overview" actionLabel="View All" actionLink="/admin/evaluations">
             {loading ? <ListSkeleton /> : (
               <div className="overflow-x-auto">
@@ -779,13 +916,8 @@ export default function InternshipAdministratorDashboard() {
               </div>
             )}
           </Card>
-        </div>
 
-        
-        {/* Right  col N/A 2/5 */}
-        <div className="lg:col-span-2 space-y-5">
-
-          {/* User  Overview */}
+          
           <Card title="User Overview" actionLabel="Manage Users" actionLink="/admin/users">
             {loading ? <ListSkeleton /> : (
               <div className="space-y-4">
@@ -818,11 +950,9 @@ export default function InternshipAdministratorDashboard() {
             )}
           </Card>
 
-          {/* Quick Actions */}
           <Card title="Quick Actions">
             <div className="space-y-2">
               {[
-                { label:'Register Student',  sub:'Add a new student account',     icon:Icon.plus,       onClick:() => setModal('register'),                                  color:'text-indigo-400 bg-indigo-600/20'   },
                 { label:'Assign Placement',  sub:'Create a new placement record',  icon:Icon.placements, onClick:() => setModal('placement'),                                color:'text-emerald-400 bg-emerald-500/20' },
                 { label:'Assign Supervisor', sub:'Link supervisor and student',   icon:Icon.assign,     onClick:() => { setSelectedPlacement(null); setModal('supervisor') },color:'text-amber-400 bg-amber-500/20'     },
                 { label:'View Evaluations',  sub:'All scores for  all students', icon:Icon.eval,       to:'/admin/evaluations',                                             color:'text-teal-400 bg-teal-500/20'       },

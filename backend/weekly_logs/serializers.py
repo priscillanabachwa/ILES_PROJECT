@@ -2,7 +2,6 @@ from rest_framework import serializers
 from datetime import date
 from .models import WeeklyLogbook, LogBookReview
 
-
 class LogbookReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = LogBookReview
@@ -15,10 +14,10 @@ class WeeklyLogbookSerializer(serializers.ModelSerializer):
         model = WeeklyLogbook
         fields = [
             'id', 'placement', 'week_number', 'activities',
-            'challenges', 'lesson', 'status', 'supervisor_comment',
-            'deadline', 'submitted_at', 'attachment', 'attachment_url'
+            'challenges', 'lesson', 'status',
+            'supervisor_comment', 'deadline', 'submitted_at', 'updated_at', 'attachment', 'attachment_url'
         ]
-        read_only_fields = ['id', 'submitted_at', 'supervisor_comment', 'deadline', 'attachment_url']
+        read_only_fields = ['id', 'submitted_at', 'updated_at', 'supervisor_comment', 'deadline', 'attachment_url']
 
     def get_attachment_url(self, obj):
         if not obj.attachment:
