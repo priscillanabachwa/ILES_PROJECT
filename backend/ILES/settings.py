@@ -9,12 +9,10 @@ https://docs.djangoproject.com/en/6.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
-import environ
-import os
 
-env = environ.Env(
-    DEBUG=(bool, False)
-)
+import os
+import dj_database_url
+from pathlib import Path
 
 
 from pathlib import Path
@@ -24,9 +22,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = config('SECRET_KEY')
 
-DEBUG = config('DEBUG', default=False, cast=bool)
+DEBUG = os.environ.get('DEBUG', 'False')=='True'
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -89,14 +87,10 @@ TEMPLATES = [
 WSGI_APPLICATION = 'ILES.wsgi.application'
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DB_NAME', default='iles_db'),
-        'USER': config('DB_USER', default='iles_user'),
-        'PASSWORD': config('DB_PASSWORD', default=''),
-        'HOST': config('DB_HOST', default='localhost'),
-        'PORT': config('DB_PORT', default='5432'),
-    }
+    'default': dj_database_url.config(
+        default=os.environ.get("DATABASE_URL"),
+        conn_max_age=600
+    )
 }
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -124,7 +118,10 @@ USE_I18N = True
 
 USE_TZ = True
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATIC_ROOT=os.path.join(BASE_DIR, 'staticfiles')
+
+MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
 
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOW_CREDENTIALS = True
