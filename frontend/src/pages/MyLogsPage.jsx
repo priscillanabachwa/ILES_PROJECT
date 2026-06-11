@@ -222,7 +222,7 @@ export default function MyLogsPage() {
         ])
         setLogs(Array.isArray(logData) ? logData : [])
         const active = Array.isArray(placements)
-          ? placements.find(p => p.status === 'ACTIVE') || placements[0]
+          ? placements.find(p => p.status === 'ACTIVE') || placements.find(p => p.status === 'PENDING') || null
           : null
         setPlacementId(active?.id ?? null)
         setPlacement(active ?? null)

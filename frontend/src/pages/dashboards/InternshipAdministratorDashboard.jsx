@@ -193,11 +193,11 @@ function AssignPlacementModal({ onClose, onSuccess }) {
     }
     setSaving(true)
     try {
-      const payload = { student: form.student, start_date: form.start_date, end_date: form.end_date }
+      const payload = { student: form.student, start_date: form.start_date, end_date: form.end_date, status: 'ACTIVE' }
       const match = companies.find(c => c.company_name.toLowerCase() === form.company_name.trim().toLowerCase())
       if (match) { payload.company = match.id } else { payload.company_name_input = form.company_name.trim() }
       await dashboardService.createPlacement(payload)
-      toast.success('Placement created successfully!')
+      toast.success('Placement assigned successfully!')
       onSuccess?.()
       onClose()
     } catch (err) {
@@ -261,13 +261,14 @@ function AssignPlacementModal({ onClose, onSuccess }) {
 }
 
 function AssignSupervisorModal({ onClose, placement = null, allPlacements = [], onSuccess }) {
-  const [academicSups, setAcademicSups] = useState([])
-  const [workplaceSups, setWorkplaceSups] = useState([])
-  const [loadingOpts, setLoadingOpts] = useState(true)
+  const [students,      setStudents]     = useState([])
+  const [academicSups,  setAcademicSups] = useState([])
+  const [workplaceSups, setWorkplaceSups]= useState([])
+  const [loadingOpts,   setLoadingOpts]  = useState(true)
   const [form, setForm] = useState({
-    placement_id:         placement?.id ? String(placement.id) : '',
-    academic_supervisor:  placement?._academic_supervisor_id ? String(placement._academic_supervisor_id) : '',
-    workplace_supervisor: placement?._workplace_supervisor_id ? String(placement._workplace_supervisor_id) : '',
+    student_id:          placement ? String(placement.student_id || '') : '',
+    academic_supervisor: placement?._academic_supervisor_id ? String(placement._academic_supervisor_id) : '',
+    workplace_supervisor:placement?._workplace_supervisor_id ? String(placement._workplace_supervisor_id) : '',
   })
   const [saving, setSaving] = useState(false)
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }))
@@ -276,10 +277,12 @@ function AssignSupervisorModal({ onClose, placement = null, allPlacements = [], 
     const load = async () => {
       setLoadingOpts(true)
       try {
-        const [acad, work] = await Promise.all([
+        const [studs, acad, work] = await Promise.all([
+          dashboardService.getStudentsList(),
           dashboardService.getSupervisorsList('academic_supervisor'),
           dashboardService.getSupervisorsList('workplace_supervisor'),
         ])
+        setStudents(Array.isArray(studs) ? studs : [])
         setAcademicSups(Array.isArray(acad) ? acad : [])
         setWorkplaceSups(Array.isArray(work) ? work : [])
       } catch {  } finally { setLoadingOpts(false) }
@@ -287,12 +290,18 @@ function AssignSupervisorModal({ onClose, placement = null, allPlacements = [], 
     load()
   }, [])
 
-  const activePlacement = placement || allPlacements.find(p => String(p.id) === form.placement_id)
-  const studentLabel = activePlacement?.student_name || ''
+  const activePlacement = placement || allPlacements.find(p => p.student_id === form.student_id)
+  const selectedStudent = students.find(s => String(s.id) === form.student_id)
+  const studentLabel = placement?.student_name ||
+    (selectedStudent ? `${selectedStudent.first_name || ''} ${selectedStudent.last_name || ''}`.trim() || selectedStudent.email : '')
+
+  const noPlacement = !placement && form.student_id && !activePlacement
 
   const handleSubmit = async () => {
-    const pid = placement?.id || form.placement_id
-    if (!pid) { toast.error('Please select a placement.'); return }
+    if (!placement && !form.student_id) { toast.error('Please select a student.'); return }
+    if (noPlacement) { toast.error('This student has no placement yet. Please assign a placement first.'); return }
+    const pid = activePlacement?.id
+    if (!pid) { toast.error('Could not find placement for this student.'); return }
     if (!form.academic_supervisor && !form.workplace_supervisor) {
       toast.error('Please assign at least one supervisor.')
       return
@@ -318,14 +327,14 @@ function AssignSupervisorModal({ onClose, placement = null, allPlacements = [], 
       ) : (
         <>
           {!placement ? (
-            <FormField label="Placement / Student" required>
-              <select className={selectCls} value={form.placement_id} onChange={set('placement_id')}>
-                <option value="" className="bg-slate-800">Select placement</option>
-                {allPlacements
-                  .filter(p => !p._academic_supervisor_id || !p._workplace_supervisor_id)
-                  .map(p => (
-                    <option key={p.id} value={p.id}>{p.student_name} — {p.company}</option>
-                  ))}
+            <FormField label="Student" required>
+              <select className={selectCls} value={form.student_id} onChange={set('student_id')}>
+                <option value="" className="bg-slate-800">Select student</option>
+                {students.map(s => (
+                  <option key={s.id} value={String(s.id)}>
+                    {`${s.first_name || ''} ${s.last_name || ''}`.trim() || s.email}
+                  </option>
+                ))}
               </select>
             </FormField>
           ) : (
@@ -333,6 +342,13 @@ function AssignSupervisorModal({ onClose, placement = null, allPlacements = [], 
               <div className={`${inputCls} opacity-60 cursor-not-allowed`}>{studentLabel}</div>
             </FormField>
           )}
+
+          {noPlacement && (
+            <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3">
+              <p className="text-xs text-amber-300">⚠ This student has no placement yet. Please assign a placement first before assigning supervisors.</p>
+            </div>
+          )}
+
           <FormField label="Academic Supervisor">
             <select className={selectCls} value={form.academic_supervisor} onChange={set('academic_supervisor')}>
               <option value="" className="bg-slate-800">None / Keep existing</option>
@@ -657,9 +673,21 @@ export default function InternshipAdministratorDashboard() {
     try {
       await dashboardService.markPlacementCompleted(p.id)
       setPlacements((prev) => prev.map((pl) => pl.id === p.id ? { ...pl, status: 'COMPLETED' } : pl))
+      dashboardService.getAdminStats().then(r => setStats(r.data)).catch(() => {})
       toast.success(` ${p.student_name}'s placement marked as completed!`)
     } catch (err) {
       toast.error(err.message || 'Failed to update placement status.')
+    }
+  }
+
+  const handleActivatePlacement = async (p) => {
+    try {
+      await dashboardService.markPlacementActive(p.id)
+      setPlacements((prev) => prev.map((pl) => pl.id === p.id ? { ...pl, status: 'ACTIVE' } : pl))
+      dashboardService.getAdminStats().then(r => setStats(r.data)).catch(() => {})
+      toast.success(`${p.student_name}'s placement is now active!`)
+    } catch (err) {
+      toast.error(err.message || 'Failed to activate placement.')
     }
   }
 
@@ -669,9 +697,9 @@ export default function InternshipAdministratorDashboard() {
   }
 
   const roleBreakdown = [
-    { role:'Students',              count: loading ? null : stats?.total_students,                                              color:'bg-indigo-500' },
-    { role:'Academic Supervisors',  count: loading ? null : users.filter(u => u.role === 'academic_supervisor').length,          color:'bg-emerald-500' },
-    { role:'Workplace Supervisors', count: loading ? null : users.filter(u => u.role === 'workplace_supervisor').length,         color:'bg-amber-500' },
+    { role:'Students',              count: loading ? null : users.filter(u => u.role === 'student').length,              color:'bg-indigo-500' },
+    { role:'Academic Supervisors',  count: loading ? null : users.filter(u => u.role === 'academic_supervisor').length,  color:'bg-emerald-500' },
+    { role:'Workplace Supervisors', count: loading ? null : users.filter(u => u.role === 'workplace_supervisor').length, color:'bg-amber-500' },
   ]
 
   return (
@@ -680,13 +708,19 @@ export default function InternshipAdministratorDashboard() {
       {modal === 'register' && (
         <RegisterStudentModal
           onClose={() => setModal(null)}
-          onSuccess={() => dashboardService.getAdminUsers().then(r => setUsers(r.data)).catch(() => {})}
+          onSuccess={() => {
+            dashboardService.getAdminUsers().then(r => setUsers(r.data)).catch(() => {})
+            dashboardService.getAdminStats().then(r => setStats(r.data)).catch(() => {})
+          }}
         />
       )}
       {modal === 'placement'  && (
         <AssignPlacementModal
           onClose={() => setModal(null)}
-          onSuccess={() => dashboardService.getAdminPlacements().then(r => setPlacements(r.data)).catch(() => {})}
+          onSuccess={() => {
+            dashboardService.getAdminPlacements().then(r => setPlacements(r.data)).catch(() => {})
+            dashboardService.getAdminStats().then(r => setStats(r.data)).catch(() => {})
+          }}
         />
       )}
       {modal === 'supervisor' && (
@@ -727,7 +761,7 @@ export default function InternshipAdministratorDashboard() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label:'Pending Placements',   value:stats?.pending_placements,   color:'text-amber-300',   link:'/admin/users?role=placements', linkText:'Assign now'  },
+          { label:'Pending Placements',   value:stats?.pending_placements,   color:'text-amber-300',   onClick:() => setModal('placement'), linkText:'Assign now'  },
           { label:'Unassigned Students',  value:stats?.unassigned_students,  color:'text-rose-300',    onClick:() => { setSelectedPlacement(null); setModal('supervisor') }, linkText:'Assign now'  },
           { label:'Evaluations Complete', value:stats?.evaluations_complete, color:'text-emerald-300', link:'/admin/evaluations',           linkText:'View reports'},
           { label:'Logs Overdue',         value:stats?.logs_overdue ?? 0,    color:'text-red-300',     link:'/admin/logs',                  linkText:'Review now'  },
@@ -823,6 +857,12 @@ export default function InternshipAdministratorDashboard() {
                               <button onClick={() => handleInlineAssign(p)}
                                 className="text-xs font-semibold text-amber-400 hover:text-amber-300 border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 px-2 py-1 rounded-lg transition whitespace-nowrap">
                                 Assign
+                              </button>
+                            )}
+                            {p.status === 'PENDING' && (
+                              <button onClick={() => handleActivatePlacement(p)}
+                                className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 px-2 py-1 rounded-lg transition whitespace-nowrap">
+                                Activate
                               </button>
                             )}
                             {p.status === 'ACTIVE' && (

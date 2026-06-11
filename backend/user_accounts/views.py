@@ -3,12 +3,14 @@ from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import AllowAny
-from django.core.cache import cache
+from django.core.cache import caches
+
+cache = caches["default"]
 from django.core.mail import send_mail
 from django.conf import settings
 from .utils import generate_reset_code
 
-from .models import CustomUser, Notification
+from .models import CustomUser, Notification, PasswordResetCode
 from .serializers import CustomUserSerializer, NotificationSerializer
 
 class CustomUserViewSet(viewsets.ModelViewSet):

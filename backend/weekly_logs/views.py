@@ -112,7 +112,7 @@ class WeeklyLogbookViewSet(viewsets.ModelViewSet):
         log = self.get_object()
         role = request.user.role
 
-        if role in ('academic_supervisor', 'admin'):
+        if role in ('workplace_supervisor', 'admin'):
             if log.status != 'submitted':
                 return Response(
                     {'detail': 'Only submitted logs can be reviewed.'},

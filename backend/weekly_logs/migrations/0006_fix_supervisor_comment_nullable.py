@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunSQL(
-            sql='ALTER TABLE weekly_logs_weeklylogbook ALTER COLUMN supervisor_comment DROP NOT NULL;',
-            reverse_sql='ALTER TABLE weekly_logs_weeklylogbook ALTER COLUMN supervisor_comment SET NOT NULL;',
+            sql='-- SQLite does not support ALTER COLUMN. This migration is a no-op for SQLite.',
+            reverse_sql='-- no-op',
         ),
     ]
