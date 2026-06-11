@@ -29,33 +29,24 @@ const STATUS_LABELS = {
   returned:  'Returned',
 }
 
-const STATUS_SORT_ORDER = { submitted: 0, reviewed: 1, approved: 2, draft: 3 }
-
-const effectiveStatus = (log) =>
-  log.status === 'draft' && log.supervisor_comment ? 'returned' : log.status
-
-function ReviewModal({ log, onClose, onSuccess }) {
+function ApproveModal({ log, onClose, onSuccess }) {
   const [comment,    setComment]    = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const isReviewed = log.status === 'reviewed'
 
   const handleAction = async (action) => {
-    if ((action === 'review' || action === 'disapprove') && !comment.trim()) {
-      toast.error(action === 'review' ? 'A comment is required to review.' : 'A reason is required to disapprove.')
-      return
-    }
     setSubmitting(true)
     try {
       const body = { supervisor_comment: comment.trim() }
-      if (action === 'review') {
-        await fetchWithAuth(`${API}/weeklylogs/logbooks/${log.id}/review/`, { method: 'POST', body: JSON.stringify(body) })
-        toast.success('Log marked as reviewed.')
-        onSuccess(log.id, 'reviewed', comment.trim())
-      } else if (action === 'approve') {
+      if (action === 'approve') {
         await fetchWithAuth(`${API}/weeklylogs/logbooks/${log.id}/approve/`, { method: 'POST', body: JSON.stringify(body) })
         toast.success('Log approved.')
         onSuccess(log.id, 'approved', comment.trim())
       } else if (action === 'disapprove') {
+        if (!comment.trim()) {
+          toast.error('A reason is required to disapprove.')
+          setSubmitting(false)
+          return
+        }
         await fetchWithAuth(`${API}/weeklylogs/logbooks/${log.id}/reject/`, { method: 'POST', body: JSON.stringify(body) })
         toast.success('Log sent back for revision.')
         onSuccess(log.id, 'draft', comment.trim())
@@ -73,9 +64,7 @@ function ReviewModal({ log, onClose, onSuccess }) {
       <div className="relative bg-slate-800 border border-slate-700/50 rounded-2xl w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh]">
         <div className="flex items-start justify-between p-6 border-b border-slate-700/50 flex-shrink-0">
           <div>
-            <h2 className="text-lg font-bold text-white">
-              {isReviewed ? 'Approve or Disapprove' : 'Review Log'} — Week {log.week_number}
-            </h2>
+            <h2 className="text-lg font-bold text-white">Approve or Disapprove — Week {log.week_number}</h2>
             <p className="text-slate-400 text-sm mt-0.5">{log.student_name}</p>
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-white transition p-1">
@@ -105,6 +94,13 @@ function ReviewModal({ log, onClose, onSuccess }) {
             )}
           </div>
 
+          {log.supervisor_comment && (
+            <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
+              <p className="text-xs text-blue-400 mb-1">Workplace Supervisor Comment</p>
+              <p className="text-slate-300 text-sm">{log.supervisor_comment}</p>
+            </div>
+          )}
+
           {log.attachment_url && (
             <a
               href={log.attachment_url}
@@ -125,17 +121,12 @@ function ReviewModal({ log, onClose, onSuccess }) {
           )}
 
           <div>
-            <label className="text-xs text-slate-500 uppercase tracking-wider mb-1 block">Supervisor Comment</label>
-            <p className="text-slate-600 text-xs mb-2">
-              {isReviewed
-                ? 'Required when disapproving · Optional when approving'
-                : 'Required when reviewing or disapproving · Optional when approving'}
-            </p>
+            <label className="text-xs text-slate-500 uppercase tracking-wider mb-1 block">Additional Comment (Optional for approval, Required for disapproval)</label>
             <textarea
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               rows={4}
-              placeholder="Enter your comment or feedback..."
+              placeholder="Enter your comment..."
               className="w-full bg-slate-700/50 border border-slate-600 rounded-xl px-4 py-3 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 resize-none"
             />
           </div>
@@ -146,16 +137,8 @@ function ReviewModal({ log, onClose, onSuccess }) {
             className="py-2.5 px-4 rounded-xl text-sm font-semibold border border-slate-600 text-slate-400 hover:bg-slate-700/50 transition disabled:opacity-50">
             Cancel
           </button>
-          {!isReviewed && (
-            <button onClick={() => handleAction('review')} disabled={submitting}
-              className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white transition disabled:opacity-50"
-              title="Add comment and mark as reviewed">
-              {submitting ? '…' : 'Review'}
-            </button>
-          )}
           <button onClick={() => handleAction('approve')} disabled={submitting}
-            className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition disabled:opacity-50"
-            title="Approve this log">
+            className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition disabled:opacity-50">
             {submitting ? '…' : 'Approve'}
           </button>
           <button onClick={() => handleAction('disapprove')} disabled={submitting}
@@ -206,7 +189,7 @@ function LogDetailModal({ log, onClose }) {
           </div>
           {log.supervisor_comment && (
             <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
-              <p className="text-xs text-blue-400 mb-1">Academic Supervisor Comment</p>
+              <p className="text-xs text-blue-400 mb-1">Workplace Supervisor Comment</p>
               <p className="text-slate-300 text-sm">{log.supervisor_comment}</p>
             </div>
           )}
@@ -231,8 +214,8 @@ function LogDetailModal({ log, onClose }) {
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div className="bg-slate-700/30 rounded-xl p-3 border border-slate-700/50">
               <p className="text-xs text-slate-500 mb-1">Status</p>
-              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${STATUS_STYLES[effectiveStatus(log)] || STATUS_STYLES.draft}`}>
-                {STATUS_LABELS[effectiveStatus(log)] || log.status}
+              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${STATUS_STYLES[log.status] || STATUS_STYLES.draft}`}>
+                {STATUS_LABELS[log.status] || log.status}
               </span>
             </div>
             <div className="bg-slate-700/30 rounded-xl p-3 border border-slate-700/50">
@@ -257,8 +240,8 @@ export default function AcademicLogsPage() {
   const [loading,    setLoading]    = useState(true)
   const [search,     setSearch]     = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
-  const [reviewLog,    setReviewLog]    = useState(null)
   const [detailLog,    setDetailLog]    = useState(null)
+  const [approveLog,   setApproveLog]   = useState(null)
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -312,47 +295,29 @@ export default function AcademicLogsPage() {
     }
   }
 
-  const handleDirectApprove = async (log) => {
-    try {
-      await fetchWithAuth(`${API}/weeklylogs/logbooks/${log.id}/approve/`, { method: 'POST' })
-      handleStatusUpdate(log.id, 'approved', '')
-    } catch {
-      toast.error('Failed to approve log.')
-    }
-  }
-
-  const total            = logs.filter(l => l.status !== 'draft' || l.supervisor_comment).length
-  const submitted        = logs.filter(l => l.status === 'submitted').length
-  const awaitingApproval = logs.filter(l => l.status === 'reviewed').length
-  const approved         = logs.filter(l => l.status === 'approved').length
-  const disapproved      = logs.filter(l => l.status === 'draft' && l.supervisor_comment).length
+  const approved  = logs.filter(l => l.status === 'approved').length
+  const evaluated = Object.values(evalByLog).length
 
   const filtered = logs
     .filter((l) => {
-      const matchStatus =
-        statusFilter === 'all'         ? true :
-        statusFilter === 'disapproved' ? l.status === 'draft' && l.supervisor_comment :
-                                         l.status === statusFilter
+      const matchStatus = statusFilter === 'all' || l.status === statusFilter
       const matchSearch = search === '' ||
         l.student_name.toLowerCase().includes(search.toLowerCase()) ||
         l.company.toLowerCase().includes(search.toLowerCase())
       return matchStatus && matchSearch
     })
     .sort((a, b) => {
-      const pa = STATUS_SORT_ORDER[a.status] ?? 3
-      const pb = STATUS_SORT_ORDER[b.status] ?? 3
+      const statusOrder = { approved: 0, reviewed: 1, submitted: 2, draft: 3 }
+      const pa = statusOrder[a.status] ?? 3
+      const pb = statusOrder[b.status] ?? 3
       if (pa !== pb) return pa - pb
       return new Date(b.submitted_at || 0) - new Date(a.submitted_at || 0)
     })
 
   return (
     <div className="space-y-6">
-      {reviewLog && (
-        <ReviewModal
-          log={reviewLog}
-          onClose={() => setReviewLog(null)}
-          onSuccess={handleStatusUpdate}
-        />
+      {approveLog && (
+        <ApproveModal log={approveLog} onClose={() => setApproveLog(null)} onSuccess={handleStatusUpdate} />
       )}
       {detailLog && (
         <LogDetailModal log={detailLog} onClose={() => setDetailLog(null)} />
@@ -360,16 +325,15 @@ export default function AcademicLogsPage() {
 
       <div>
         <h1 className="text-2xl font-bold text-white">Internship Logs</h1>
-        <p className="text-sm text-slate-400 mt-1">Review and approve weekly logs from your assigned students</p>
+        <p className="text-sm text-slate-400 mt-1">Approve or disapprove reviewed logs and award marks</p>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Total Logs',        value: total,           color: 'text-white',       bg: 'bg-slate-800/50 border-slate-700/50'     },
-          { label: 'Submitted',         value: submitted,       color: 'text-amber-400',   bg: 'bg-amber-500/10 border-amber-500/20'     },
-          { label: 'Awaiting Approval', value: awaitingApproval, color: 'text-blue-400',   bg: 'bg-blue-500/10 border-blue-500/20'       },
-          { label: 'Approved',          value: approved,        color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
-          { label: 'Disapproved',       value: disapproved,     color: 'text-red-400',     bg: 'bg-red-500/10 border-red-500/20'         },
+          { label: 'Total Logs', value: logs.filter(l => l.status !== 'draft').length, color: 'text-white',       bg: 'bg-slate-800/50 border-slate-700/50'    },
+          { label: 'Submitted',  value: logs.filter(l => l.status === 'submitted').length, color: 'text-amber-400',   bg: 'bg-amber-500/10 border-amber-500/20'    },
+          { label: 'Reviewed',   value: logs.filter(l => l.status === 'reviewed').length,  color: 'text-blue-400',    bg: 'bg-blue-500/10 border-blue-500/20'      },
+          { label: 'Approved',   value: approved,  color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
         ].map(({ label, value, color, bg }) => (
           <div key={label} className={`rounded-2xl p-5 border ${bg}`}>
             <p className="text-slate-400 text-xs uppercase tracking-wider mb-2">{label}</p>
@@ -391,11 +355,10 @@ export default function AcademicLogsPage() {
         </div>
         <div className="flex gap-2 flex-wrap">
           {[
-            { key: 'all',          label: 'All'         },
-            { key: 'submitted',    label: 'Submitted'   },
-            { key: 'reviewed',     label: 'Reviewed'    },
-            { key: 'approved',     label: 'Approved'    },
-            { key: 'disapproved',  label: 'Disapproved' },
+            { key: 'all',       label: 'All'       },
+            { key: 'submitted', label: 'Submitted' },
+            { key: 'reviewed',  label: 'Reviewed'  },
+            { key: 'approved',  label: 'Approved'  },
           ].map(({ key, label }) => (
             <button key={key} onClick={() => setStatusFilter(key)}
               className={`px-4 py-2.5 rounded-xl text-sm font-medium transition ${
@@ -447,8 +410,8 @@ export default function AcademicLogsPage() {
                       <span className="text-slate-300 text-sm font-medium">Week {log.week_number}</span>
                     </td>
                     <td className="px-5 py-4">
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${STATUS_STYLES[effectiveStatus(log)] || STATUS_STYLES.draft}`}>
-                        {STATUS_LABELS[effectiveStatus(log)] || log.status}
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${STATUS_STYLES[log.status] || STATUS_STYLES.draft}`}>
+                        {STATUS_LABELS[log.status] || log.status}
                       </span>
                     </td>
                     <td className="px-5 py-4">
@@ -456,33 +419,16 @@ export default function AcademicLogsPage() {
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-2 flex-wrap">
-
                         <button onClick={() => setDetailLog(log)}
                           className="px-3 py-1.5 bg-slate-700/50 hover:bg-slate-700 text-slate-300 border border-slate-600 rounded-lg text-xs font-medium transition">
                           View
                         </button>
-
-                        {log.status === 'submitted' && (
-                          <button onClick={() => setReviewLog(log)}
-                            className="px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 border border-blue-500/30 rounded-lg text-xs font-medium transition">
-                            Review
+                        {log.status === 'reviewed' && (
+                          <button onClick={() => setApproveLog(log)}
+                            className="px-3 py-1.5 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 border border-emerald-500/50 rounded-lg text-xs font-medium transition">
+                            Approve/Disapprove
                           </button>
                         )}
-
-                        {log.status === 'reviewed' && (
-                          <>
-                            <button
-                              onClick={() => handleDirectApprove(log)}
-                              className="px-3 py-1.5 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/30 rounded-lg text-xs font-medium transition">
-                              Approve
-                            </button>
-                            <button onClick={() => setReviewLog(log)}
-                              className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg text-xs font-medium transition">
-                              Disapprove
-                            </button>
-                          </>
-                        )}
-
                         {log.status === 'approved' && (
                           evalByLog[log.id]?.status === 'SUBMITTED' ? (
                             <span className="flex items-center gap-1 text-emerald-400 text-xs font-medium px-2 py-1">
@@ -512,8 +458,8 @@ export default function AcademicLogsPage() {
           </div>
         )}
         <div className="px-5 py-3 border-t border-slate-700/50 flex items-center justify-between">
-          <p className="text-slate-500 text-xs">Showing {filtered.length} of {total} logs</p>
-          <p className="text-slate-500 text-xs">{submitted} awaiting review · {awaitingApproval} awaiting approval</p>
+          <p className="text-slate-500 text-xs">Showing {filtered.length} of {logs.filter(l => l.status !== 'draft').length} logs</p>
+          <p className="text-slate-500 text-xs">{approved} approved</p>
         </div>
       </div>
     </div>
