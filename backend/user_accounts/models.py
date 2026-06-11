@@ -68,6 +68,20 @@ class CustomUser(AbstractUser):
     def __str__(self):
         return f'{self.email} ({self.get_role_display()})'
 
+class PasswordResetCode(models.Model):
+    email = models.EmailField(db_index=True)
+    code = models.CharField(max_length=6)
+    is_used = models.BooleanField(default=False, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["email", "is_used"]),
+        ]
+        ordering = ["-created_at"]
+
+
 class Notification(models.Model):
     TYPE_CHOICES = [
         ('log_submitted', 'Log Submitted'),
