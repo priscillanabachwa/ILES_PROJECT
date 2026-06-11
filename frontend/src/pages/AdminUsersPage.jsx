@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react'
+﻿import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { fetchWithAuth } from '../services/authService'
@@ -61,10 +61,122 @@ function TableSkeleton({ cols = 6 }) {
 }
 
 function PlacementBadge({ status }) {
+  if (status === 'NO_PLACEMENT') {
+    return (
+      <span className="text-xs px-2.5 py-0.5 rounded-full font-semibold whitespace-nowrap bg-slate-500/20 text-slate-400 border border-slate-500/30">
+        No placement
+      </span>
+    )
+  }
   return (
     <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold capitalize whitespace-nowrap ${PLACEMENT_STATUS_STYLES[status] || 'bg-slate-500/20 text-slate-400'}`}>
       {status?.toLowerCase()}
     </span>
+  )
+}
+
+function AssignPlacementModal({ onClose, preselectedStudent = null, students = [], onSuccess }) {
+  const [companies, setCompanies] = useState([])
+  const [form, setForm] = useState({
+    student: preselectedStudent ? String(preselectedStudent.id) : '',
+    company_name: '',
+    start_date: '',
+    end_date: '',
+  })
+  const [saving, setSaving] = useState(false)
+  const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }))
+
+  useEffect(() => {
+    dashboardService.getCompaniesList().then(c => setCompanies(Array.isArray(c) ? c : [])).catch(() => {})
+  }, [])
+
+  const handleSubmit = async () => {
+    if (!form.student || !form.company_name.trim() || !form.start_date || !form.end_date) {
+      toast.error('Please fill in all required fields.')
+      return
+    }
+    setSaving(true)
+    try {
+      const payload = { student: form.student, start_date: form.start_date, end_date: form.end_date, status: 'ACTIVE' }
+      const match = companies.find(c => c.company_name.toLowerCase() === form.company_name.trim().toLowerCase())
+      if (match) { payload.company = match.id } else { payload.company_name_input = form.company_name.trim() }
+      await dashboardService.createPlacement(payload)
+      toast.success('Placement assigned successfully!')
+      onSuccess?.()
+      onClose()
+    } catch (err) {
+      toast.error(err.message || 'Failed to create placement.')
+    } finally { setSaving(false) }
+  }
+
+  const studentLabel = preselectedStudent
+    ? `${preselectedStudent.first_name || ''} ${preselectedStudent.last_name || ''}`.trim() || preselectedStudent.email
+    : null
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-slate-800 border border-slate-700/50 rounded-2xl w-full max-w-md shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700 sticky top-0 bg-slate-800">
+          <p className="text-sm font-bold text-white">Assign Placement</p>
+          <button onClick={onClose} className="text-slate-400 hover:text-white transition">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+        <div className="p-6 space-y-4">
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
+              Student{!preselectedStudent && <span className="text-red-400 ml-1">*</span>}
+            </label>
+            {preselectedStudent ? (
+              <div className={`${inputCls} opacity-60 cursor-not-allowed`}>{studentLabel}</div>
+            ) : (
+              <select className={`${inputCls} bg-slate-800`} value={form.student} onChange={set('student')}>
+                <option value="">Select student...</option>
+                {students.map(s => (
+                  <option key={s.id} value={s.id}>
+                    {`${s.first_name || ''} ${s.last_name || ''}`.trim() || s.email}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Company / Organisation <span className="text-red-400">*</span></label>
+            <input
+              className={inputCls}
+              list="company-list-up"
+              placeholder="Type or select a company..."
+              value={form.company_name}
+              onChange={set('company_name')}
+              autoComplete="off"
+            />
+            <datalist id="company-list-up">
+              {companies.map(c => <option key={c.id} value={c.company_name} />)}
+            </datalist>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Start Date <span className="text-red-400">*</span></label>
+              <input className={inputCls} type="date" value={form.start_date} onChange={set('start_date')} />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">End Date <span className="text-red-400">*</span></label>
+              <input className={inputCls} type="date" value={form.end_date} onChange={set('end_date')} />
+            </div>
+          </div>
+          <div className="flex gap-3 pt-2">
+            <button onClick={onClose} className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-slate-600 text-slate-400 hover:bg-slate-700/50 transition">Cancel</button>
+            <button onClick={handleSubmit} disabled={saving}
+              className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition disabled:opacity-50">
+              {saving ? 'Assigning...' : 'Assign Placement'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -200,23 +312,41 @@ function UserDetailModal({ user, onClose, onResetPassword }) {
   )
 }
 
-function PlacementsTab({ placements, setPlacements, loadingPlacements }) {
+function PlacementsTab({ placements, setPlacements, loadingPlacements, students = [], onAssignStudent }) {
   const [search,          setSearch]          = useState('')
   const [statusFilter,    setStatusFilter]    = useState('all')
   const [actioningId,     setActioningId]     = useState(null)
+  const [activatingId,    setActivatingId]    = useState(null)
 
-  const filtered = placements.filter((p) => {
-    const matchStatus = statusFilter === 'all' || p.status === statusFilter
+  const placedStudentIds = new Set(placements.map(p => String(p.student || p.student_id || '')))
+  const studentsWithoutPlacement = students.filter(s => !placedStudentIds.has(String(s.id)))
+
+  const virtualRows = studentsWithoutPlacement.map(s => ({
+    _virtualId:   `virt-${s.id}`,
+    _student:     s,
+    student_name: `${s.first_name || ''} ${s.last_name || ''}`.trim() || s.email,
+    company_name: null,
+    academic_supervisor_name: null,
+    workplace_supervisor_name: null,
+    status: 'NO_PLACEMENT',
+  }))
+
+  const allItems = [...placements, ...virtualRows]
+
+  const filtered = allItems.filter((p) => {
+    const matchStatus = statusFilter === 'all'
+      || p.status === statusFilter
+      || (statusFilter === 'PENDING' && p.status === 'NO_PLACEMENT')
     const matchSearch = search === '' ||
       p.student_name?.toLowerCase().includes(search.toLowerCase()) ||
-      p.company_name?.toLowerCase().includes(search.toLowerCase())
+      (p.company_name || '').toLowerCase().includes(search.toLowerCase())
     return matchStatus && matchSearch
   })
 
   const counts = {
-    all:       placements.length,
+    all:       allItems.length,
     ACTIVE:    placements.filter((p) => p.status === 'ACTIVE').length,
-    PENDING:   placements.filter((p) => p.status === 'PENDING').length,
+    PENDING:   placements.filter((p) => p.status === 'PENDING').length + virtualRows.length,
     COMPLETED: placements.filter((p) => p.status === 'COMPLETED').length,
   }
 
@@ -233,6 +363,21 @@ function PlacementsTab({ placements, setPlacements, loadingPlacements }) {
     } catch (err) {
       toast.error(err.message || 'Failed to mark completed.')
     } finally { setActioningId(null) }
+  }
+
+  const handleActivate = async (p) => {
+    if (activatingId) return
+    setActivatingId(p.id)
+    try {
+      await fetchWithAuth(`${API}/placements/${p.id}/`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'ACTIVE' }),
+      })
+      setPlacements(prev => prev.map(pl => pl.id === p.id ? { ...pl, status: 'ACTIVE' } : pl))
+      toast.success(`${p.student_name}'s placement is now active!`)
+    } catch (err) {
+      toast.error(err.message || 'Failed to activate placement.')
+    } finally { setActivatingId(null) }
   }
 
   return (
@@ -285,7 +430,8 @@ function PlacementsTab({ placements, setPlacements, loadingPlacements }) {
                   <tr><td colSpan={6} className="text-center py-12 text-slate-500 text-sm">No placements found.</td></tr>
                 )}
                 {filtered.map((p) => (
-                  <tr key={p.id} className="hover:bg-slate-700/20 transition">
+                  <tr key={p._virtualId || p.id}
+                    className={`hover:bg-slate-700/20 transition ${p.status === 'NO_PLACEMENT' ? 'opacity-75' : ''}`}>
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
@@ -294,28 +440,49 @@ function PlacementsTab({ placements, setPlacements, loadingPlacements }) {
                         <p className="text-white text-sm font-semibold">{p.student_name || '—'}</p>
                       </div>
                     </td>
-                    <td className="px-4 py-4"><p className="text-slate-300 text-sm">{p.company_name || '—'}</p></td>
+                    <td className="px-4 py-4">
+                      <p className="text-slate-300 text-sm">{p.company_name || <span className="text-slate-600 italic">Not assigned</span>}</p>
+                    </td>
                     <td className="px-4 py-4">
                       <p className="text-slate-400 text-xs truncate max-w-[100px]">
-                        {p.academic_supervisor_name || <span className="text-red-400 italic">None</span>}
+                        {p.academic_supervisor_name || <span className="text-rose-400 italic">None</span>}
                       </p>
                     </td>
                     <td className="px-4 py-4">
                       <p className="text-slate-400 text-xs truncate max-w-[100px]">
-                        {p.workplace_supervisor_name || <span className="text-red-400 italic">None</span>}
+                        {p.workplace_supervisor_name || <span className="text-rose-400 italic">None</span>}
                       </p>
                     </td>
                     <td className="px-4 py-4"><PlacementBadge status={p.status} /></td>
                     <td className="px-4 py-4">
-                      {p.status === 'ACTIVE' && (
-                        <button
-                          onClick={() => handleMarkCompleted(p)}
-                          disabled={actioningId === p.id}
-                          className="text-xs font-semibold text-emerald-400 border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-1 rounded-lg transition disabled:opacity-50"
-                        >
-                          {actioningId === p.id ? '...' : 'Mark Done'}
-                        </button>
-                      )}
+                      <div className="flex items-center gap-1.5">
+                        {p.status === 'NO_PLACEMENT' && (
+                          <button
+                            onClick={() => onAssignStudent?.(p._student)}
+                            className="text-xs font-semibold text-emerald-400 border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-1 rounded-lg transition whitespace-nowrap"
+                          >
+                            Assign
+                          </button>
+                        )}
+                        {p.status === 'PENDING' && (
+                          <button
+                            onClick={() => handleActivate(p)}
+                            disabled={activatingId === p.id}
+                            className="text-xs font-semibold text-indigo-400 border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 px-2 py-1 rounded-lg transition disabled:opacity-50 whitespace-nowrap"
+                          >
+                            {activatingId === p.id ? '...' : 'Activate'}
+                          </button>
+                        )}
+                        {p.status === 'ACTIVE' && (
+                          <button
+                            onClick={() => handleMarkCompleted(p)}
+                            disabled={actioningId === p.id}
+                            className="text-xs font-semibold text-emerald-400 border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-1 rounded-lg transition disabled:opacity-50 whitespace-nowrap"
+                          >
+                            {actioningId === p.id ? '...' : 'Mark Done'}
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -386,12 +553,15 @@ export default function AdminUsersPage() {
   const [search,           setSearch]           = useState('')
   const [roleFilter,       setRoleFilter]       = useState(searchParams.get('role') || 'all')
   const [statusFilter,     setStatusFilter]     = useState('all')
-  const [selectedUser,     setSelectedUser]     = useState(null)
-  const [showRegister,     setShowRegister]     = useState(false)
-  const [userToDelete,     setUserToDelete]     = useState(null)
-  const [deleting,         setDeleting]         = useState(false)
+  const [selectedUser,       setSelectedUser]       = useState(null)
+  const [showRegister,       setShowRegister]       = useState(false)
+  const [userToDelete,       setUserToDelete]       = useState(null)
+  const [deleting,           setDeleting]           = useState(false)
+  const [assignForStudent,   setAssignForStudent]   = useState(null)  // student object | true (any)
 
-  useEffect(() => {
+  const fetchAll = useCallback(() => {
+    setLoadingUsers(true)
+    setLoadingPlacements(true)
     fetchWithAuth(`${API}/accounts/users/`)
       .then(data => setUsers(Array.isArray(data) ? data : []))
       .catch(() => toast.error('Failed to load users.'))
@@ -401,6 +571,8 @@ export default function AdminUsersPage() {
       .catch(() => {})
       .finally(() => setLoadingPlacements(false))
   }, [])
+
+  useEffect(() => { fetchAll() }, [fetchAll])
 
   const counts = {
     total:    users.length,
@@ -455,6 +627,9 @@ export default function AdminUsersPage() {
     try {
       await fetchWithAuth(`${API}/accounts/users/${userToDelete.id}/`, { method: 'DELETE' })
       setUsers(prev => prev.filter(u => u.id !== userToDelete.id))
+      fetchWithAuth(`${API}/placements/`)
+        .then(data => setPlacements(Array.isArray(data) ? data : []))
+        .catch(() => {})
       const name = `${userToDelete.first_name || ''} ${userToDelete.last_name || ''}`.trim() || userToDelete.email
       toast.success(`${name} has been deleted.`)
       setUserToDelete(null)
@@ -482,6 +657,17 @@ export default function AdminUsersPage() {
       {showRegister && (
         <RegisterStudentModal onClose={() => setShowRegister(false)} onRegister={handleRegister} />
       )}
+      {assignForStudent && (
+        <AssignPlacementModal
+          onClose={() => setAssignForStudent(null)}
+          preselectedStudent={assignForStudent === true ? null : assignForStudent}
+          students={users.filter(u => u.role === 'student')}
+          onSuccess={() => {
+            fetchAll()
+            setAssignForStudent(null)
+          }}
+        />
+      )}
       {selectedUser && (
         <UserDetailModal
           user={selectedUser}
@@ -503,6 +689,16 @@ export default function AdminUsersPage() {
           <h1 className="text-2xl font-bold text-white">Manage Users</h1>
           <p className="text-sm text-slate-400 mt-1">View and manage all user accounts and placements.</p>
         </div>
+        <button
+          onClick={fetchAll}
+          disabled={loadingUsers}
+          className="flex items-center gap-2 px-3 py-2 bg-slate-800/50 border border-slate-700/50 text-slate-400 hover:text-white hover:border-indigo-500/50 hover:bg-indigo-600/10 rounded-xl text-xs font-semibold transition disabled:opacity-50"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          Refresh
+        </button>
       </div>
 
       {!isPlacementsTab && (
@@ -553,6 +749,8 @@ export default function AdminUsersPage() {
           placements={placements}
           setPlacements={setPlacements}
           loadingPlacements={loadingPlacements}
+          students={users.filter(u => u.role === 'student')}
+          onAssignStudent={(student) => setAssignForStudent(student)}
         />
       )}
 

@@ -51,28 +51,34 @@ function gradeFromScore(s) {
   return 'F';
 }
 
-// Formula: Workplace (40%) + Logbook (30%) + Report (20%) + Other Academic (10%)
-// Each component comes from a separate evaluation record type — not keyword-matched criteria names.
+function rawScoreFromItems(items) {
+  if (!items?.length) return null;
+  const scored = items.reduce((s, i) => s + Number(i.score),     0);
+  const maxed  = items.reduce((s, i) => s + Number(i.max_score), 0);
+  return maxed > 0 ? Number((scored / maxed * 100).toFixed(1)) : null;
+}
+
 function computeScoreComponents(evalsArr) {
   const arr = Array.isArray(evalsArr) ? evalsArr : [];
 
   const workplaceEval = arr.find(e => e.evaluator_role === 'workplace_supervisor');
   const academicEvals = arr.filter(e => e.evaluator_role === 'academic_supervisor');
 
-  // Per-log academic evals → logbook component (30%)
   const logEvals   = academicEvals.filter(e => e.log != null && e.total_score != null);
-  // Final placement-level academic eval → report component (20%)
   const reportEval = academicEvals.find(e => e.log == null && e.visit_number == null);
-  // On-site visit evals → other academic component (10%)
   const visitEvals = academicEvals.filter(e => e.visit_number != null && e.total_score != null);
 
-  const workplaceScore = workplaceEval?.total_score != null ? Number(workplaceEval.total_score) : null;
+  const workplaceScore = workplaceEval
+    ? (rawScoreFromItems(workplaceEval.items) ?? (workplaceEval.total_score != null ? Number(workplaceEval.total_score) : null))
+    : null;
 
   const logbookScore = logEvals.length > 0
     ? Number((logEvals.reduce((s, e) => s + Number(e.total_score), 0) / logEvals.length).toFixed(1))
     : null;
 
-  const reportScore = reportEval?.total_score != null ? Number(reportEval.total_score) : null;
+  const reportScore = reportEval
+    ? (rawScoreFromItems(reportEval.items) ?? (reportEval.total_score != null ? Number(reportEval.total_score) : null))
+    : null;
 
   const otherAcademicScore = visitEvals.length > 0
     ? Number((visitEvals.reduce((s, e) => s + Number(e.total_score), 0) / visitEvals.length).toFixed(1))
@@ -81,7 +87,6 @@ function computeScoreComponents(evalsArr) {
   const anyAvailable = workplaceScore != null || logbookScore != null ||
     reportScore != null || otherAcademicScore != null;
 
-  // Running score: null components contribute 0 (partial until all evaluations are in)
   const finalScore = anyAvailable
     ? Number((
         (workplaceScore      ?? 0) * 0.4 +
@@ -353,8 +358,6 @@ async function getPendingReviews() {
   };
 }
 
-// Returns per-student submission progress (replaces flat recent-activity list).
-// Sorted: students with pending action first, then by last submission date.
 async function getRecentActivity() {
   const [placements, logbooks] = await Promise.all([
     fetchWithAuth(PLACEMENTS),
@@ -421,10 +424,21 @@ async function getAdminStats() {
     fetchWithAuth(LOGBOOKS),
     fetchWithAuth(EVALUATIONS).catch(() => []),
   ]);
-  const completedEvals = Array.isArray(evals) ? evals.filter(e => e.status === 'SUBMITTED') : [];
-  const avgScore = completedEvals.length
-    ? completedEvals.reduce((s, e) => s + Number(e.total_score || 0), 0) / completedEvals.length
+  const evalsArr = Array.isArray(evals) ? evals : [];
+
+  const evalsByPlacement = {};
+  for (const e of evalsArr) {
+    if (!evalsByPlacement[e.placement]) evalsByPlacement[e.placement] = [];
+    evalsByPlacement[e.placement].push(e);
+  }
+  const perPlacementScores = Object.values(evalsByPlacement)
+    .map(placementEvals => computeScoreComponents(placementEvals).final_score)
+    .filter(s => s != null);
+  const avgScore = perPlacementScores.length
+    ? Number((perPlacementScores.reduce((s, n) => s + n, 0) / perPlacementScores.length).toFixed(1))
     : 0;
+
+  const completedEvals = evalsArr.filter(e => e.status === 'SUBMITTED');
   return {
     data: {
       total_students: users.filter(u => u.role === 'student').length,
@@ -433,11 +447,23 @@ async function getAdminStats() {
       ).length,
       average_score: avgScore,
       active_placements: placements.filter(p => p.status === 'ACTIVE').length,
-      pending_placements: placements.filter(p => p.status === 'PENDING').length,
-      unassigned_students: placements.filter(
-        p => !p.workplace_supervisor || !p.academic_supervisor
-      ).length,
-      evaluations_complete: completedEvals.length,
+      pending_placements: (() => {
+        const placedIds = new Set(placements.map(p => p.student))
+        const noPlacement = users.filter(u => u.role === 'student' && !placedIds.has(u.id)).length
+        return noPlacement + placements.filter(p => p.status === 'PENDING').length
+      })(),
+      unassigned_students: (() => {
+        const placedIds = new Set(placements.map(p => p.student))
+        const noPlacement = users.filter(u => u.role === 'student' && !placedIds.has(u.id)).length
+        const missingSupervisor = placements.filter(p => !p.workplace_supervisor || !p.academic_supervisor).length
+        return noPlacement + missingSupervisor
+      })(),
+      evaluations_complete: (() => {
+        const placementsWithEvals = new Set(
+          evalsArr.filter(e => e.status === 'SUBMITTED').map(e => e.placement)
+        )
+        return placementsWithEvals.size
+      })(),
       logs_overdue: logbooks.filter(
         l => l.status === 'draft' && l.deadline && new Date(l.deadline) < new Date()
       ).length,
@@ -482,70 +508,43 @@ async function getAdminEvaluations() {
     fetchWithAuth(EVALUATIONS).catch(() => []),
     fetchWithAuth(PLACEMENTS),
   ]);
-  const pm = buildPlacementMap(placements);
 
-  const byPlacement = {};
+  const evalsByPlacement = {};
   for (const e of (Array.isArray(evals) ? evals : [])) {
-    if (!byPlacement[e.placement]) byPlacement[e.placement] = { academic: null, workplace: null };
-    // Academic: use the placement-level report eval only (not per-log or per-visit evals)
-    if (e.evaluator_role === 'academic_supervisor' && e.log == null && e.visit_number == null)
-      byPlacement[e.placement].academic = e;
-    else if (e.evaluator_role === 'workplace_supervisor')
-      byPlacement[e.placement].workplace = e;
+    if (!evalsByPlacement[e.placement]) evalsByPlacement[e.placement] = [];
+    evalsByPlacement[e.placement].push(e);
   }
 
-  const gradeFromScore = (s) => {
-    if (s == null) return null;
-    if (s >= 80) return 'A';
-    if (s >= 70) return 'B';
-    if (s >= 60) return 'C';
-    if (s >= 50) return 'D';
-    return 'F';
-  };
-
   return {
-    data: Object.entries(byPlacement).map(([placementId, { academic, workplace }]) => {
-      const wScore      = workplace?.total_score != null ? Number(workplace.total_score) : null;
-      const acItems     = academic?.items || [];
-      const logbookItem = acItems.find(i => i.criteria_name?.toLowerCase().includes('logbook'));
-      const reportItem  = acItems.find(i => i.criteria_name?.toLowerCase().includes('report'));
-      const otherItems  = acItems.filter(i =>
-        !i.criteria_name?.toLowerCase().includes('logbook') &&
-        !i.criteria_name?.toLowerCase().includes('report')
-      );
-      const logbookScore = logbookItem ? Number(logbookItem.score) : null;
-      const reportScore  = reportItem  ? Number(reportItem.score)  : null;
-      const otherScore   = otherItems.length > 0
-        ? Number((otherItems.reduce((s, i) => s + Number(i.score), 0) / otherItems.length).toFixed(1))
+    data: placements.map(p => {
+      const placementEvals = evalsByPlacement[p.id] || [];
+      const scores = computeScoreComponents(placementEvals);
+
+      const { logbook_score, report_score, other_academic_score } = scores;
+      const academicScore = (logbook_score != null || report_score != null || other_academic_score != null)
+        ? Number((
+            (logbook_score        ?? 0) * 0.5  +
+            (report_score         ?? 0) * (1/3) +
+            (other_academic_score ?? 0) * (1/6)
+          ).toFixed(1))
         : null;
-      const aTotal = academic?.total_score != null ? Number(academic.total_score) : null;
 
-      let finalScore = null;
-      if (wScore != null && logbookScore != null && reportScore != null && otherScore != null)
-        finalScore = Number(((wScore * 0.4) + (logbookScore * 0.3) + (reportScore * 0.2) + (otherScore * 0.1)).toFixed(1));
-      else if (wScore != null && aTotal != null)
-        finalScore = Number(((wScore * 0.4) + (aTotal * 0.6)).toFixed(1));
-      else if (aTotal != null)  finalScore = aTotal;
-      else if (wScore != null)  finalScore = wScore;
-
-      const status = (academic?.status === 'SUBMITTED' || workplace?.status === 'SUBMITTED')
-        ? 'SUBMITTED' : 'PENDING';
+      const hasSubmitted = placementEvals.some(e => e.status === 'SUBMITTED');
 
       return {
-        id: Number(placementId),
-        placement: Number(placementId),
-        student_name: capName(pm[placementId]?.student_name || `Placement #${placementId}`),
-        company:      pm[placementId]?.company_name || '—',
-        workplace_score:      wScore,
-        logbook_score:        logbookScore,
-        report_score:         reportScore,
-        other_academic_score: otherScore,
-        academic_total:       aTotal,
-        final_score:     finalScore,
-        total_score:     finalScore,
-        grade:           gradeFromScore(finalScore),
-        status,
-        items: [...(academic?.items || []), ...(workplace?.items || [])],
+        id:           p.id,
+        placement:    p.id,
+        student_name: capName(p.student_name || String(p.student || '')),
+        company:      p.company_name || '—',
+        workplace_score:      scores.workplace_score,
+        academic_score:       academicScore,
+        logbook_score:        scores.logbook_score,
+        report_score:         scores.report_score,
+        other_academic_score: scores.other_academic_score,
+        final_score:          scores.final_score,
+        total_score:          scores.final_score,
+        grade:                scores.grade,
+        status: hasSubmitted ? 'SUBMITTED' : 'PENDING',
       };
     }),
   };
@@ -573,6 +572,13 @@ async function markPlacementCompleted(placementId) {
   return fetchWithAuth(`${BASE}/placements/${placementId}/`, {
     method: 'PATCH',
     body: JSON.stringify({ status: 'COMPLETED' }),
+  });
+}
+
+async function markPlacementActive(placementId) {
+  return fetchWithAuth(`${BASE}/placements/${placementId}/`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status: 'ACTIVE' }),
   });
 }
 
@@ -643,6 +649,7 @@ const dashboardService = {
   approveLog,
   rejectLog,
   markPlacementCompleted,
+  markPlacementActive,
   registerStudent,
   createPlacement,
   updatePlacementSupervisors,

@@ -153,21 +153,35 @@ function WorkflowStep({ label, active, done }) {
 
 function WorkflowTracker({ status }) {
   const steps = ['draft', 'submitted', 'reviewed', 'approved']
-  const idx   = steps.indexOf(status?.toLowerCase()) ?? 0
+
+  // Work with both casing and possible API shape issues.
+  const normalized = typeof status === 'string' ? status.toLowerCase() : ''
+  const idx = steps.indexOf(normalized)
+
+  // If we don't recognize the status, keep the tracker at the first step.
+  const safeIdx = idx === -1 ? 0 : idx
+
+  // Mark a step as done when it is at or before the current step.
+  // This is what makes "Reviewed" show a tick when status === 'reviewed'.
   return (
     <div className="flex items-start gap-0">
       {steps.map((step, i) => (
         <div key={step} className="flex items-center flex-1">
-          <WorkflowStep label={step.charAt(0).toUpperCase() + step.slice(1)} active={i === idx} done={i < idx} />
+          <WorkflowStep
+            label={step.charAt(0).toUpperCase() + step.slice(1)}
+            active={i === safeIdx}
+            done={i <= safeIdx}
+          />
           {i < steps.length - 1 && (
-            <div className={`h-0.5 flex-1 mt-[-12px] ${i < idx ? 'bg-indigo-600' : 'bg-slate-700'}`} />
-
+            <div className={`h-0.5 flex-1 mt-[-12px] ${i < safeIdx ? 'bg-indigo-600' : 'bg-slate-700'}`} />
           )}
         </div>
       ))}
     </div>
   )
 }
+
+
 
 export default function StudentDashboard() {
   const { user } = useAuth()

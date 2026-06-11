@@ -7,7 +7,7 @@ class CanSubmitLog(BasePermission):
 class CanReviewLog(BasePermission):
     def has_permission(self, request, view):
         return request.user.is_authenticated and request.user.role in (
-            'workplace_supervisor', 'academic_supervisor', 'admin'
+            'workplace_supervisor', 'admin'
         )
 
 class CanApproveLog(BasePermission):
@@ -16,8 +16,10 @@ class CanApproveLog(BasePermission):
             'academic_supervisor', 'admin'
         )
 
+
 class CanRejectLog(BasePermission):
     def has_permission(self, request, view):
         return request.user.is_authenticated and request.user.role in (
-            'workplace_supervisor', 'academic_supervisor', 'admin'
+            'academic_supervisor', 'admin'
         )
+

@@ -24,6 +24,13 @@ function gradeLabel(grade) {
   return 'Not graded yet'
 }
 
+function rawScoreFromItems(items) {
+  if (!items?.length) return null
+  const scored = items.reduce((s, i) => s + Number(i.score), 0)
+  const maxed  = items.reduce((s, i) => s + Number(i.max_score), 0)
+  return maxed > 0 ? Number((scored / maxed * 100).toFixed(1)) : null
+}
+
 function computeGrade(score) {
   if (score == null) return null
   if (score >= 80) return 'A'
@@ -35,7 +42,7 @@ function computeGrade(score) {
 
 function EvaluationSection({ title, subtitle, evaluation, emptyMessage, logFeedback = [] }) {
   const items = Array.isArray(evaluation?.items) ? evaluation.items : []
-  const score = evaluation?.total_score != null ? Number(evaluation.total_score) : null
+  const score = rawScoreFromItems(items)
 
   return (
     <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl overflow-hidden">
@@ -66,7 +73,7 @@ function EvaluationSection({ title, subtitle, evaluation, emptyMessage, logFeedb
           <table className="w-full">
             <thead>
               <tr className="border-b border-slate-700/50">
-                {['Criteria', 'Score (out of 100)'].map(h => (
+                {['Criteria', 'Score / Max'].map(h => (
                   <th key={h} className="text-left text-xs text-slate-500 uppercase tracking-wider px-6 py-3 font-semibold">
                     {h}
                   </th>
@@ -92,6 +99,7 @@ function EvaluationSection({ title, subtitle, evaluation, emptyMessage, logFeedb
                         {Number(item.score) % 1 === 0
                           ? Number(item.score).toFixed(0)
                           : Number(item.score).toFixed(2)}
+                        <span className="text-slate-500 font-normal"> / {Number(item.max_score) % 1 === 0 ? Number(item.max_score).toFixed(0) : Number(item.max_score).toFixed(2)}</span>
                       </span>
                     </td>
                   </tr>
@@ -186,15 +194,12 @@ export default function StudentEvaluationPage() {
 
   const workplaceEval  = evals.find(e => e.evaluator_role === 'workplace_supervisor')
   const academicEvals  = evals.filter(e => e.evaluator_role === 'academic_supervisor')
-  // Report evaluation: final placement-level eval (no log, no visit)
-  const reportEval     = academicEvals.find(e => e.log == null && e.visit_number == null)
-  // Logbook: per-log evaluations (one per approved weekly log)
-  const logEvalsScored = academicEvals.filter(e => e.log != null && e.total_score != null)
-  // Other academic: on-site visit evaluations
+  const reportEval       = academicEvals.find(e => e.log == null && e.visit_number == null)
+  const logEvalsScored   = academicEvals.filter(e => e.log != null && e.total_score != null)
   const visitEvalsScored = academicEvals.filter(e => e.visit_number != null && e.total_score != null)
 
-  const workplaceScore     = workplaceEval?.total_score != null ? Number(workplaceEval.total_score) : null
-  const reportScore        = reportEval?.total_score    != null ? Number(reportEval.total_score)    : null
+  const workplaceScore     = rawScoreFromItems(workplaceEval?.items) ?? (workplaceEval?.total_score != null ? Number(workplaceEval.total_score) : null)
+  const reportScore        = rawScoreFromItems(reportEval?.items)    ?? (reportEval?.total_score    != null ? Number(reportEval.total_score)    : null)
   const logbookScore       = logEvalsScored.length > 0
     ? Number((logEvalsScored.reduce((s, e) => s + Number(e.total_score), 0) / logEvalsScored.length).toFixed(1))
     : null
@@ -202,17 +207,14 @@ export default function StudentEvaluationPage() {
     ? Number((visitEvalsScored.reduce((s, e) => s + Number(e.total_score), 0) / visitEvalsScored.length).toFixed(1))
     : null
 
-  // Academic (60%) = Logbook (30%) + Report (20%) + Other Academic (10%)
   const academicScore = (logbookScore != null || reportScore != null || otherAcademicScore != null)
     ? Number((
-        (logbookScore       ?? 0) * 0.5   +   // 30% of total ÷ 60% = 50% of academic bucket
-        (reportScore        ?? 0) * (1/3) +   // 20% of total ÷ 60% = 33.3% of academic bucket
-        (otherAcademicScore ?? 0) * (1/6)     // 10% of total ÷ 60% = 16.7% of academic bucket
+        (logbookScore       ?? 0) * 0.5  +
+        (reportScore        ?? 0) * (1/3) +
+        (otherAcademicScore ?? 0) * (1/6)
       ).toFixed(1))
     : null
 
-  // Final score: Workplace (40%) + Academic (60%)
-  // Formula: WP×0.4 + LB×0.3 + RPT×0.2 + Other×0.1
   const anyAvailable = workplaceScore != null || logbookScore != null ||
     reportScore != null || otherAcademicScore != null
   const finalScore = anyAvailable
@@ -277,7 +279,6 @@ export default function StudentEvaluationPage() {
 
           <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 space-y-3">
             <p className="text-xs text-slate-500 uppercase tracking-wider">Score Breakdown</p>
-            {/* Workplace — 40% */}
             <div className="flex items-center justify-between">
               <span className="text-xs text-slate-400 font-semibold">Workplace (40%)</span>
               <span className={`text-sm font-bold ${workplaceScore != null ? 'text-indigo-400' : 'text-slate-600'}`}>
@@ -286,7 +287,6 @@ export default function StudentEvaluationPage() {
                   : '—'}
               </span>
             </div>
-            {/* Academic — 60% (Logbook 30% + Report 20% + Other 10%) */}
             <div className="flex items-center justify-between">
               <span className="text-xs text-slate-400 font-semibold">Academic (60%)</span>
               <span className={`text-sm font-bold ${academicScore != null ? 'text-emerald-400' : 'text-slate-600'}`}>
@@ -295,7 +295,6 @@ export default function StudentEvaluationPage() {
                   : '—'}
               </span>
             </div>
-            {/* Academic sub-breakdown */}
             <div className="pl-3 border-l border-slate-700 space-y-1.5">
               {[
                 { label: 'Logbook (30%)',     score: logbookScore,       color: 'text-amber-400'   },
