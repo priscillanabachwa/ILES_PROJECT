@@ -1,4 +1,6 @@
-const API_BASE_URL = '/api';
+const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+ ? '/api'
+ : 'https://iles-project-0arv.onrender.com/api';
 
 export const loginUser = async (email, password) => {
   let response;
