@@ -9,7 +9,7 @@ User = get_user_model()
 @pytest.fixture
 def student_user(db):
     return User.objects.create_user(
-        username="student_john",
+       
         email="john@student.com",
         password="testpass123",
         role="student"
@@ -18,7 +18,7 @@ def student_user(db):
 @pytest.fixture
 def workplace_supervisor(db):
     return User.objects.create_user(
-        username="supervisor_jane",
+       
         email="jane@company.com",
         password="testpass123",
         role="workplace_supervisor"
@@ -27,7 +27,7 @@ def workplace_supervisor(db):
 @pytest.fixture
 def academic_supervisor(db):
     return User.objects.create_user(
-        username="academic_bob",
+        
         email="bob@university.com",
         password="testpass123",
         role="academic_supervisor"
@@ -36,7 +36,7 @@ def academic_supervisor(db):
 @pytest.fixture
 def admin_user(db):
     return User.objects.create_superuser(
-        username="admin",
+       
         email="admin@iles.com",
         password="adminpass123"
     )
