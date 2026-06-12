@@ -1,12 +1,12 @@
 # placements/tests/test_views.py
 import pytest
-from django.urls import reverse
 from placements.models import InternshipPlacement, Company
 
 class TestPlacementViews:
 
     def test_student_can_submit_placement(self, student_client, db):
-        url = reverse("placement-list")
+        # Explicit string URL paths ignore any reverse() registration issues
+        url = "/api/placements/"
         test_company = Company.objects.create(company_name="Tech Corp")
         
         data = {
@@ -27,8 +27,7 @@ class TestPlacementViews:
             end_date="2025-06-30",
             status="PENDING"
         )
-        url = reverse("placement-detail", args=[placement.id])
-        # Use uppercase 'ACTIVE' or 'COMPLETED' depending on what your view considers "Approved"
+        url = f"/api/placements/{placement.id}/"
         response = supervisor_client.patch(url, {"status": "ACTIVE"}, format="json")
         assert response.status_code == 200
         placement.refresh_from_db()
@@ -44,6 +43,6 @@ class TestPlacementViews:
             end_date="2025-06-30",
             status="PENDING"
         )
-        url = reverse("placement-detail", args=[placement.id])
+        url = f"/api/placements/{placement.id}/"
         response = student_client.patch(url, {"status": "ACTIVE"}, format="json")
         assert response.status_code == 403
