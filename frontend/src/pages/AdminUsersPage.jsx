@@ -5,7 +5,9 @@ import { fetchWithAuth } from '../services/authService'
 import dashboardService from '../services/dashboardService'
 import { useAuth } from '../Context/AuthContext'
 
-const API = '/api'
+const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? '/api' 
+  : 'https://iles-project-0arv.onrender.com/api'
 
 const getInitials = (first, last) =>
   `${first?.[0] || ''}${last?.[0] || ''}`.toUpperCase() || '?'

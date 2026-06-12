@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { fetchWithAuth } from '../services/authService'
 
-const API = '/api'
+const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? '/api' 
+  : 'https://iles-project-0arv.onrender.com/api'
 
 const TYPE_CONFIG = {
   log_submitted: { label: 'Log Submitted', bg: 'bg-blue-500/20',   text: 'text-blue-400',   dot: 'bg-blue-400'   },

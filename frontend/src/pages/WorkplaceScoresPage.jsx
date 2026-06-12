@@ -3,7 +3,9 @@ import { toast } from 'react-toastify'
 import { fetchWithAuth } from '../services/authService'
 import { capName } from '../services/dashboardService'
 
-const API = '/api'
+const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? '/api' 
+  : 'https://iles-project-0arv.onrender.com/api'
 
 function Skeleton({ className = '' }) {
   return <div className={`bg-slate-700/50 animate-pulse rounded-lg ${className}`} />

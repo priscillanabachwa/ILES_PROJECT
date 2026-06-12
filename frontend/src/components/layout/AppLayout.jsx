@@ -4,7 +4,9 @@ import { useAuth } from '../../Context/AuthContext'
 import { fetchWithAuth } from '../../services/authService'
 import ILESLogo from '../../assets/ILES_LOGO.png'
 
-const API = '/api'
+const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? '/api' 
+  : 'https://iles-project-0arv.onrender.com/api';
 
 const NAV = {
   admin: [

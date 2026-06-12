@@ -4,7 +4,9 @@ import axios from 'axios'
 import { toast } from 'react-toastify'
 import { getAuthToken, fetchWithAuth } from '../services/authService'
 
-const API = '/api'
+const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? '/api' 
+  : 'https://iles-project-0arv.onrender.com/api'
 
 const ACCEPTED_EXT  = '.pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png'
 const ACCEPTED_MIME = new Set([

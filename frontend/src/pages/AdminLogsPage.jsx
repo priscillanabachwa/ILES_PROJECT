@@ -3,7 +3,9 @@ import { toast } from 'react-toastify'
 import { fetchWithAuth } from '../services/authService'
 import { capName } from '../services/dashboardService'
 
-const API = '/api'
+const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? '/api' 
+  : 'https://iles-project-0arv.onrender.com/api'
 
 const formatDate = (iso) =>
   iso ? new Date(iso).toLocaleDateString('en-UG', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'

@@ -1,6 +1,8 @@
 ﻿import { fetchWithAuth } from './authService';
 
-const BASE = '/api';
+const BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? '/api' 
+  : 'https://iles-project-0arv.onrender.com/api';
 const PLACEMENTS = `${BASE}/placements/`;
 const LOGBOOKS = `${BASE}/weeklylogs/logbooks/`;
 const EVALUATIONS = `${BASE}/evaluations/evaluations/`;
