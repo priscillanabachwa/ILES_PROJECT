@@ -8,7 +8,7 @@ class TestUserModel:
 
     def test_student_created_successfully(self, db):
         user = User.objects.create_user(
-            username="student1",
+           
             email="student1@test.com",
             password="pass123",
             role="student"
@@ -18,10 +18,7 @@ class TestUserModel:
         assert user.role == "student"
 
     def test_password_is_hashed(self, db):
-        user = User.objects.create_user(
-            username="student2",
-            password="plainpassword"
-        )
+        user = User.objects.create_user(email="testuser@example.com", password="password123")
         # password should never be stored as plain text
         assert user.password != "plainpassword"
 

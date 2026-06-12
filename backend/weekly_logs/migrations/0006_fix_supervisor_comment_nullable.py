@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunSQL(
-            sql='-- SQLite does not support ALTER COLUMN. This migration is a no-op for SQLite.',
-            reverse_sql='-- no-op',
+            sql='SELECT 1;',
+            reverse_sql='SELECT 1;',
         ),
     ]
