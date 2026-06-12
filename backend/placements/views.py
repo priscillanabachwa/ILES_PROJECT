@@ -1,9 +1,9 @@
-
 from rest_framework import viewsets
 from .models import InternshipPlacement, Company
 from .serializers import PlacementSerializer, CompanySerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import filters
+from rest_framework.exceptions import PermissionDenied  
 
 class CompanyViewSet(viewsets.ModelViewSet):
     queryset = Company.objects.all().order_by('company_name')
@@ -13,11 +13,16 @@ class CompanyViewSet(viewsets.ModelViewSet):
 class PlacementViewSet(viewsets.ModelViewSet):
     queryset = InternshipPlacement.objects.all()
     serializer_class = PlacementSerializer
-
     permission_classes = [IsAuthenticated]
 
     filter_backends = [filters.SearchFilter]
     search_fields = ['student__username', 'company__company_name']
+
+
+    def check_object_permissions(self, request, obj):
+        super().check_object_permissions(request, obj)
+        if request.user.role == 'student' and request.method in ['PUT', 'PATCH']:
+            raise PermissionDenied("Students are not authorized to modify placement tracking statuses.")
 
     def perform_create(self, serializer):
         if self.request.user.role == 'student':
@@ -34,4 +39,3 @@ class PlacementViewSet(viewsets.ModelViewSet):
         elif user.role == 'academic_supervisor':
             return InternshipPlacement.objects.filter(academic_supervisor=user)
         return super().get_queryset()
-
