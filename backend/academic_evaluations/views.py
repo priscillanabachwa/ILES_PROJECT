@@ -1,5 +1,6 @@
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.exceptions import PermissionDenied  # <-- Added for security exceptions
 from .models import AcademicEvaluation, EvaluationCriteria, EvaluationScore
 from .serializers import (
     AcademicEvaluationSerializer,
@@ -10,6 +11,12 @@ from .serializers import (
 class AcademicEvaluationViewSet(viewsets.ModelViewSet):
     serializer_class = AcademicEvaluationSerializer
     permission_classes = [IsAuthenticated]
+
+  
+    def check_permissions(self, request):
+        super().check_permissions(request)
+        if request.user.role == 'student' and request.method not in ['GET', 'HEAD', 'OPTIONS']:
+            raise PermissionDenied("Students are only allowed read-only access to evaluations.")
 
     def get_queryset(self):
         user = self.request.user
