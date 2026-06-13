@@ -3,9 +3,9 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 from datetime import date, timedelta
 
-from users.models import CustomUser, Notification
+from user_accounts.models import CustomUser, Notification
 from placements.models import Company, InternshipPlacement
-from logbook.models import WeeklyLogbook, LogBookReview
+from weekly_logs.models import WeeklyLogbook, LogBookReview
 
 
 # ─────────────────────────────────────────────
