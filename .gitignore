@@ -8,6 +8,11 @@ dist/
 venv/
 __pycache__/
 *.pyc
-
-
+frontend/__mocks__/
+frontend/jest.config.js/
+frontend/jest.setup.js/
+frontend\src/pages/dashboards/AcademicSupervisorDashboard.test.jsx/
+frontend\src/pages/dashboards/WorkplaceSupervisorDashboard.test.jsx/
+frontend\src/pages/dashboards/InternshipAdminDashboard.test.jsx/
+frontend\src/pages/dashboards/StudentDashboard.test.jsx/
 
